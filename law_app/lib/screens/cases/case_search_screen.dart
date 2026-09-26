@@ -377,7 +377,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                                   );
                               Navigator.of(context).push(
                                 MaterialPageRoute(builder: (_) => CaseDetailScreen(caseId: item.id)),
-                              );
+                              ).then((_) => _triggerSearch(_searchController.text));
                             },
                           );
                         },

@@ -135,11 +135,22 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
       body: BlocBuilder<CaseBloc, CaseState>(
         builder: (context, state) {
           if (state is CaseLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+            return Scaffold(
+              appBar: AppBar(
+                leading: const BackButton(),
+                title: const Text('Case Details'),
+              ),
+              body: const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy)),
+            );
           }
 
           if (state is CaseError) {
-            return Center(
+            return Scaffold(
+              appBar: AppBar(
+                leading: const BackButton(),
+                title: const Text('Case Details'),
+              ),
+              body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -155,6 +166,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                     ),
                   ],
                 ),
+              ),
               ),
             );
           }
@@ -446,7 +458,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
             );
           }
 
-          return const SizedBox.shrink();
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryNavy),
+          );
         },
       ),
     );
