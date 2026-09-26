@@ -21,6 +21,16 @@ router.get(
   }),
 );
 
+router.post(
+  "/sync-kanoon",
+  auth(),
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    const result = await IndianKanoonService.syncLandmarkCasesToDb(Case);
+    res.json(result);
+  }),
+);
+
 /**
  * Public: Search cases (Hybrid: Curated Database + Indian Kanoon API)
  * Supports query (name/keywords/citation), court filter, year/date range, pagination.

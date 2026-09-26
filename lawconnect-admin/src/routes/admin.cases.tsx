@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download } from "lucide-react";
+import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/cases")({
@@ -48,6 +48,7 @@ function CasesAdmin() {
   const [viewingCase, setViewingCase] = useState<LawCase | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -167,6 +168,19 @@ function CasesAdmin() {
     }
   }
 
+  async function syncKanoon() {
+    setSyncing(true);
+    try {
+      const result = await api<{ message?: string; count?: number }>("/api/cases/sync-kanoon", { method: "POST" });
+      alert(result.message || `Indian Kanoon sync complete. Added ${result.count || 0} judgments.`);
+      load(1);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Indian Kanoon sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const courts = ["all", "Supreme Court of India", "Delhi High Court", "Bombay High Court", "Allahabad High Court", "Calcutta High Court", "Madras High Court", "Karnataka High Court"];
 
   return (
@@ -174,9 +188,15 @@ function CasesAdmin() {
       title="Cases & Judgments"
       subtitle="Publish, inspect and manage landmark judgments, case briefs and Kanoon citations"
       actions={
-        <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Plus className="size-4" /> Add Case Judgment
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={syncKanoon} disabled={syncing} variant="outline" className="gap-2">
+            <RefreshCw className={`size-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Fetching..." : "Fetch Indian Kanoon Data"}
+          </Button>
+          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Plus className="size-4" /> Add Case Judgment
+          </Button>
+        </div>
       }
     >
       {/* Search & Filter Bar */}
