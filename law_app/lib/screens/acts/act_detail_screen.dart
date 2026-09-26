@@ -38,6 +38,10 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(widget.actName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       ),
       body: BlocBuilder<ActBloc, ActState>(

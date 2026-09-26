@@ -73,7 +73,13 @@ class _NotesScreenState extends State<NotesScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        automaticallyImplyLeading: widget.showBackButton,
+        automaticallyImplyLeading: false,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: const Text('Case Study Notes'),
       ),
       floatingActionButton: FloatingActionButton(

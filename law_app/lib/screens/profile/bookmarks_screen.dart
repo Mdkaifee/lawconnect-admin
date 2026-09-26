@@ -24,7 +24,13 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        automaticallyImplyLeading: widget.showBackButton,
+        automaticallyImplyLeading: false,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: const Text('Saved Bookmarks'),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(

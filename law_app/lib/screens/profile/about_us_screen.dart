@@ -40,6 +40,10 @@ class AboutUsScreen extends StatelessWidget {
         surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F1E36)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'About Us',
           style: TextStyle(
