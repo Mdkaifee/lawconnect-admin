@@ -205,13 +205,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         foregroundColor: AppColors.primaryNavy,
         surfaceTintColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: widget.showBackButton
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
+        iconTheme: const IconThemeData(color: AppColors.primaryNavy),
+        automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Law Posts', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
