@@ -333,3 +333,4 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
     );
   }
 }
+

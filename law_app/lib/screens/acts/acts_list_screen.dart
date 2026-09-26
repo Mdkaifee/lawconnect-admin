@@ -163,3 +163,4 @@ class _ActsListScreenState extends State<ActsListScreen> {
     );
   }
 }
+

@@ -252,3 +252,4 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
     );
   }
 }
+

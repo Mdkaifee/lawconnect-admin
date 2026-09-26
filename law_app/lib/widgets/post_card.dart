@@ -235,3 +235,4 @@ class PostCard extends StatelessWidget {
     );
   }
 }
+

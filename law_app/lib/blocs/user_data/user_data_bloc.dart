@@ -197,3 +197,4 @@ class UserDataBloc extends Bloc<UserDataEvent, UserDataState> {
     add(LoadUserDataEvent());
   }
 }
+

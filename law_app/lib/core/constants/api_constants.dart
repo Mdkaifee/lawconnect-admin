@@ -29,3 +29,4 @@ class ApiConstants {
   static const String history = '$baseUrl/history';
   static const String categories = '$baseUrl/categories';
 }
+

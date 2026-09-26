@@ -46,3 +46,4 @@ class UpdateModel extends Equatable {
   @override
   List<Object?> get props => [id, title, summary, category, source, court, badge, publishedAt, verificationStatus];
 }
+

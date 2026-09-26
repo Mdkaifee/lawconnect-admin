@@ -80,3 +80,4 @@ class ActModel extends Equatable {
   @override
   List<Object?> get props => [id, name, shortName, year, type, sections, sectionsCount];
 }
+

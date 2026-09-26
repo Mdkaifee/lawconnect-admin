@@ -143,3 +143,4 @@ class UserDataRepository {
     await _client.delete(Uri.parse(ApiConstants.history), headers: _authRepo.authHeaders);
   }
 }
+

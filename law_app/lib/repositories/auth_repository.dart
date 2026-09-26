@@ -95,3 +95,4 @@ class AuthRepository {
     await prefs.remove('current_user');
   }
 }
+

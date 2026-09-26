@@ -18,6 +18,14 @@ class AppColors {
 }
 
 class AppTheme {
+  static const Color primaryDark = AppColors.primaryNavyDark;
+  static const Color navyBlue = AppColors.primaryNavy;
+  static const Color goldAccent = AppColors.goldAccent;
+  static const Color surfaceDark = Color(0xFF142033);
+  static const Color textLight = Colors.white;
+  static const Color textMuted = AppColors.textMuted;
+  static const Color background = AppColors.backgroundLight;
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -117,3 +125,4 @@ class AppTheme {
     );
   }
 }
+

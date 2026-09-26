@@ -70,3 +70,4 @@ class UpdateBloc extends Bloc<UpdateEvent, UpdateState> {
     }
   }
 }
+

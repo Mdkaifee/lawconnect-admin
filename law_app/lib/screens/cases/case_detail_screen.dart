@@ -4,7 +4,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
-import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/html_sanitizer.dart';
 import '../../models/case_model.dart';
@@ -37,10 +36,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
 
   void _openUrl(String? url) async {
     if (url == null || url.isEmpty) return;
-    final absoluteUrl = url.startsWith('/api/')
-        ? '${ApiConstants.baseUrl.replaceFirst('/api', '')}$url'
-        : url;
-    final uri = Uri.parse(absoluteUrl);
+    final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -250,7 +246,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                         if (c.hasCourtCopy) ...[
                           const SizedBox(height: 8),
                           InkWell(
-                            onTap: () => _openUrl(c.origDocUrl),
+                            onTap: () => _openUrl(c.sourceUrl),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
@@ -479,3 +475,4 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
     );
   }
 }
+

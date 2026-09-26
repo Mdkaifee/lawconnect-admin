@@ -87,3 +87,4 @@ class LawHubApp extends StatelessWidget {
     );
   }
 }
+

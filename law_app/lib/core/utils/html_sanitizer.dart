@@ -43,3 +43,4 @@ class HtmlSanitizer {
     return '$sub...';
   }
 }
+

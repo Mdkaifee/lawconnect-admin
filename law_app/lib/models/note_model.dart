@@ -7,7 +7,8 @@ class NoteModel extends Equatable {
   final String refType;
   final String? refId;
   final String? refTitle;
-  final String updatedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const NoteModel({
     required this.id,
@@ -16,31 +17,41 @@ class NoteModel extends Equatable {
     this.refType = 'general',
     this.refId,
     this.refTitle,
+    required this.createdAt,
     required this.updatedAt,
   });
 
   factory NoteModel.fromJson(Map<String, dynamic> json) {
     return NoteModel(
-      id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
-      title: json['title']?.toString() ?? 'Untitled Note',
-      content: json['content']?.toString() ?? '',
-      refType: json['refType']?.toString() ?? 'general',
-      refId: json['refId']?.toString(),
-      refTitle: json['refTitle']?.toString(),
-      updatedAt: json['updatedAt']?.toString() ?? DateTime.now().toIso8601String(),
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      content: (json['content'] ?? '').toString(),
+      refType: (json['refType'] ?? json['relatedType'] ?? 'general').toString(),
+      refId: json['refId']?.toString() ?? json['relatedId']?.toString(),
+      refTitle: json['refTitle']?.toString() ?? json['relatedTitle']?.toString(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       'content': content,
       'refType': refType,
-      'refId': refId,
-      'refTitle': refTitle,
+      if (refId != null) 'refId': refId,
+      if (refTitle != null) 'refTitle': refTitle,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
   @override
-  List<Object?> get props => [id, title, content, refType, refId, updatedAt];
+  List<Object?> get props => [id, title, content, refType, refId, refTitle, createdAt, updatedAt];
 }
+

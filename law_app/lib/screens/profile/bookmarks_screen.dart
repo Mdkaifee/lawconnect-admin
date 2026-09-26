@@ -99,3 +99,4 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     );
   }
 }
+
