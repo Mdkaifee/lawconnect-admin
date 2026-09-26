@@ -78,7 +78,7 @@ class LawHubApp extends StatelessWidget {
           BlocProvider(create: (_) => UserDataBloc(userDataRepository: userDataRepository)..add(LoadUserDataEvent())),
         ],
         child: MaterialApp(
-          title: 'Law Hub',
+          title: 'Rishikesh Law Hub',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           home: const SplashScreen(),
