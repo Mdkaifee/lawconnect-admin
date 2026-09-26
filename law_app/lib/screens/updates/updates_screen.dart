@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/update_model.dart';
+import '../../core/utils/url_helper.dart';
 
 class UpdatesScreen extends StatefulWidget {
   const UpdatesScreen({super.key});
@@ -57,13 +57,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     }
   }
 
-  void _openSourceUrl(String? url) async {
-    if (url == null || url.isEmpty) return;
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
+  void _openSourceUrl(String? url) => UrlHelper.openInAppUrl(context, url);
 
   @override
   Widget build(BuildContext context) {

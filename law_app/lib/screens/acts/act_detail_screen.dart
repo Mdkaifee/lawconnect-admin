@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../repositories/user_data_repository.dart';
 
 class ActDetailScreen extends StatefulWidget {
   final String actId;
@@ -18,6 +19,7 @@ class ActDetailScreen extends StatefulWidget {
 class _ActDetailScreenState extends State<ActDetailScreen> {
   final TextEditingController _sectionSearchController = TextEditingController();
   String _sectionQuery = '';
+  final Set<String> _bookmarkBusy = {};
 
   @override
   void initState() {
@@ -211,24 +213,26 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             ElevatedButton.icon(
-                                              icon: const Icon(Icons.bookmark_border, size: 16),
+                                              icon: _bookmarkBusy.contains('${act.id}_${s.number}')
+                                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                                  : const Icon(Icons.bookmark_border, size: 16),
                                               label: const Text('Bookmark'),
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: AppColors.primaryNavy,
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                               ),
-                                              onPressed: () {
-                                                context.read<UserDataBloc>().add(
-                                                      ToggleBookmarkEvent(
-                                                        refType: 'section',
-                                                        refId: '${act.id}_${s.number}',
-                                                        title: '${act.shortName} - ${s.number}',
-                                                        subtitle: s.title,
-                                                      ),
-                                                    );
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Bookmark updated!')),
-                                                );
+                                              onPressed: _bookmarkBusy.contains('${act.id}_${s.number}') ? null : () async {
+                                                final refId = '${act.id}_${s.number}';
+                                                setState(() => _bookmarkBusy.add(refId));
+                                                try {
+                                                  await context.read<UserDataRepository>().addBookmark(
+                                                    refType: 'section', refId: refId,
+                                                    title: '${act.shortName} - ${s.number}', subtitle: s.title,
+                                                  );
+                                                  if (mounted) context.read<UserDataBloc>().add(LoadUserDataEvent());
+                                                } finally {
+                                                  if (mounted) setState(() => _bookmarkBusy.remove(refId));
+                                                }
                                               },
                                             ),
                                           ],
@@ -252,4 +256,3 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
     );
   }
 }
-

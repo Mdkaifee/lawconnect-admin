@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download, CloudDownload, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/cases")({
@@ -48,25 +48,6 @@ function CasesAdmin() {
   const [viewingCase, setViewingCase] = useState<LawCase | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
-
-  async function triggerKanoonSync() {
-    setSyncing(true);
-    setSyncMessage(null);
-    try {
-      const res = await api<{ success: boolean; count: number; totalInDb: number; message: string }>(
-        "/api/cases/sync-kanoon",
-        { method: "POST" }
-      );
-      setSyncMessage(res.message || `Successfully synced ${res.count} judgments to database!`);
-      load(1);
-    } catch (err) {
-      setSyncMessage(err instanceof Error ? `Sync failed: ${err.message}` : "Failed to fetch from Indian Kanoon.");
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   // Form State
   const [title, setTitle] = useState("");
@@ -193,43 +174,11 @@ function CasesAdmin() {
       title="Cases & Judgments"
       subtitle="Publish, inspect and manage landmark judgments, case briefs and Kanoon citations"
       actions={
-        <div className="flex items-center gap-2.5">
-          <Button
-            onClick={triggerKanoonSync}
-            disabled={syncing}
-            variant="outline"
-            className="gap-2 border-primary/30 text-primary hover:bg-primary/10 shadow-sm"
-          >
-            {syncing ? (
-              <>
-                <RefreshCw className="size-4 animate-spin" />
-                <span>Fetching Kanoon...</span>
-              </>
-            ) : (
-              <>
-                <CloudDownload className="size-4" />
-                <span>Fetch Data from Indian Kanoon</span>
-              </>
-            )}
-          </Button>
-          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-            <Plus className="size-4" /> Add Case Judgment
-          </Button>
-        </div>
+        <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Plus className="size-4" /> Add Case Judgment
+        </Button>
       }
     >
-      {/* Sync Feedback Banner */}
-      {syncMessage && (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 p-4 text-sm font-medium text-foreground">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-5 text-primary shrink-0" />
-            <span>{syncMessage}</span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setSyncMessage(null)}>
-            Dismiss
-          </Button>
-        </div>
-      )}
       {/* Search & Filter Bar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-64 flex-1">

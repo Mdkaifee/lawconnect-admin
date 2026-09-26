@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/utils/html_sanitizer.dart';
+import '../../core/utils/url_helper.dart';
 import '../../models/case_model.dart';
+import '../../repositories/user_data_repository.dart';
 
 class CaseDetailScreen extends StatefulWidget {
   final String caseId;
@@ -19,6 +21,7 @@ class CaseDetailScreen extends StatefulWidget {
 class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _noteController = TextEditingController();
+  bool _bookmarkBusy = false;
 
   @override
   void initState() {
@@ -34,11 +37,38 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
     super.dispose();
   }
 
-  void _openUrl(String? url) async {
+  void _openUrl(String? url) {
     if (url == null || url.isEmpty) return;
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final resolved = url.startsWith('/')
+        ? '${ApiConstants.baseUrl.replaceFirst('/api', '')}$url'
+        : url;
+    UrlHelper.openInAppUrl(context, resolved);
+  }
+
+  Future<void> _toggleBookmark(CaseModel item, bool currentlyBookmarked) async {
+    if (_bookmarkBusy) return;
+    setState(() => _bookmarkBusy = true);
+    try {
+      final repository = context.read<UserDataRepository>();
+      if (currentlyBookmarked) {
+        await repository.removeBookmark(item.id);
+      } else {
+        await repository.addBookmark(
+          refType: 'case',
+          refId: item.id,
+          title: item.title,
+          subtitle: item.citation ?? item.court,
+        );
+      }
+      if (mounted) context.read<UserDataBloc>().add(LoadUserDataEvent());
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bookmark update failed')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _bookmarkBusy = false);
     }
   }
 
@@ -149,20 +179,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                         builder: (context, userState) {
                           final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(c.id);
                           return IconButton(
-                            icon: Icon(
-                              isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                              color: isBookmarked ? AppColors.goldAccent : Colors.white,
-                            ),
-                            onPressed: () {
-                              context.read<UserDataBloc>().add(
-                                    ToggleBookmarkEvent(
-                                      refType: 'case',
-                                      refId: c.id,
-                                      title: c.title,
-                                      subtitle: c.citation ?? c.court,
-                                    ),
-                                  );
-                            },
+                            icon: _bookmarkBusy
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, color: isBookmarked ? AppColors.goldAccent : Colors.white),
+                            onPressed: _bookmarkBusy ? null : () => _toggleBookmark(c, isBookmarked),
                           );
                         },
                       ),
@@ -246,7 +266,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                         if (c.hasCourtCopy) ...[
                           const SizedBox(height: 8),
                           InkWell(
-                            onTap: () => _openUrl(c.sourceUrl),
+                            onTap: () => _openUrl(c.origDocUrl ?? c.sourceUrl),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
@@ -475,4 +495,3 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
     );
   }
 }
-

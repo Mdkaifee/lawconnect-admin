@@ -8,7 +8,8 @@ import mongoose from "mongoose";
 const router = Router();
 
 /**
- * Integration & Sync status check for Admin UI
+ * Public: integration status check for Admin UI
+ * Safe: never returns API key, only checks connectivity
  */
 router.get(
   "/integration-status",
@@ -17,30 +18,6 @@ router.get(
   asyncHandler(async (_req, res) => {
     const status = await IndianKanoonService.checkStatus();
     res.json(status);
-  }),
-);
-
-router.get(
-  "/sync-status",
-  auth(),
-  requireAdmin,
-  asyncHandler(async (_req, res) => {
-    const total = await Case.countDocuments();
-    const status = IndianKanoonService.getSyncStatus(total);
-    res.json(status);
-  }),
-);
-
-/**
- * Trigger manual fetch from Indian Kanoon to save in MongoDB
- */
-router.post(
-  "/sync-kanoon",
-  auth(),
-  requireAdmin,
-  asyncHandler(async (_req, res) => {
-    const result = await IndianKanoonService.syncLandmarkCasesToDb(Case);
-    res.json(result);
   }),
 );
 
