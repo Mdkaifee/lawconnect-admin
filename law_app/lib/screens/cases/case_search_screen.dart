@@ -112,12 +112,16 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Search Judgments'),
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.primaryNavy,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.primaryNavy),
+        title: const Text('Case Search', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w700)),
         actions: [
-          IconButton(icon: const Icon(Icons.filter_alt_outlined), onPressed: _showYearFilter),
           IconButton(
+            tooltip: 'Refresh results',
             icon: const Icon(Icons.refresh),
             onPressed: () => _triggerSearch(_searchController.text),
           ),
@@ -141,18 +145,24 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                   textInputAction: TextInputAction.search,
                   onSubmitted: _triggerSearch,
                   decoration: InputDecoration(
-                    hintText: 'Search case title, citation (e.g. 1973 4 SCC 225)...',
+                    hintText: 'Search case name or citation...',
+                    isDense: true,
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
                     prefixIcon: const Icon(Icons.search, color: AppColors.primaryNavy),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              _triggerSearch('');
-                            },
-                          )
-                        : null,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    suffixIconConstraints: const BoxConstraints.tightFor(width: 40, height: 40),
+                    suffixIcon: Container(
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(color: AppColors.primaryNavy, borderRadius: BorderRadius.circular(8)),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.search, size: 18, color: Colors.white),
+                        onPressed: () => _triggerSearch(_searchController.text),
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -160,14 +170,18 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                 // Court & Filter Pills
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                       ..._courtFilters.map((court) {
                         final isSelected = _selectedCourt == court;
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
                             label: Text(court),
+                            labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: EdgeInsets.zero,
                             selected: isSelected,
                             onSelected: (selected) {
                               if (selected) {
@@ -188,45 +202,18 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                           ),
                         );
                       }),
-                      // Year Filter Chip
+                      // Year filter control at the far right.
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: ActionChip(
-                          avatar: const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.primaryNavy),
-                          label: Text(_selectedYear != null ? 'Year: $_selectedYear' : 'Select Year'),
-                          labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryNavy),
-                          backgroundColor: _selectedYear != null ? AppColors.goldAccent.withValues(alpha: 0.2) : Colors.white,
-                          side: const BorderSide(color: AppColors.borderLight),
-                          onPressed: () async {
-                            final currentYear = DateTime.now().year;
-                            final pickedYear = await showDialog<int>(
-                              context: context,
-                              builder: (ctx) {
-                                return SimpleDialog(
-                                  title: const Text('Filter by Year'),
-                                  children: [
-                                    SimpleDialogOption(
-                                      onPressed: () => Navigator.pop(ctx, null),
-                                      child: const Text('All Years (Clear)'),
-                                    ),
-                                    ...List.generate(30, (i) => currentYear - i).map((y) {
-                                      return SimpleDialogOption(
-                                        onPressed: () => Navigator.pop(ctx, y),
-                                        child: Text(y.toString()),
-                                      );
-                                    }),
-                                  ],
-                                );
-                              },
-                            );
-
-                            setState(() => _selectedYear = pickedYear);
-                            _triggerSearch(_searchController.text);
-                          },
+                        child: IconButton(
+                          tooltip: _selectedYear == null ? 'Filter by year' : 'Year: $_selectedYear',
+                          icon: Icon(Icons.filter_alt_outlined, color: _selectedYear == null ? AppColors.primaryNavy : AppColors.goldAccent),
+                          onPressed: _showYearFilter,
                         ),
                       ),
                     ],
                   ),
+                ),
                 ),
               ],
             ),
@@ -304,8 +291,19 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                    itemCount: state.items.length + (state.hasMore ? 1 : 0) + (state.hasMore ? 0 : 1),
                     itemBuilder: (context, idx) {
+                      if (!state.hasMore && idx == state.items.length) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4, bottom: 18),
+                          child: Center(
+                            child: Text(
+                              'Showing ${state.items.length} results',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        );
+                      }
                       if (idx == state.items.length) {
                         return const Center(
                           child: Padding(
