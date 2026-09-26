@@ -57,7 +57,7 @@ function Login() {
           <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
             <Scale className="size-7" />
           </span>
-          <h1 className="font-display text-3xl">Rishikesh Law Hub</h1>
+          <h1 className="font-display text-3xl">Law Hub</h1>
           <p className="mt-1 text-sm text-muted-foreground">Admin panel — owner access only</p>
         </div>
 

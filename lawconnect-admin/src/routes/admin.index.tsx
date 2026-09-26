@@ -9,10 +9,10 @@ import { useEffect, useState } from "react";
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Rishikesh Law Hub Admin" },
+      { title: "Dashboard — Law Hub Admin" },
       { name: "description", content: "Overview of cases, acts, posts, legal updates and app users." },
-      { property: "og:title", content: "Dashboard — Rishikesh Law Hub Admin" },
-      { property: "og:description", content: "Overview of content and users in Rishikesh Law Hub." },
+      { property: "og:title", content: "Dashboard — Law Hub Admin" },
+      { property: "og:description", content: "Overview of content and users in Law Hub." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

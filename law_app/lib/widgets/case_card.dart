@@ -16,22 +16,9 @@ class CaseCard extends StatelessWidget {
     this.isBookmarked = false,
   });
 
-  String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return '';
-    try {
-      final parsed = DateTime.tryParse(raw);
-      if (parsed != null) {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return '${parsed.day} ${months[parsed.month - 1]} ${parsed.year}';
-      }
-    } catch (_) {}
-    return raw.split('T').first;
-  }
-
   @override
   Widget build(BuildContext context) {
     final isSupremeCourt = caseItem.courtType == 'Supreme Court' || caseItem.court.toLowerCase().contains('supreme');
-    final formattedDate = _formatDate(caseItem.dateOfJudgment);
 
     return Card(
       elevation: 0,
@@ -157,11 +144,11 @@ class CaseCard extends StatelessWidget {
               // Footer
               Row(
                 children: [
-                  if (formattedDate.isNotEmpty) ...[
+                  if (caseItem.dateOfJudgment != null && caseItem.dateOfJudgment!.isNotEmpty) ...[
                     const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMuted),
                     const SizedBox(width: 4),
                     Text(
-                      formattedDate,
+                      caseItem.dateOfJudgment!,
                       style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
                     const SizedBox(width: 14),
@@ -194,3 +181,4 @@ class CaseCard extends StatelessWidget {
     );
   }
 }
+

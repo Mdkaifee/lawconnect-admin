@@ -10,8 +10,18 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { setToken } from "@/lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -31,9 +41,11 @@ export function AdminShell({ title, subtitle, actions, children }: {
 }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  function signOut() {
+  function confirmSignOut() {
     setToken(null);
+    setShowLogoutDialog(false);
     navigate({ to: "/", replace: true });
   }
 
@@ -45,7 +57,7 @@ export function AdminShell({ title, subtitle, actions, children }: {
             <Scale className="size-5" />
           </span>
           <div className="leading-tight">
-            <p className="font-display text-base">Rishikesh Law Hub</p>
+            <p className="font-display text-base font-bold">Law Hub</p>
             <p className="text-xs opacity-70">Admin Panel</p>
           </div>
         </div>
@@ -69,7 +81,7 @@ export function AdminShell({ title, subtitle, actions, children }: {
           })}
         </nav>
         <button
-          onClick={signOut}
+          onClick={() => setShowLogoutDialog(true)}
           className="m-3 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60"
         >
           <LogOut className="size-4" />
@@ -91,9 +103,36 @@ export function AdminShell({ title, subtitle, actions, children }: {
               {label}
             </Link>
           ))}
+          <button
+            onClick={() => setShowLogoutDialog(true)}
+            className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+          >
+            Log out
+          </button>
         </div>
         <main className="flex-1 p-6">{children}</main>
       </div>
+
+      {/* Custom Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Admin Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to end your current administrative session and log out of Law Hub?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSignOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

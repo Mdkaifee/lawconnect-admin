@@ -137,7 +137,7 @@ class ProfileScreen extends StatelessWidget {
                       CustomConfirmationDialog.show(
                         context,
                         title: 'Confirm Logout',
-                        message: 'Are you sure you want to sign out of your Rishikesh Law Hub account?',
+                        message: 'Are you sure you want to sign out of your Law Hub account?',
                         confirmText: 'Sign Out',
                         cancelText: 'Cancel',
                         icon: Icons.logout_rounded,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/date_formatter.dart';
 import '../../models/update_model.dart';
 
 class UpdatesScreen extends StatefulWidget {
@@ -225,19 +226,35 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
             ],
             if (u.sourceUrl != null && u.sourceUrl!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              InkWell(
-                onTap: () => _openSourceUrl(u.sourceUrl),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Read Official Source',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.goldAccent),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () => _openSourceUrl(u.sourceUrl),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Read Official Source',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.goldAccent),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.open_in_new, size: 14, color: AppColors.goldAccent),
+                      ],
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.open_in_new, size: 14, color: AppColors.goldAccent),
-                  ],
-                ),
+                  ),
+                  if (u.publishedAt != null && u.publishedAt!.isNotEmpty)
+                    Text(
+                      AppDateFormatter.formatDateTime(u.publishedAt),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    ),
+                ],
+              ),
+            ] else if (u.publishedAt != null && u.publishedAt!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                AppDateFormatter.formatDateTime(u.publishedAt),
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
             ],
           ],

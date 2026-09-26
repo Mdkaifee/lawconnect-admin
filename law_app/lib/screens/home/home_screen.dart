@@ -6,6 +6,7 @@ import '../../blocs/act/act_bloc.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/date_formatter.dart';
 import '../cases/case_search_screen.dart';
 import '../cases/case_detail_screen.dart';
 import '../acts/acts_list_screen.dart';
@@ -25,10 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    _loadInitialData();
   }
 
-  void _loadAll() {
+  void _loadInitialData() {
     context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
     context.read<ActBloc>().add(const LoadActsEvent());
     context.read<UpdateBloc>().add(const LoadUpdatesEvent());
@@ -52,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 10),
             const Text(
-              'Rishikesh Law Hub',
+              'Law Hub',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
             ),
           ],
@@ -70,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          _loadAll();
+          _loadInitialData();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -180,6 +181,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               BlocBuilder<ActBloc, ActState>(
                 builder: (context, state) {
+                  if (state is ActLoading) {
+                    return const SizedBox(
+                      height: 100,
+                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy)),
+                    );
+                  }
                   if (state is ActListLoaded && state.acts.isNotEmpty) {
                     return SizedBox(
                       height: 105,
@@ -289,10 +296,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       }).toList(),
                     );
                   }
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('No landmark judgments available right now.'),
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          const Text('No landmark judgments loaded.'),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => context.read<CaseBloc>().add(LoadCuratedLandmarksEvent()),
+                            child: const Text('Reload Judgments'),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -337,6 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (state is UpdateLoaded && state.updates.isNotEmpty) {
                     return Column(
                       children: state.updates.take(3).map((u) {
+                        final formattedTime = AppDateFormatter.formatRelative(u.publishedAt);
+
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           elevation: 0,
@@ -370,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               subtitle: Padding(
                                 padding: const EdgeInsets.only(top: 4),
                                 child: Text(
-                                  '${u.source} • ${u.category}',
+                                  '${u.source} • ${u.category}${formattedTime.isNotEmpty ? " • $formattedTime" : ""}',
                                   style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                                 ),
                               ),

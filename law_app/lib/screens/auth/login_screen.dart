@@ -113,9 +113,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Rishikesh Law Hub',
+                    'Law Hub',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: AppColors.primaryNavy,
                     ),

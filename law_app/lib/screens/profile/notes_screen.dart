@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/date_formatter.dart';
 import '../../models/note_model.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 
@@ -141,6 +142,11 @@ class _NotesScreenState extends State<NotesScreen> {
                         ],
                         const SizedBox(height: 8),
                         Text(note.content, style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary, height: 1.45)),
+                        const SizedBox(height: 8),
+                        Text(
+                          AppDateFormatter.formatDateTime(note.updatedAt),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        ),
                       ],
                     ),
                   ),
