@@ -2,9 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import bcrypt from "bcryptjs";
 import { connectDB } from "./config/db.js";
-import { Admin } from "./models/index.js";
 import authRoutes from "./routes/auth.js";
 import caseRoutes from "./routes/cases.js";
 import actRoutes from "./routes/acts.js";
@@ -14,38 +12,7 @@ import { categories, notes, bookmarks, history, users, stats } from "./routes/mi
 
 const app = express();
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow all origins (web browsers, mobile apps, localhost, Render)
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-  optionsSuccessStatus: 204,
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-// Explicit header safety middleware for all incoming requests
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With,Accept");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
+app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(morgan("tiny"));
 
@@ -65,42 +32,14 @@ app.use("/api/users", users);
 app.use("/api/stats", stats);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
-app.use((err, req, res, _next) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-  }
+app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || "Server error" });
 });
 
-async function ensureAdmin() {
-  try {
-    const username = process.env.ADMIN_USERNAME || "Rishikesh";
-    const password = process.env.ADMIN_PASSWORD || "Rishikesh@1";
-    let admin = await Admin.findOne({ username: new RegExp(`^${username}$`, "i") });
-    if (!admin) {
-      const passwordHash = await bcrypt.hash(password, 10);
-      admin = await Admin.create({
-        username,
-        passwordHash,
-        name: "Rishikesh Yadav",
-        role: "owner",
-      });
-      console.log(`Admin account '${username}' created automatically.`);
-    }
-  } catch (e) {
-    console.error("Auto-seed admin error:", e.message);
-  }
-}
-
 const port = process.env.PORT || 4000;
 connectDB()
-  .then(async () => {
-    await ensureAdmin();
-    app.listen(port, () => console.log(`API listening on :${port}`));
-  })
+  .then(() => app.listen(port, () => console.log(`API listening on :${port}`)))
   .catch((e) => {
     console.error("Failed to start:", e.message);
     process.exit(1);

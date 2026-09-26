@@ -1,15 +1,9 @@
-const DEFAULT_API =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:4000"
-    : "https://lawconnect-admin.onrender.com";
+const DEFAULT_API = "http://localhost:4000";
 
 export function getApiBase(): string {
   if (typeof window !== "undefined") {
     const stored = window.localStorage.getItem("lawhub_api_base");
-    // If we're on production, ignore any stale localhost setting from local dev
-    if (stored && (window.location.hostname === "localhost" || !stored.includes("localhost"))) {
-      return stored.replace(/\/$/, "");
-    }
+    if (stored) return stored.replace(/\/$/, "");
   }
   const env = import.meta.env["VITE_API_URL"] as string | undefined;
   return (env || DEFAULT_API).replace(/\/$/, "");
@@ -41,26 +35,18 @@ export async function api<T = unknown>(
   if (auth && token) headers["Authorization"] = `Bearer ${token}`;
 
   let res: Response;
-  const base = getApiBase();
   try {
-    res = await fetch(`${base}${path}`, {
+    res = await fetch(`${getApiBase()}${path}`, {
       method,
       headers,
-      credentials: "omit",
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   } catch {
-    throw new Error(`Can't reach the backend server at ${base}. Please ensure the backend is running.`);
+    throw new Error("Can't reach the server. Check the server address in Settings.");
   }
 
   const text = await res.text();
-  let data: Record<string, unknown> = {};
-  try {
-    data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
-  } catch {
-    data = { error: text || `HTTP ${res.status}` };
-  }
-
+  const data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
   if (!res.ok) {
     if (res.status === 401) setToken(null);
     throw new Error((data["error"] as string) || `Request failed (${res.status})`);

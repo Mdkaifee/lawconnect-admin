@@ -10,8 +10,19 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { setToken } from "@/lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -23,7 +34,12 @@ const NAV = [
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export function AdminShell({ title, subtitle, actions, children }: {
+export function AdminShell({
+  title,
+  subtitle,
+  actions,
+  children,
+}: {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
@@ -31,9 +47,11 @@ export function AdminShell({ title, subtitle, actions, children }: {
 }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
-  function signOut() {
+  function confirmSignOut() {
     setToken(null);
+    setLogoutOpen(false);
     navigate({ to: "/", replace: true });
   }
 
@@ -58,7 +76,7 @@ export function AdminShell({ title, subtitle, actions, children }: {
                 to={to}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                   active
-                    ? "bg-sidebar-accent text-sidebar-primary"
+                    ? "bg-sidebar-accent text-sidebar-primary font-medium"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                 }`}
               >
@@ -68,13 +86,31 @@ export function AdminShell({ title, subtitle, actions, children }: {
             );
           })}
         </nav>
-        <button
-          onClick={signOut}
-          className="m-3 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60"
-        >
-          <LogOut className="size-4" />
-          Log out
-        </button>
+
+        <div className="p-3">
+          <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+            <AlertDialogTrigger asChild>
+              <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-destructive/10 hover:text-destructive">
+                <LogOut className="size-4" />
+                Log out
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Log Out</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to log out of the Rishikesh Law Hub admin panel?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Log out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -87,10 +123,24 @@ export function AdminShell({ title, subtitle, actions, children }: {
         </header>
         <div className="flex gap-2 overflow-x-auto border-b border-border bg-card px-4 py-2 md:hidden">
           {NAV.map(({ to, label }) => (
-            <Link key={to} to={to} className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+            <Link
+              key={to}
+              to={to}
+              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs transition-colors ${
+                pathname === to || (to !== "/admin" && pathname.startsWith(to))
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
               {label}
             </Link>
           ))}
+          <button
+            onClick={() => setLogoutOpen(true)}
+            className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+          >
+            Log out
+          </button>
         </div>
         <main className="flex-1 p-6">{children}</main>
       </div>
