@@ -6,7 +6,8 @@ import '../../widgets/post_card.dart';
 import 'comments_sheet.dart';
 
 class CommunityFeedScreen extends StatefulWidget {
-  const CommunityFeedScreen({super.key});
+  final bool showBackButton;
+  const CommunityFeedScreen({super.key, this.showBackButton = false});
 
   @override
   State<CommunityFeedScreen> createState() => _CommunityFeedScreenState();
@@ -166,6 +167,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Advocate Community'),
         actions: [
           IconButton(
@@ -284,4 +286,3 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     );
   }
 }
-

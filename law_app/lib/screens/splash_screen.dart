@@ -13,25 +13,39 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  bool _minimumDurationComplete = false;
+  AuthState? _pendingAuthState;
+
   @override
   void initState() {
     super.initState();
     context.read<AuthBloc>().add(CheckAuthEvent());
+    Future<void>.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() => _minimumDurationComplete = true);
+      _continueAfterSplash(_pendingAuthState);
+    });
+  }
+
+  void _continueAfterSplash(AuthState? state) {
+    if (!_minimumDurationComplete || !mounted || state == null) return;
+    if (state is Authenticated) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      );
+    } else if (state is Unauthenticated) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is Authenticated) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-          );
-        } else if (state is Unauthenticated) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
-        }
+        _pendingAuthState = state;
+        _continueAfterSplash(state);
       },
       child: Scaffold(
         backgroundColor: AppColors.primaryNavy,
@@ -39,21 +53,16 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 88,
-                height: 88,
-                decoration: BoxDecoration(
-                  color: AppColors.goldAccent.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.goldAccent, width: 2),
-                ),
-                child: const Icon(Icons.gavel_rounded, color: AppColors.goldAccent, size: 44),
+              const SizedBox(
+                width: 150,
+                height: 150,
+                child: Image(image: AssetImage('assets/splash.jpeg'), fit: BoxFit.contain),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               const Text(
                 'Rishikesh Law Hub',
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 25,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: 0.5,
@@ -61,17 +70,22 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Legal Research & Community Portal',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.goldAccentLight,
-                  fontWeight: FontWeight.w500,
-                ),
+                'Learn Law • Find Cases • Understand Justice',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: AppColors.goldAccentLight, fontWeight: FontWeight.w500),
               ),
+              const SizedBox(height: 64),
+              const Text('“Justice delayed is justice denied.”', style: TextStyle(color: Colors.white70, fontSize: 13, fontStyle: FontStyle.italic)),
+              const SizedBox(height: 8),
+              const Text('— Lord Acton', style: TextStyle(color: AppColors.goldAccentLight, fontSize: 12)),
               const SizedBox(height: 48),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.goldAccent),
-                strokeWidth: 2.5,
+              SizedBox(
+                height: 105,
+                child: Icon(
+                  Icons.account_balance_outlined,
+                  size: 96,
+                  color: AppColors.goldAccent.withValues(alpha: 0.9),
+                ),
               ),
             ],
           ),
@@ -80,4 +94,3 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
-

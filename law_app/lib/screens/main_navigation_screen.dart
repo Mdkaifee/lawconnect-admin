@@ -5,6 +5,8 @@ import 'cases/case_search_screen.dart';
 import 'acts/acts_list_screen.dart';
 import 'updates/updates_screen.dart';
 import 'community/community_feed_screen.dart';
+import 'profile/bookmarks_screen.dart';
+import 'profile/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -20,9 +22,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     CaseSearchScreen(),
-    ActsListScreen(),
-    UpdatesScreen(),
     CommunityFeedScreen(),
+    BookmarksScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -54,11 +56,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           backgroundColor: Colors.white,
           selectedItemColor: AppColors.primaryNavy,
           unselectedItemColor: AppColors.textMuted,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
           elevation: 0,
+          iconSize: 21,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
@@ -71,19 +72,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: 'Search',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_outlined),
-              activeIcon: Icon(Icons.menu_book_rounded),
-              label: 'Bare Acts',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.newspaper_outlined),
-              activeIcon: Icon(Icons.newspaper_rounded),
-              label: 'Updates',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.forum_outlined),
               activeIcon: Icon(Icons.forum_rounded),
-              label: 'Community',
+              label: 'Posts',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark_border_rounded),
+              activeIcon: Icon(Icons.bookmark_rounded),
+              label: 'Bookmarks',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: 'Profile',
             ),
           ],
         ),

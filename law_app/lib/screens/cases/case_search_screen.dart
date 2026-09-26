@@ -10,7 +10,8 @@ import 'case_detail_screen.dart';
 
 class CaseSearchScreen extends StatefulWidget {
   final String? initialQuery;
-  const CaseSearchScreen({super.key, this.initialQuery});
+  final bool autoOpenFilter;
+  const CaseSearchScreen({super.key, this.initialQuery, this.autoOpenFilter = false});
 
   @override
   State<CaseSearchScreen> createState() => _CaseSearchScreenState();
@@ -36,6 +37,10 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
       _triggerSearch(widget.initialQuery!);
     } else {
       context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
+    }
+
+    if (widget.autoOpenFilter) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showYearFilter());
     }
 
     _scrollController.addListener(_onScroll);
@@ -85,6 +90,25 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
         );
   }
 
+  Future<void> _showYearFilter() async {
+    final currentYear = DateTime.now().year;
+    final pickedYear = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Filter by Year'),
+        children: [
+          SimpleDialogOption(onPressed: () => Navigator.pop(ctx), child: const Text('All Years')),
+          ...List.generate(30, (i) => currentYear - i).map(
+            (year) => SimpleDialogOption(onPressed: () => Navigator.pop(ctx, year), child: Text(year.toString())),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _selectedYear = pickedYear);
+    _triggerSearch(_searchController.text);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,6 +116,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
       appBar: AppBar(
         title: const Text('Search Judgments'),
         actions: [
+          IconButton(icon: const Icon(Icons.filter_alt_outlined), onPressed: _showYearFilter),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _triggerSearch(_searchController.text),

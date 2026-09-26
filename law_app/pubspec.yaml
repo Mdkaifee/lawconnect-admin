@@ -1,5 +1,5 @@
 name: law_app
-description: "Rishikesh Law Hub - Comprehensive Legal Research & Community App"
+description: "Law Hub - Comprehensive Legal Research & Community App"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -26,3 +26,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/splash.jpeg
+    - assets/sci.jpeg

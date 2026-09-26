@@ -5,7 +5,8 @@ import '../../core/theme/app_theme.dart';
 import '../cases/case_detail_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
-  const BookmarksScreen({super.key});
+  final bool showBackButton;
+  const BookmarksScreen({super.key, this.showBackButton = false});
 
   @override
   State<BookmarksScreen> createState() => _BookmarksScreenState();
@@ -23,6 +24,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Saved Bookmarks'),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(
@@ -99,4 +101,3 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     );
   }
 }
-

@@ -78,7 +78,7 @@ class LawHubApp extends StatelessWidget {
           BlocProvider(create: (_) => UserDataBloc(userDataRepository: userDataRepository)..add(LoadUserDataEvent())),
         ],
         child: MaterialApp(
-          title: 'Rishikesh Law Hub',
+          title: 'Law Hub',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           home: const SplashScreen(),
@@ -87,4 +87,3 @@ class LawHubApp extends StatelessWidget {
     );
   }
 }
-

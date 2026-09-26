@@ -6,7 +6,8 @@ import '../../models/note_model.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key});
+  final bool showBackButton;
+  const NotesScreen({super.key, this.showBackButton = false});
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -72,6 +73,7 @@ class _NotesScreenState extends State<NotesScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Case Study Notes'),
       ),
       floatingActionButton: FloatingActionButton(
@@ -155,4 +157,3 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 }
-

@@ -9,6 +9,8 @@ import '../../core/theme/app_theme.dart';
 import '../cases/case_search_screen.dart';
 import '../cases/case_detail_screen.dart';
 import '../acts/act_detail_screen.dart';
+import '../acts/acts_list_screen.dart';
+import '../updates/updates_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/case_card.dart';
 
@@ -41,33 +43,51 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
+      drawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(color: AppColors.primaryNavy),
+                child: Align(alignment: Alignment.bottomLeft, child: Text('Rishikesh Law Hub', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800))),
+              ),
+              ListTile(leading: const Icon(Icons.menu_book_rounded), title: const Text('Acts & Sections'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ActsListScreen())); }),
+              ListTile(leading: const Icon(Icons.newspaper_rounded), title: const Text('Legal Updates'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const UpdatesScreen())); }),
+              ListTile(leading: const Icon(Icons.person_rounded), title: const Text('Profile'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())); }),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
+        backgroundColor: AppColors.backgroundLight,
+        foregroundColor: AppColors.primaryNavy,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded, color: AppColors.primaryNavy),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.goldAccent.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.scale_rounded, color: AppColors.goldAccent, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Rishikesh Law Hub',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-            ),
+            BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
+              final name = state is Authenticated ? state.user.name : 'Advocate';
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Good Morning,', style: TextStyle(fontSize: 11, color: AppColors.primaryNavy)),
+                Row(children: [
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.primaryNavy)),
+                  const SizedBox(width: 3),
+                  const Icon(Icons.waving_hand_rounded, size: 13, color: AppColors.goldAccent),
+                ]),
+                const Text('Learn • Explore • Grow', style: TextStyle(fontSize: 9, color: AppColors.primaryNavy)),
+              ]);
+            }),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
-          ),
+            IconButton(
+              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primaryNavy),
+              onPressed: () {},
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -85,9 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
               // Hero Greeting & Quick Search
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryNavy,
+                  color: AppColors.backgroundLight,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(24),
                     bottomRight: Radius.circular(24),
@@ -96,26 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        final name = state is Authenticated ? state.user.name : 'Advocate';
-                        return Text(
-                          'Namaste, $name',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Search judgments, bare acts, and legal precedents',
-                      style: TextStyle(fontSize: 13, color: AppColors.goldAccentLight),
-                    ),
-                    const SizedBox(height: 16),
-
                     // Quick Search Bar
                     GestureDetector(
                       onTap: () {
@@ -136,17 +136,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(Icons.search, color: AppColors.textMuted, size: 22),
                             SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'Search case name, citation, or keywords...',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: AppColors.textMuted, fontSize: 13.5),
                               ),
                             ),
-                            Icon(Icons.tune_rounded, color: AppColors.primaryNavy, size: 20),
                           ],
                         ),
                       ),
@@ -155,6 +156,59 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
+              const SizedBox(height: 8),
+
+              // Reference-style quote and court banner.
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                height: 128,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  image: const DecorationImage(
+                    image: AssetImage('assets/sci.jpeg'),
+                    fit: BoxFit.cover,
+                    opacity: 1,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '“The Constitution is not a mere lawyers’ document, it is a vehicle of life, and its spirit is always the spirit of the age.”\n\n— Dr. B.R. Ambedkar',
+                          style: TextStyle(color: AppColors.primaryNavy, fontSize: 12, height: 1.35, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Reference-style legal category grid
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.count(
+                  crossAxisCount: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.1,
+                  children: const [
+                    _HomeCategory(icon: Icons.menu_book_rounded, label: 'Constitution', color: Colors.blue),
+                    _HomeCategory(icon: Icons.gavel_rounded, label: 'Criminal Law', color: Colors.orange),
+                    _HomeCategory(icon: Icons.handshake_rounded, label: 'Contract', color: Colors.green),
+                    _HomeCategory(icon: Icons.account_balance_rounded, label: 'Torts', color: Colors.indigo),
+                    _HomeCategory(icon: Icons.family_restroom_rounded, label: 'Family Law', color: Colors.deepPurple),
+                    _HomeCategory(icon: Icons.work_outline_rounded, label: 'Labour Law', color: Colors.redAccent),
+                    _HomeCategory(icon: Icons.eco_outlined, label: 'Environment', color: Colors.teal),
+                    _HomeCategory(icon: Icons.more_horiz_rounded, label: 'More', color: Colors.pinkAccent),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
 
               // Bare Acts Quick Access
@@ -359,3 +413,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _HomeCategory extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _HomeCategory({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(height: 5),
+        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryNavy)),
+      ],
+    );
+  }
+}
