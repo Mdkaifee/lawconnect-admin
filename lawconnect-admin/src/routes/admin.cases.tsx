@@ -27,46 +27,6 @@ import {
 import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const ALL_INDIAN_COURTS = [
-  "Supreme Court of India",
-  // 25 High Courts
-  "Allahabad High Court",
-  "Andhra Pradesh High Court",
-  "Bombay High Court",
-  "Calcutta High Court",
-  "Chhattisgarh High Court",
-  "Delhi High Court",
-  "Gauhati High Court",
-  "Gujarat High Court",
-  "Himachal Pradesh High Court",
-  "Jammu & Kashmir and Ladakh High Court",
-  "Jharkhand High Court",
-  "Karnataka High Court",
-  "Kerala High Court",
-  "Madhya Pradesh High Court",
-  "Madras High Court",
-  "Manipur High Court",
-  "Meghalaya High Court",
-  "Orissa High Court",
-  "Patna High Court",
-  "Punjab and Haryana High Court",
-  "Rajasthan High Court",
-  "Sikkim High Court",
-  "Telangana High Court",
-  "Tripura High Court",
-  "Uttarakhand High Court",
-  // Tribunals & Special Courts
-  "National Company Law Appellate Tribunal (NCLAT)",
-  "National Company Law Tribunal (NCLT)",
-  "National Green Tribunal (NGT)",
-  "Income Tax Appellate Tribunal (ITAT)",
-  "Central Administrative Tribunal (CAT)",
-  "Armed Forces Tribunal (AFT)",
-  "National Consumer Disputes Redressal Commission (NCDRC)",
-  "Customs, Excise and Service Tax Appellate Tribunal (CESTAT)",
-  "District & Sessions Court",
-] as const;
-
 export const Route = createFileRoute("/admin/cases")({
   head: () => ({ meta: [{ title: "Cases & Judgments — Admin" }] }),
   component: CasesAdmin,
@@ -93,8 +53,7 @@ function CasesAdmin() {
   // Form State
   const [title, setTitle] = useState("");
   const [citation, setCitation] = useState("");
-  const [courtSelect, setCourtSelect] = useState<string>("Supreme Court of India");
-  const [customCourt, setCustomCourt] = useState<string>("");
+  const [court, setCourt] = useState("Supreme Court of India");
   const [dateOfJudgment, setDateOfJudgment] = useState("");
   const [bench, setBench] = useState("");
   const [petitioners, setPetitioners] = useState("");
@@ -135,8 +94,7 @@ function CasesAdmin() {
     setEditingCase(null);
     setTitle("");
     setCitation("");
-    setCourtSelect("Supreme Court of India");
-    setCustomCourt("");
+    setCourt("Supreme Court of India");
     setDateOfJudgment(new Date().toISOString().slice(0, 10));
     setBench("");
     setPetitioners("");
@@ -153,16 +111,7 @@ function CasesAdmin() {
     setEditingCase(c);
     setTitle(c.title || "");
     setCitation(c.citation || "");
-    
-    const courtName = c.court || "Supreme Court of India";
-    if (ALL_INDIAN_COURTS.includes(courtName as any)) {
-      setCourtSelect(courtName);
-      setCustomCourt("");
-    } else {
-      setCourtSelect("OTHER");
-      setCustomCourt(courtName);
-    }
-
+    setCourt(c.court || "Supreme Court of India");
     setDateOfJudgment(c.dateOfJudgment ? c.dateOfJudgment.slice(0, 10) : "");
     setBench(c.bench || "");
     setPetitioners(c.petitioners || "");
@@ -179,24 +128,10 @@ function CasesAdmin() {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      const finalCourt = courtSelect === "OTHER" ? (customCourt.trim() || "Other State Court") : courtSelect;
-      let detectedCourtType = "Supreme Court";
-      const lower = finalCourt.toLowerCase();
-      if (lower.includes("high court") || lower.includes("hc")) {
-        detectedCourtType = "High Court";
-      } else if (lower.includes("tribunal") || lower.includes("nclat") || lower.includes("ngt") || lower.includes("itat") || lower.includes("cat") || lower.includes("ncdrc") || lower.includes("commission")) {
-        detectedCourtType = "Tribunal";
-      } else if (lower.includes("district") || lower.includes("sessions")) {
-        detectedCourtType = "District Court";
-      } else if (!lower.includes("supreme court")) {
-        detectedCourtType = "Other";
-      }
-
       const payload = {
         title: title.trim(),
         citation: citation.trim(),
-        court: finalCourt,
-        courtType: detectedCourtType,
+        court,
         dateOfJudgment,
         bench,
         petitioners,
@@ -285,20 +220,15 @@ function CasesAdmin() {
             setCourtFilter(e.target.value);
             setPage(1);
           }}
-          className="h-10 rounded-md border border-input bg-card px-3 text-sm max-w-64"
+          className="h-10 rounded-md border border-input bg-card px-3 text-sm"
         >
           <option value="all">All Courts</option>
           <option value="Supreme Court of India">Supreme Court of India</option>
-          <optgroup label="State High Courts (All 25)">
-            {ALL_INDIAN_COURTS.slice(1, 26).map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </optgroup>
-          <optgroup label="Tribunals & Commissions">
-            {ALL_INDIAN_COURTS.slice(26).map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </optgroup>
+          <option value="Delhi High Court">Delhi High Court</option>
+          <option value="Bombay High Court">Bombay High Court</option>
+          <option value="Allahabad High Court">Allahabad High Court</option>
+          <option value="Calcutta High Court">Calcutta High Court</option>
+          <option value="Madras High Court">Madras High Court</option>
         </select>
 
         <Button onClick={() => load(1)} variant="secondary">
@@ -479,48 +409,19 @@ function CasesAdmin() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase text-muted-foreground">Court *</label>
+                <label className="text-xs font-semibold uppercase text-muted-foreground">Court</label>
                 <select
-                  value={courtSelect}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setCourtSelect(val);
-                    if (val !== "OTHER") setCustomCourt("");
-                  }}
+                  value={court}
+                  onChange={(e) => setCourt(e.target.value)}
                   className="mt-1 flex h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
                 >
-                  <optgroup label="Apex Court">
-                    <option value="Supreme Court of India">Supreme Court of India</option>
-                  </optgroup>
-                  <optgroup label="State High Courts (All 25)">
-                    {ALL_INDIAN_COURTS.slice(1, 26).map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Tribunals & Commissions">
-                    {ALL_INDIAN_COURTS.slice(26).map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Other / Custom">
-                    <option value="OTHER">✍️ Other State Court / Bench / Custom Entry...</option>
-                  </optgroup>
+                  <option value="Supreme Court of India">Supreme Court of India</option>
+                  <option value="Delhi High Court">Delhi High Court</option>
+                  <option value="Bombay High Court">Bombay High Court</option>
+                  <option value="Allahabad High Court">Allahabad High Court</option>
+                  <option value="Calcutta High Court">Calcutta High Court</option>
+                  <option value="Madras High Court">Madras High Court</option>
                 </select>
-
-                {courtSelect === "OTHER" && (
-                  <div className="mt-2 space-y-1">
-                    <Input
-                      value={customCourt}
-                      onChange={(e) => setCustomCourt(e.target.value)}
-                      placeholder="e.g. Rajasthan High Court - Jaipur, Special NIA Court, Commercial Court..."
-                      className="text-sm bg-primary/5 border-primary/40 mt-1"
-                      autoFocus
-                    />
-                    <p className="text-[11px] text-muted-foreground">
-                      Enter any specific State Court Bench, District Court or Tribunal name.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
 
