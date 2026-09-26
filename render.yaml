@@ -1,0 +1,28 @@
+services:
+  # 1. Backend API (Node + Express + MongoDB)
+  - type: web
+    name: rishikesh-law-hub-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"
+
+  # 2. Admin Panel Frontend (TanStack Start / Nitro SSR)
+  - type: web
+    name: rishikesh-law-hub-admin
+    runtime: node
+    rootDir: lawconnect-admin
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    envVars:
+      - key: VITE_API_URL
+        value: https://lawconnect-admin.onrender.com
+      - key: HOST
+        value: 0.0.0.0
