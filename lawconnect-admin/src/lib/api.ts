@@ -1,8 +1,17 @@
-const DEFAULT_API = "https://lawconnect-admin.onrender.com";
+const DEFAULT_API = "http://localhost:4000";
 
 export function getApiBase(): string {
+  if (typeof window !== "undefined") {
+    const stored = window.localStorage.getItem("lawhub_api_base");
+    if (stored) return stored.replace(/\/$/, "");
+  }
   const env = import.meta.env["VITE_API_URL"] as string | undefined;
   return (env || DEFAULT_API).replace(/\/$/, "");
+}
+
+export function setApiBase(url: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("lawhub_api_base", url.replace(/\/$/, ""));
 }
 
 export function getToken(): string | null {
@@ -33,7 +42,7 @@ export async function api<T = unknown>(
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   } catch {
-    throw new Error("Can't reach the server. Please check your network or server status.");
+    throw new Error("Can't reach the server. Check the server address in Settings.");
   }
 
   const text = await res.text();
