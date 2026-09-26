@@ -48,6 +48,25 @@ function CasesAdmin() {
   const [viewingCase, setViewingCase] = useState<LawCase | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  async function triggerKanoonSync() {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await api<{ success: boolean; count: number; totalInDb: number; message: string }>(
+        "/api/cases/sync-kanoon",
+        { method: "POST" }
+      );
+      setSyncMessage(res.message || `Successfully synced ${res.count} judgments to database!`);
+      load(1);
+    } catch (err) {
+      setSyncMessage(err instanceof Error ? `Sync failed: ${err.message}` : "Failed to fetch from Indian Kanoon.");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   // Form State
   const [title, setTitle] = useState("");
@@ -62,22 +81,6 @@ function CasesAdmin() {
   const [fullText, setFullText] = useState("");
   const [judgmentPdfUrl, setJudgmentPdfUrl] = useState("");
   const [published, setPublished] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
-
-  async function handleSyncKanoon() {
-    setSyncing(true);
-    setSyncMessage(null);
-    try {
-      const res = await api<{ ok: boolean; message: string }>("/api/cases/sync-kanoon", { method: "POST" });
-      setSyncMessage(res.message || "Database synchronized successfully!");
-      load(1);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   function load(nextPage = page) {
     if (!ready) return;
@@ -190,38 +193,43 @@ function CasesAdmin() {
       title="Cases & Judgments"
       subtitle="Publish, inspect and manage landmark judgments, case briefs and Kanoon citations"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Button
-            onClick={handleSyncKanoon}
+            onClick={triggerKanoonSync}
             disabled={syncing}
             variant="outline"
-            className="gap-2 shadow-sm font-semibold border-primary/30 hover:bg-primary/10"
+            className="gap-2 border-primary/30 text-primary hover:bg-primary/10 shadow-sm"
           >
             {syncing ? (
               <>
-                <RefreshCw className="size-4 animate-spin text-primary" />
-                Syncing Kanoon...
+                <RefreshCw className="size-4 animate-spin" />
+                <span>Fetching Kanoon...</span>
               </>
             ) : (
               <>
-                <CloudDownload className="size-4 text-primary" />
-                Fetch Data from Indian Kanoon
+                <CloudDownload className="size-4" />
+                <span>Fetch Data from Indian Kanoon</span>
               </>
             )}
           </Button>
-          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
             <Plus className="size-4" /> Add Case Judgment
           </Button>
         </div>
       }
     >
+      {/* Sync Feedback Banner */}
       {syncMessage && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-900 dark:text-emerald-200">
-          <CheckCircle2 className="size-4 text-emerald-600" />
-          <span>{syncMessage}</span>
+        <div className="mb-6 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 p-4 text-sm font-medium text-foreground">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-5 text-primary shrink-0" />
+            <span>{syncMessage}</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setSyncMessage(null)}>
+            Dismiss
+          </Button>
         </div>
       )}
-
       {/* Search & Filter Bar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-64 flex-1">
@@ -266,16 +274,11 @@ function CasesAdmin() {
         <StateBlock message={error} onRetry={load} />
       ) : items.length === 0 ? (
         <StateBlock
-          message="No case judgments found. Tap 'Add Case Judgment' or 'Fetch Data from Indian Kanoon' above."
+          message="No case judgments found. Tap 'Add Case Judgment' above to create your first judgment."
           action={
-            <div className="flex gap-2">
-              <Button onClick={handleSyncKanoon} disabled={syncing} variant="outline" className="gap-2">
-                <CloudDownload className="size-4" /> Fetch from Indian Kanoon
-              </Button>
-              <Button onClick={openCreate} className="gap-2">
-                <Plus className="size-4" /> Add First Case
-              </Button>
-            </div>
+            <Button onClick={openCreate} className="gap-2">
+              <Plus className="size-4" /> Add First Case
+            </Button>
           }
         />
       ) : (

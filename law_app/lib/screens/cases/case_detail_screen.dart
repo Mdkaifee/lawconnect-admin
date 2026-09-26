@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/html_sanitizer.dart';
-import '../../core/utils/url_helper.dart';
 import '../../models/case_model.dart';
 
 class CaseDetailScreen extends StatefulWidget {
@@ -19,7 +19,6 @@ class CaseDetailScreen extends StatefulWidget {
 class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _noteController = TextEditingController();
-  bool _isBookmarking = false;
 
   @override
   void initState() {
@@ -35,8 +34,12 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
     super.dispose();
   }
 
-  void _openUrl(String? url) {
-    UrlHelper.openInAppUrl(context, url);
+  void _openUrl(String? url) async {
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   void _showAddNoteDialog(BuildContext context, CaseModel caseItem) {
@@ -145,30 +148,12 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                       BlocBuilder<UserDataBloc, UserDataState>(
                         builder: (context, userState) {
                           final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(c.id);
-                          if (_isBookmarking) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 14),
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.goldAccent),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
                           return IconButton(
-                            tooltip: isBookmarked ? 'Remove Bookmark' : 'Bookmark Case',
                             icon: Icon(
                               isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                               color: isBookmarked ? AppColors.goldAccent : Colors.white,
                             ),
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              setState(() => _isBookmarking = true);
+                            onPressed: () {
                               context.read<UserDataBloc>().add(
                                     ToggleBookmarkEvent(
                                       refType: 'case',
@@ -177,16 +162,6 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                       subtitle: c.citation ?? c.court,
                                     ),
                                   );
-                              await Future.delayed(const Duration(milliseconds: 300));
-                              if (mounted) {
-                                setState(() => _isBookmarking = false);
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks'),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              }
                             },
                           );
                         },
@@ -199,7 +174,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                         icon: const Icon(Icons.share_outlined),
                         onPressed: () {
                           Share.share(
-                            '${c.title}\n\nCitation: ${c.citation ?? "N/A"}\nCourt: ${c.court}\n\nRead on Law Hub',
+                            '${c.title}\n\nCitation: ${c.citation ?? "N/A"}\nCourt: ${c.court}\n\nRead on Rishikesh Law Hub',
                           );
                         },
                       ),

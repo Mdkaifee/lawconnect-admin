@@ -303,8 +303,6 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                                 ? null
                                 : () async {
                                     setState(() => _loadingBookmarks.add(item.id));
-                                    final userDataBloc = context.read<UserDataBloc>();
-                                    final messenger = ScaffoldMessenger.of(context);
                                     try {
                                       final repo = context.read<UserDataRepository>();
                                       if (isBookmarked) {
@@ -318,8 +316,8 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                                         );
                                       }
                                       if (mounted) {
-                                        userDataBloc.add(LoadUserDataEvent());
-                                        messenger.showSnackBar(
+                                        context.read<UserDataBloc>().add(LoadUserDataEvent());
+                                        ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                             content: Text(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks'),
                                             duration: const Duration(seconds: 2),

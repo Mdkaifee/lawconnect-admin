@@ -8,8 +8,7 @@ import mongoose from "mongoose";
 const router = Router();
 
 /**
- * Public: integration status check for Admin UI
- * Safe: never returns API key, only checks connectivity
+ * Integration & Sync status check for Admin UI
  */
 router.get(
   "/integration-status",
@@ -18,6 +17,30 @@ router.get(
   asyncHandler(async (_req, res) => {
     const status = await IndianKanoonService.checkStatus();
     res.json(status);
+  }),
+);
+
+router.get(
+  "/sync-status",
+  auth(),
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    const total = await Case.countDocuments();
+    const status = IndianKanoonService.getSyncStatus(total);
+    res.json(status);
+  }),
+);
+
+/**
+ * Trigger manual fetch from Indian Kanoon to save in MongoDB
+ */
+router.post(
+  "/sync-kanoon",
+  auth(),
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    const result = await IndianKanoonService.syncLandmarkCasesToDb(Case);
+    res.json(result);
   }),
 );
 
@@ -95,22 +118,11 @@ router.get(
 
     // 2. Database search fallback / default
     const filter = { published: true };
-    const courtConditions = [];
-    if (court && court !== "All") {
-      courtConditions.push({ courtType: court }, { court: new RegExp(court, "i") });
-    }
+    if (court && court !== "All") filter.courtType = court;
     if (year) filter.year = Number(year);
-
     if (cleanQuery) {
       const rx = new RegExp(cleanQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-      const queryConditions = [{ title: rx }, { citation: rx }, { summary: rx }, { court: rx }, { tags: rx }];
-      if (courtConditions.length > 0) {
-        filter.$and = [{ $or: courtConditions }, { $or: queryConditions }];
-      } else {
-        filter.$or = queryConditions;
-      }
-    } else if (courtConditions.length > 0) {
-      filter.$or = courtConditions;
+      filter.$or = [{ title: rx }, { citation: rx }, { summary: rx }, { court: rx }, { tags: rx }];
     }
 
     const skip = (pageNum - 1) * limitNum;
@@ -155,9 +167,7 @@ router.get(
     const { q, court, year, category, tag, isFeatured, page = 1, limit = 20, all } = req.query;
     const filter = {};
     if (!all) filter.published = true;
-    if (court && court !== "All") {
-      filter.$or = [{ courtType: court }, { court: new RegExp(court, "i") }];
-    }
+    if (court && court !== "All") filter.courtType = court;
     if (year) filter.year = Number(year);
     if (category) filter.categories = category;
     if (tag) filter.tags = tag;
@@ -165,13 +175,7 @@ router.get(
 
     if (q) {
       const rx = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-      const queryConditions = [{ title: rx }, { citation: rx }, { summary: rx }, { court: rx }, { tags: rx }];
-      if (filter.$or) {
-        filter.$and = [{ $or: filter.$or }, { $or: queryConditions }];
-        delete filter.$or;
-      } else {
-        filter.$or = queryConditions;
-      }
+      filter.$or = [{ title: rx }, { citation: rx }, { summary: rx }, { court: rx }, { tags: rx }];
     }
 
     const pageNum = Math.max(1, Number(page) || 1);
@@ -332,16 +336,6 @@ router.delete(
   asyncHandler(async (req, res) => {
     await Case.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
-  }),
-);
-
-router.post(
-  "/sync-kanoon",
-  auth(),
-  requireAdmin,
-  asyncHandler(async (_req, res) => {
-    const result = await IndianKanoonService.syncToDatabase();
-    res.json({ ok: true, ...result });
   }),
 );
 

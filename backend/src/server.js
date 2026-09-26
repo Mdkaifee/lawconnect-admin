@@ -11,6 +11,8 @@ import updateRoutes from "./routes/updates.js";
 import postRoutes from "./routes/posts.js";
 import { categories, notes, bookmarks, history, users, stats, reports } from "./routes/misc.js";
 import { sanitizeLogOutput } from "./utils/security.js";
+import { IndianKanoonService } from "./services/indianKanoon.js";
+import { Case } from "./models/index.js";
 
 const app = express();
 
@@ -55,6 +57,35 @@ const port = process.env.PORT || 4000;
 connectDB()
   .then(async () => {
     await autoSeed();
+
+    // Initial background sync check
+    try {
+      const caseCount = await Case.countDocuments();
+      if (caseCount < 6) {
+        console.log("Syncing initial landmark judgments into database...");
+        await IndianKanoonService.syncLandmarkCasesToDb(Case);
+      }
+    } catch (syncErr) {
+      console.warn("Initial sync warning:", syncErr.message);
+    }
+
+    // Schedule 12-hour auto-sync (checks every hour for 6:00 AM & 6:00 PM IST/local)
+    let lastScheduledSyncHour = -1;
+    setInterval(async () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      if ((currentHour === 6 || currentHour === 18) && lastScheduledSyncHour !== currentHour) {
+        lastScheduledSyncHour = currentHour;
+        console.log(`[Auto-Sync] Running scheduled 12-hour Indian Kanoon sync at ${now.toLocaleTimeString()}...`);
+        try {
+          const res = await IndianKanoonService.syncLandmarkCasesToDb(Case);
+          console.log(`[Auto-Sync] Completed: ${res.message}`);
+        } catch (e) {
+          console.error(`[Auto-Sync] Error:`, e.message);
+        }
+      }
+    }, 60 * 1000); // check every minute
+
     app.listen(port, () => console.log(`API listening on :${port}`));
   })
   .catch((e) => {
