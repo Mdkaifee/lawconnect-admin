@@ -205,10 +205,20 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                       // Year filter control at the far right.
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: IconButton(
-                          tooltip: _selectedYear == null ? 'Filter by year' : 'Year: $_selectedYear',
-                          icon: Icon(Icons.filter_alt_outlined, color: _selectedYear == null ? AppColors.primaryNavy : AppColors.goldAccent),
-                          onPressed: _showYearFilter,
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: AppColors.borderLight),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            tooltip: _selectedYear == null ? 'Filter by year' : 'Year: $_selectedYear',
+                            icon: Icon(Icons.filter_alt_outlined, size: 18, color: _selectedYear == null ? AppColors.primaryNavy : AppColors.goldAccent),
+                            onPressed: _showYearFilter,
+                          ),
                         ),
                       ),
                     ],
