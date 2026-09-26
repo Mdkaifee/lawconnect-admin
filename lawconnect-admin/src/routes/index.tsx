@@ -9,10 +9,10 @@ import { api, getToken, setToken } from "@/lib/api";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Law Hub" },
-      { name: "description", content: "Owner login for the Law Hub admin panel: manage cases, acts, legal updates and posts." },
-      { property: "og:title", content: "Admin Login — Law Hub" },
-      { property: "og:description", content: "Owner login for the Law Hub admin panel." },
+      { title: "Rishikesh Law Hub" },
+      { name: "description", content: "Owner login for the Rishikesh Law Hub admin panel: manage cases, acts, legal updates and posts." },
+      { property: "og:title", content: "Admin Login — Rishikesh Law Hub" },
+      { property: "og:description", content: "Owner login for the Rishikesh Law Hub admin panel." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 
 function Login() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState("Rishikesh");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,7 +57,7 @@ function Login() {
           <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
             <Scale className="size-7" />
           </span>
-          <h1 className="font-display text-3xl">Law Hub</h1>
+          <h1 className="font-display text-3xl">Rishikesh Law Hub</h1>
           <p className="mt-1 text-sm text-muted-foreground">Admin panel — owner access only</p>
         </div>
 

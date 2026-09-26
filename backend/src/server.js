@@ -11,7 +11,6 @@ import updateRoutes from "./routes/updates.js";
 import postRoutes from "./routes/posts.js";
 import { categories, notes, bookmarks, history, users, stats, reports } from "./routes/misc.js";
 import { sanitizeLogOutput } from "./utils/security.js";
-import { startScheduler } from "./services/scheduler.js";
 
 const app = express();
 
@@ -56,7 +55,6 @@ const port = process.env.PORT || 4000;
 connectDB()
   .then(async () => {
     await autoSeed();
-    startScheduler();
     app.listen(port, () => console.log(`API listening on :${port}`));
   })
   .catch((e) => {

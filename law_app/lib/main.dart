@@ -13,7 +13,6 @@ import 'blocs/act/act_bloc.dart';
 import 'blocs/update/update_bloc.dart';
 import 'blocs/post/post_bloc.dart';
 import 'blocs/user_data/user_data_bloc.dart';
-import 'core/widgets/connectivity_wrapper.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -79,10 +78,9 @@ class LawHubApp extends StatelessWidget {
           BlocProvider(create: (_) => UserDataBloc(userDataRepository: userDataRepository)..add(LoadUserDataEvent())),
         ],
         child: MaterialApp(
-          title: 'Law Hub',
+          title: 'Rishikesh Law Hub',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          builder: (context, child) => ConnectivityWrapper(child: child ?? const SizedBox.shrink()),
           home: const SplashScreen(),
         ),
       ),
