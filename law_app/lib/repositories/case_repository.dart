@@ -56,7 +56,7 @@ class CaseRepository {
   }
 
   Future<List<CaseModel>> getCuratedLandmarks() async {
-    final uri = Uri.parse('${ApiConstants.cases}?isFeatured=true&limit=10');
+    final uri = Uri.parse('${ApiConstants.cases}?limit=10');
     final response = await _client.get(uri);
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -80,4 +80,3 @@ class CaseRepository {
     }
   }
 }
-

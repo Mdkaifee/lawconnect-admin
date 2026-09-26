@@ -1,47 +1,29 @@
-const LIVE_API_URL = "https://lawconnect-admin.onrender.com";
-const LOCAL_API_URL = "http://localhost:4000";
+const DEFAULT_API = "http://localhost:4000";
 const LOCAL_API_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i;
 
-function isLocalhost(): boolean {
+function isProductionHost(): boolean {
   if (typeof window === "undefined") return false;
-  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  return window.location.hostname === "rishikesh-law-hub-admin.onrender.com";
 }
 
 export function getApiBase(): string {
-  const env = (import.meta.env["VITE_API_URL"] as string | undefined)?.trim();
-  
+  const env = import.meta.env["VITE_API_URL"] as string | undefined;
   if (typeof window !== "undefined") {
     const stored = window.localStorage.getItem("lawhub_api_base");
     if (stored) {
-      const normalized = stored.trim().replace(/\/$/, "");
-      // If we are on a remote server/render and stored url is localhost, clear and purge it
-      if (!isLocalhost() && LOCAL_API_PATTERN.test(normalized)) {
-        window.localStorage.removeItem("lawhub_api_base");
-      } else if (normalized.length > 0) {
+      const normalized = stored.replace(/\/$/, "");
+      if (!(isProductionHost() && LOCAL_API_PATTERN.test(normalized))) {
         return normalized;
       }
+      window.localStorage.removeItem("lawhub_api_base");
     }
   }
-
-  if (env && env.length > 0) {
-    return env.replace(/\/$/, "");
-  }
-
-  // If running in browser locally default to localhost, otherwise live API
-  if (isLocalhost()) {
-    return LOCAL_API_URL;
-  }
-  return LIVE_API_URL;
+  return (env || DEFAULT_API).replace(/\/$/, "");
 }
 
 export function setApiBase(url: string) {
   if (typeof window === "undefined") return;
-  const cleaned = (url || "").trim().replace(/\/$/, "");
-  if (!cleaned) {
-    window.localStorage.removeItem("lawhub_api_base");
-  } else {
-    window.localStorage.setItem("lawhub_api_base", cleaned);
-  }
+  window.localStorage.setItem("lawhub_api_base", url.replace(/\/$/, ""));
 }
 
 export function getToken(): string | null {
@@ -57,48 +39,29 @@ export function setToken(token: string | null) {
 
 export async function api<T = unknown>(
   path: string,
-  options: { method?: string; body?: unknown; auth?: boolean; retries?: number } = {},
+  options: { method?: string; body?: unknown; auth?: boolean } = {},
 ): Promise<T> {
-  const { method = "GET", body, auth = true, retries = 1 } = options;
+  const { method = "GET", body, auth = true } = options;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const token = getToken();
   if (auth && token) headers["Authorization"] = `Bearer ${token}`;
 
-  const base = getApiBase();
-  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
-
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetch(`${getApiBase()}${path}`, {
       method,
       headers,
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
-  } catch (netErr: any) {
-    // If request failed and we have retries left (Render cold start handling)
-    if (retries > 0 && method === "GET") {
-      await new Promise((r) => setTimeout(r, 1200));
-      return api<T>(path, { ...options, retries: retries - 1 });
-    }
-    throw new Error(
-      `Cannot reach the backend API at ${base}. If Render is waking up from sleep, please wait a few seconds and retry.`,
-    );
+  } catch {
+    throw new Error("Can't reach the server. Check the server address in Settings.");
   }
 
   const text = await res.text();
-  let data: any = {};
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { raw: text };
-    }
-  }
-
+  const data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
   if (!res.ok) {
     if (res.status === 401) setToken(null);
-    throw new Error((data?.error as string) || (data?.message as string) || `Request failed (${res.status})`);
+    throw new Error((data["error"] as string) || `Request failed (${res.status})`);
   }
-
   return data as T;
 }

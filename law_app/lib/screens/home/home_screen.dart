@@ -8,7 +8,9 @@ import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../cases/case_search_screen.dart';
 import '../cases/case_detail_screen.dart';
+import '../acts/acts_list_screen.dart';
 import '../acts/act_detail_screen.dart';
+import '../updates/updates_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/case_card.dart';
 
@@ -20,21 +22,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _quickSearchController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
+    _loadAll();
+  }
+
+  void _loadAll() {
     context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
     context.read<ActBloc>().add(const LoadActsEvent());
     context.read<UpdateBloc>().add(const LoadUpdatesEvent());
     context.read<PostBloc>().add(const LoadPostsEvent());
-  }
-
-  @override
-  void dispose() {
-    _quickSearchController.dispose();
-    super.dispose();
   }
 
   @override
@@ -72,9 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
-          context.read<ActBloc>().add(const LoadActsEvent());
-          context.read<UpdateBloc>().add(const LoadUpdatesEvent());
+          _loadAll();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -173,7 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Switch to acts tab or navigate
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ActsListScreen()),
+                        );
                       },
                       child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
                     ),
@@ -241,15 +239,28 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // Landmark Judgments Header
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Landmark Judgments',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryNavy,
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Landmark Judgments',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryNavy,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CaseSearchScreen()),
+                        );
+                      },
+                      child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
@@ -293,16 +304,29 @@ class _HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Verified Legal Updates',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryNavy,
-                      ),
+                    const Row(
+                      children: [
+                        Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Verified Legal Updates',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const UpdatesScreen()),
+                        );
+                      },
+                      child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -320,27 +344,35 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                             side: const BorderSide(color: AppColors.borderLight),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryNavy.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const UpdatesScreen()),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.article_outlined, color: AppColors.primaryNavy, size: 22),
                               ),
-                              child: const Icon(Icons.article_outlined, color: AppColors.primaryNavy, size: 22),
-                            ),
-                            title: Text(
-                              u.title,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '${u.source} • ${u.category}',
-                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                              title: Text(
+                                u.title,
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  '${u.source} • ${u.category}',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                ),
                               ),
                             ),
                           ),
@@ -358,4 +390,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
