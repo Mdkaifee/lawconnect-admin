@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
@@ -43,6 +44,13 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
         ? '${ApiConstants.baseUrl.replaceFirst('/api', '')}$url'
         : url;
     UrlHelper.openInAppUrl(context, resolved);
+  }
+
+  String _formatJudgmentDate(String? value) {
+    if (value == null || value.trim().isEmpty) return '';
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return value;
+    return DateFormat('dd MMM yyyy').format(parsed.toLocal());
   }
 
   Future<void> _toggleBookmark(CaseModel item, bool currentlyBookmarked) async {
@@ -195,10 +203,6 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.note_add_outlined),
-                        onPressed: () => _showAddNoteDialog(context, c),
-                      ),
-                      IconButton(
                         icon: const Icon(Icons.share_outlined),
                         onPressed: () {
                           Share.share(
@@ -240,10 +244,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                 color: AppColors.textSecondary,
                               ),
                             ),
-                            if (c.dateOfJudgment != null) ...[
+                            if (_formatJudgmentDate(c.dateOfJudgment).isNotEmpty) ...[
                               const Text(' • ', style: TextStyle(color: AppColors.textMuted)),
                               Text(
-                                c.dateOfJudgment!,
+                                _formatJudgmentDate(c.dateOfJudgment),
                                 style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                               ),
                             ],
