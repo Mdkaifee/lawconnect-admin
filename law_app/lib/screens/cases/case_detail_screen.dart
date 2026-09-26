@@ -178,14 +178,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
                   SliverAppBar(
-                    title: Text(
-                      c.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
+                    title: const SizedBox.shrink(),
                     pinned: true,
-                    floating: true,
+                    expandedHeight: 0,
+                    toolbarHeight: 56,
                     actions: [
                       BlocBuilder<UserDataBloc, UserDataState>(
                         builder: (context, userState) {
@@ -211,17 +207,6 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                         },
                       ),
                     ],
-                    bottom: TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.start,
-                      tabs: [
-                        const Tab(text: 'Summary'),
-                        const Tab(text: 'Full Judgment'),
-                        Tab(text: 'Precedents (${c.cites.length + c.citedBy.length})'),
-                        const Tab(text: 'Simple Ratio'),
-                      ],
-                    ),
                   ),
                 ];
               },
@@ -304,6 +289,23 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                             ),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+
+                  Material(
+                    color: Colors.white,
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: AppColors.primaryNavy,
+                      unselectedLabelColor: AppColors.textSecondary,
+                      indicatorColor: AppColors.primaryNavy,
+                      indicatorWeight: 2,
+                      tabs: const [
+                        Tab(text: 'Overview'),
+                        Tab(text: 'Judgment'),
+                        Tab(text: 'Notes'),
+                        Tab(text: 'Related'),
                       ],
                     ),
                   ),
