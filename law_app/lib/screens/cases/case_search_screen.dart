@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../repositories/user_data_repository.dart';
 import '../../widgets/case_card.dart';
 import 'case_detail_screen.dart';
+import '../main_navigation_screen.dart';
 
 class CaseSearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -118,6 +119,16 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
         foregroundColor: AppColors.primaryNavy,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.primaryNavy),
+        leading: IconButton(
+          color: AppColors.primaryNavy,
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavigationScreen(initialIndex: 0)),
+              (route) => false,
+            );
+          },
+        ),
         title: const Text('Case Search', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w700)),
         actions: [
           IconButton(
