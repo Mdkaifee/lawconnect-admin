@@ -103,4 +103,65 @@ router.put(
   }),
 );
 
+/* ---- Follow / Unfollow Author (Prevent Self-Follow) ---- */
+router.post(
+  "/follow/:authorId",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const { authorId } = req.params;
+    const currentUserId = req.auth.id;
+
+    // DO NOT ALLOW TO FOLLOW MYSELF
+    if (authorId === currentUserId) {
+      return res.status(400).json({ error: "You cannot follow yourself" });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) return res.status(404).json({ error: "User not found" });
+
+    const followingList = (currentUser.following || []).map((id) => id.toString());
+    const isAlreadyFollowing = followingList.includes(authorId);
+
+    let updatedUser;
+    if (isAlreadyFollowing) {
+      updatedUser = await User.findByIdAndUpdate(
+        currentUserId,
+        { $pull: { following: authorId } },
+        { new: true },
+      );
+    } else {
+      updatedUser = await User.findByIdAndUpdate(
+        currentUserId,
+        { $addToSet: { following: authorId } },
+        { new: true },
+      );
+    }
+
+    const updatedFollowing = (updatedUser.following || []).map((id) => id.toString());
+    res.json({
+      ok: true,
+      isFollowing: !isAlreadyFollowing,
+      message: !isAlreadyFollowing ? "Author followed successfully" : "Author unfollowed successfully",
+      following: updatedFollowing,
+    });
+  }),
+);
+
+/* ---- Get current user's followed authors ---- */
+router.get(
+  "/following",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const user = await User.findById(req.auth.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const followingIds = (user.following || []).map((id) => id.toString());
+    res.json({
+      following: followingIds,
+    });
+  }),
+);
+
 export default router;

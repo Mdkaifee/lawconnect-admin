@@ -8,11 +8,22 @@ const router = Router();
 /* ---------------- 1. List & Search Posts ---------------- */
 router.get(
   "/",
+  auth(false),
   asyncHandler(async (req, res) => {
     const { scope, authorId, category, tag, q, page = 1, limit = 20, all } = req.query;
     const filter = {};
     if (!all) filter.status = "published";
     if (scope === "mine" && authorId) filter.authorId = authorId;
+    if (scope === "following") {
+      let followingIds = [];
+      if (req.auth && req.auth.id) {
+        const currentUser = await User.findById(req.auth.id);
+        followingIds = (currentUser?.following || []).map((id) => id.toString());
+      } else if (authorId) {
+        followingIds = authorId.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      filter.authorId = { $in: followingIds };
+    }
     if (category && category !== "All" && category !== "Feed") filter.category = category;
     if (tag) filter.tags = tag;
     if (q) {
