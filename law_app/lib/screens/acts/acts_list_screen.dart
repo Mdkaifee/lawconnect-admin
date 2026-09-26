@@ -61,33 +61,13 @@ class _ActsListScreenState extends State<ActsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Bare Acts & Codes',
-          style: TextStyle(
-            color: AppColors.primaryNavy,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
+        title: const Text('Bare Acts & Codes'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryNavy),
+            icon: const Icon(Icons.refresh),
             onPressed: _fetchActs,
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-        ),
       ),
       body: Column(
         children: [

@@ -73,27 +73,14 @@ class _NotesScreenState extends State<NotesScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Case Study Notes',
-          style: TextStyle(
-            color: AppColors.primaryNavy,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-        ),
+        automaticallyImplyLeading: false,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: const Text('Case Study Notes'),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showEditNoteDialog(context),
