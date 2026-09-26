@@ -3,14 +3,25 @@ node_modules/
 
 # Build output
 dist/
+dist-ssr/
 build/
 out/
 .next/
 .nuxt/
 .output/
 .vite/
+.vinxi/
+.tanstack/
+.nitro/
 coverage/
 *.tsbuildinfo
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
 
 # Environment variables and secrets
 .env
@@ -19,6 +30,11 @@ coverage/
 !.env.sample
 *.pem
 *.key
+*.local
+
+# Cloudflare
+.wrangler/
+.dev.vars
 
 # Logs
 logs/
@@ -27,6 +43,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # Cache and temporary files
 .cache/
@@ -36,10 +53,13 @@ pnpm-debug.log*
 *.temp
 
 # Editor settings
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 .idea/
-*.swp
-*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sw?
 
 # Operating system files
 .DS_Store
