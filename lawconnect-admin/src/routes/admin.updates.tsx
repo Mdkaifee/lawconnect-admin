@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
+import { useAdminGuard } from "@/lib/useAdmin";
+import { api } from "@/lib/api";
+import type { LegalUpdate } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -21,279 +25,229 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAdminGuard } from "@/lib/useAdmin";
-import { api } from "@/lib/api";
-import type { LegalUpdate } from "@/lib/types";
-import { Plus, Trash2, Edit3, ExternalLink } from "lucide-react";
+import { Plus, Search, Trash2, Edit } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/updates")({
-  component: UpdatesPage,
+  head: () => ({ meta: [{ title: "Legal Updates — Admin" }] }),
+  component: UpdatesAdmin,
 });
 
-const COURTS = ["All", "Supreme Court", "High Court", "Other"];
+const EMPTY_UPDATE: Partial<LegalUpdate> = {
+  title: "",
+  body: "",
+  source: "Official Gazette / Supreme Court",
+  court: "Supreme Court",
+  badge: "SC",
+  published: true,
+};
 
-function UpdatesPage() {
+function UpdatesAdmin() {
   const ready = useAdminGuard();
-  const [updates, setUpdates] = useState<LegalUpdate[]>([]);
+  const [items, setItems] = useState<LegalUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const [courtFilter, setCourtFilter] = useState("All");
 
-  // Dialogs
-  const [editItem, setEditItem] = useState<Partial<LegalUpdate> | null>(null);
-  const [isNew, setIsNew] = useState(false);
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Partial<LegalUpdate> | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  async function loadUpdates() {
-    try {
-      setLoading(true);
-      setError(null);
-      const params = new URLSearchParams({ all: "true" });
-      if (courtFilter !== "All") params.set("court", courtFilter);
-      const res = await api<{ items: LegalUpdate[]; total: number }>(`/api/updates?${params.toString()}`);
-      setUpdates(res.items || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load updates");
-    } finally {
-      setLoading(false);
-    }
+  function load() {
+    if (!ready) return;
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams({ all: "true" });
+    if (query) params.set("q", query);
+    if (courtFilter !== "All") params.set("court", courtFilter);
+
+    api<{ items: LegalUpdate[] }>(`/api/updates?${params.toString()}`)
+      .then((res) => setItems(res.items))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    if (!ready) return;
-    loadUpdates();
+    load();
   }, [ready, courtFilter]);
 
-  function openCreate() {
-    setIsNew(true);
-    setEditItem({
-      title: "",
-      body: "",
-      source: "LiveLaw",
-      court: "Supreme Court",
-      badge: "SC",
-      url: "",
-      publishedAt: new Date().toISOString(),
-      published: true,
-    });
-  }
-
-  function openEdit(item: LegalUpdate) {
-    setIsNew(false);
-    setEditItem({ ...item });
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editItem || !editItem.title) return;
-    setSaveBusy(true);
+  async function save() {
+    if (!editing || !editing.title) return;
+    setSaving(true);
     try {
-      if (isNew) {
-        await api("/api/updates", { method: "POST", body: editItem });
+      if (editing._id) {
+        await api(`/api/updates/${editing._id}`, { method: "PUT", body: editing });
       } else {
-        await api(`/api/updates/${editItem._id}`, { method: "PUT", body: editItem });
+        await api("/api/updates", { method: "POST", body: editing });
       }
-      setEditItem(null);
-      await loadUpdates();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Save failed");
+      setEditing(null);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to save update");
     } finally {
-      setSaveBusy(false);
+      setSaving(false);
     }
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
+  async function confirmDelete() {
+    if (!deletingId) return;
     try {
-      await api(`/api/updates/${deleteId}`, { method: "DELETE" });
-      setDeleteId(null);
-      await loadUpdates();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed");
+      await api(`/api/updates/${deletingId}`, { method: "DELETE" });
+      setDeletingId(null);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to delete update");
     }
   }
 
   return (
     <AdminShell
-      title="Legal Updates"
-      subtitle="Publish breaking legal news, court developments, and law notifications"
+      title="Legal Updates & Notifications"
+      subtitle="Publish verified court developments, gazette notifications, and rules"
       actions={
-        <Button onClick={openCreate} className="gap-2">
+        <Button onClick={() => setEditing({ ...EMPTY_UPDATE })} className="gap-2">
           <Plus className="size-4" /> Add Legal Update
         </Button>
       }
     >
-      <div className="space-y-4">
-        {/* Filters */}
-        <div className="flex gap-1.5 overflow-x-auto">
-          {COURTS.map((c) => (
-            <Button
-              key={c}
-              variant={courtFilter === c ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCourtFilter(c)}
-            >
-              {c}
-            </Button>
-          ))}
+      <div className="mb-4 flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="Search updates by headline or source..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+            className="pl-9"
+          />
         </div>
-
-        <StateBlock
-          loading={loading}
-          error={error}
-          empty={!loading && updates.length === 0}
-          emptyText="No legal updates found."
-        />
-
-        {!loading && updates.length > 0 ? (
-          <div className="space-y-3">
-            {updates.map((item) => (
-              <Panel key={item._id} className="p-4 transition hover:border-primary/40">
-                <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-                        {item.badge || item.court || "NEWS"}
-                      </span>
-                      <h3 className="font-display text-base font-semibold">{item.title}</h3>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      {[
-                        item.source ? `Source: ${item.source}` : null,
-                        item.court,
-                        item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" • ")}
-                    </p>
-
-                    {item.body ? (
-                      <p className="text-sm text-foreground/80 line-clamp-2 mt-1">{item.body}</p>
-                    ) : null}
-                  </div>
-
-                  <div className="flex items-center gap-2 self-end md:self-start shrink-0">
-                    {item.url ? (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="Open Source Link"
-                      >
-                        <ExternalLink className="size-4" />
-                      </a>
-                    ) : null}
-                    <Button variant="outline" size="sm" onClick={() => openEdit(item)} className="gap-1">
-                      <Edit3 className="size-3.5" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteId(item._id)}
-                      className="text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </Panel>
-            ))}
-          </div>
-        ) : null}
+        <select
+          value={courtFilter}
+          onChange={(e) => setCourtFilter(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="All">All Courts</option>
+          <option value="Supreme Court">Supreme Court</option>
+          <option value="High Court">High Court</option>
+          <option value="Other">Other / Gazette</option>
+        </select>
+        <Button variant="outline" onClick={load}>
+          Search
+        </Button>
       </div>
 
-      {/* Edit / Create Modal */}
-      <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{isNew ? "Create Legal Update" : "Edit Legal Update"}</DialogTitle>
-          </DialogHeader>
+      <StateBlock loading={loading} error={error} empty={!loading && items.length === 0} emptyText="No updates found." />
 
-          {editItem ? (
-            <form onSubmit={handleSave} className="space-y-4 py-2">
+      {!loading && items.length > 0 ? (
+        <Panel className="divide-y divide-border">
+          {items.map((u) => (
+            <div key={u._id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    {u.court || "Other"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{u.source}</span>
+                </div>
+                <h3 className="mt-1 font-display text-base font-semibold">{u.title}</h3>
+                {u.body ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{u.body}</p> : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setEditing(u)}>
+                  <Edit className="size-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(u._id)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </Panel>
+      ) : null}
+
+      {/* Edit / Create Dialog */}
+      <Dialog open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editing?._id ? "Edit Legal Update" : "Add Legal Update"}</DialogTitle>
+          </DialogHeader>
+          {editing ? (
+            <div className="space-y-4 py-2">
               <Field label="Headline / Title *">
                 <Input
-                  required
-                  value={editItem.title || ""}
-                  onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
-                  placeholder="e.g. SC seeks response from Centre on plea against..."
+                  value={editing.title ?? ""}
+                  onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                  placeholder="e.g. SC seeks response on Waqf Amendment plea"
                 />
               </Field>
-
-              <div className="grid grid-cols-3 gap-3">
-                <Field label="Court Category">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Source">
+                  <Input
+                    value={editing.source ?? ""}
+                    onChange={(e) => setEditing({ ...editing, source: e.target.value })}
+                    placeholder="e.g. Supreme Court of India / LiveLaw"
+                  />
+                </Field>
+                <Field label="Court">
                   <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={editItem.court || "Supreme Court"}
-                    onChange={(e) => setEditItem({ ...editItem, court: e.target.value })}
+                    value={editing.court ?? "Supreme Court"}
+                    onChange={(e) => setEditing({ ...editing, court: e.target.value })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="Supreme Court">Supreme Court</option>
                     <option value="High Court">High Court</option>
                     <option value="Other">Other</option>
                   </select>
                 </Field>
-                <Field label="Badge Text">
-                  <Input
-                    value={editItem.badge || ""}
-                    onChange={(e) => setEditItem({ ...editItem, badge: e.target.value })}
-                    placeholder="SC / HC / GOI"
-                  />
-                </Field>
-                <Field label="Source Name">
-                  <Input
-                    value={editItem.source || ""}
-                    onChange={(e) => setEditItem({ ...editItem, source: e.target.value })}
-                    placeholder="LiveLaw, Bar & Bench"
-                  />
-                </Field>
               </div>
-
-              <Field label="Summary / Content">
+              <Field label="Body / Description">
                 <Textarea
                   rows={4}
-                  value={editItem.body || ""}
-                  onChange={(e) => setEditItem({ ...editItem, body: e.target.value })}
-                  placeholder="Details of the update, verdict summary, notification text..."
+                  value={editing.body ?? ""}
+                  onChange={(e) => setEditing({ ...editing, body: e.target.value })}
+                  placeholder="Details of the update or notification..."
                 />
               </Field>
-
-              <Field label="External Link / Article URL">
+              <Field label="Source Link (URL)">
                 <Input
-                  value={editItem.url || ""}
-                  onChange={(e) => setEditItem({ ...editItem, url: e.target.value })}
-                  placeholder="https://livelaw.in/..."
+                  value={editing.url ?? ""}
+                  onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                  placeholder="https://..."
                 />
               </Field>
-
-              <DialogFooter className="pt-3">
-                <Button type="button" variant="outline" onClick={() => setEditItem(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={saveBusy}>
-                  {saveBusy ? "Saving..." : isNew ? "Publish Update" : "Save Changes"}
-                </Button>
-              </DialogFooter>
-            </form>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm font-medium">Published in App</span>
+                <Switch
+                  checked={editing.published ?? true}
+                  onCheckedChange={(val) => setEditing({ ...editing, published: val })}
+                />
+              </div>
+            </div>
           ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={saving || !editing?.title}>
+              {saving ? "Saving…" : "Save Update"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      {/* Delete Confirmation Alert */}
+      <AlertDialog open={Boolean(deletingId)} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Legal Update</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this legal update?
+              Are you sure you want to delete this legal update?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

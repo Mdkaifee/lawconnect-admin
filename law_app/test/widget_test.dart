@@ -1,7 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('Smoke test - verify test setup', () {
-    expect(1 + 1, equals(2));
+  testWidgets('Rishikesh Law Hub smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Text('Rishikesh Law Hub'),
+        ),
+      ),
+    );
+
+    expect(find.text('Rishikesh Law Hub'), findsOneWidget);
   });
 }

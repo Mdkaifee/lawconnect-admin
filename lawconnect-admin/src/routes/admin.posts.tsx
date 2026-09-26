@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
+import { useAdminGuard } from "@/lib/useAdmin";
+import { api } from "@/lib/api";
+import type { Post } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,284 +24,317 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAdminGuard } from "@/lib/useAdmin";
-import { api } from "@/lib/api";
-import type { Post } from "@/lib/types";
-import { Plus, Search, Trash2, Edit3, Heart, MessageSquare } from "lucide-react";
+import { Plus, Search, Trash2, EyeOff, CheckCircle, Flag } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/posts")({
-  component: PostsPage,
+  head: () => ({ meta: [{ title: "Law Posts & Moderation — Admin" }] }),
+  component: PostsAdmin,
 });
 
-function PostsPage() {
+function PostsAdmin() {
   const ready = useAdminGuard();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [items, setItems] = useState<Post[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [viewTab, setViewTab] = useState<"posts" | "reports">("posts");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
 
-  // Dialogs
-  const [editPost, setEditPost] = useState<Partial<Post> | null>(null);
-  const [isNew, setIsNew] = useState(false);
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [newCategory, setNewCategory] = useState("Supreme Court");
 
-  async function loadPosts() {
-    try {
-      setLoading(true);
-      setError(null);
-      const params = new URLSearchParams({ all: "true" });
-      if (search.trim()) params.set("q", search.trim());
-      const res = await api<{ items: Post[]; total: number }>(`/api/posts?${params.toString()}`);
-      setPosts(res.items || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load posts");
-    } finally {
-      setLoading(false);
-    }
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  function load() {
+    if (!ready) return;
+    setLoading(true);
+    setError(null);
+
+    Promise.all([
+      api<{ items: Post[] }>(`/api/posts?all=true${query ? `&q=${query}` : ""}`),
+      api<{ items: any[] }>("/api/reports?status=all").catch(() => ({ items: [] })),
+    ])
+      .then(([postsRes, reportsRes]) => {
+        setItems(postsRes.items);
+        setReports(reportsRes.items);
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    if (!ready) return;
-    loadPosts();
+    load();
   }, [ready]);
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    loadPosts();
-  }
-
-  function openCreate() {
-    setIsNew(true);
-    setEditPost({
-      title: "",
-      content: "",
-      category: "Constitution",
-      authorName: "Rishikesh Yadav",
-      authorType: "admin",
-      tags: [],
-      status: "published",
-    });
-  }
-
-  function openEdit(p: Post) {
-    setIsNew(false);
-    setEditPost({ ...p });
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editPost || !editPost.title) return;
-    setSaveBusy(true);
+  async function createOfficialPost() {
+    if (!newTitle.trim() || !newContent.trim()) return;
+    setSaving(true);
     try {
-      if (isNew) {
-        await api("/api/posts/admin", { method: "POST", body: editPost });
-      } else {
-        await api(`/api/posts/${editPost._id}`, { method: "PUT", body: editPost });
-      }
-      setEditPost(null);
-      await loadPosts();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Save failed");
+      await api("/api/posts/admin", {
+        method: "POST",
+        body: {
+          title: newTitle.trim(),
+          content: newContent.trim(),
+          category: newCategory,
+        },
+      });
+      setCreateOpen(false);
+      setNewTitle("");
+      setNewContent("");
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to create official post");
     } finally {
-      setSaveBusy(false);
+      setSaving(false);
     }
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
+  async function toggleHidePost(postId: string, currentStatus: string) {
     try {
-      await api(`/api/posts/${deleteId}`, { method: "DELETE" });
-      setDeleteId(null);
-      await loadPosts();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed");
+      const nextStatus = currentStatus === "hidden" ? "published" : "hidden";
+      await api(`/api/posts/${postId}`, {
+        method: "PUT",
+        body: { status: nextStatus },
+      });
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to update post status");
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deletingId) return;
+    try {
+      await api(`/api/posts/${deletingId}`, { method: "DELETE" });
+      setDeletingId(null);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to delete post");
+    }
+  }
+
+  async function handleResolveReport(reportId: string, action: string) {
+    try {
+      await api(`/api/reports/${reportId}`, {
+        method: "PUT",
+        body: { status: "resolved", action },
+      });
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to action report");
     }
   }
 
   return (
     <AdminShell
-      title="Law Posts & Community"
-      subtitle="Publish official articles, insights and moderate community discussions"
+      title="Law Posts & Moderation"
+      subtitle="Moderate student discussions, community queries, and publish official notes"
       actions={
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="size-4" /> Create Official Post
+        <Button onClick={() => setCreateOpen(true)} className="gap-2">
+          <Plus className="size-4" /> Publish Official Post
         </Button>
       }
     >
-      <div className="space-y-4">
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      {/* View Switcher Tabs */}
+      <div className="mb-4 flex gap-3 items-center justify-between">
+        <div className="flex gap-2">
+          <Button
+            variant={viewTab === "posts" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewTab("posts")}
+          >
+            All Posts ({items.length})
+          </Button>
+          <Button
+            variant={viewTab === "reports" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewTab("reports")}
+            className="gap-1.5"
+          >
+            <Flag className="size-3.5 text-amber-500" />
+            Reported Queue ({reports.filter((r) => r.status === "pending").length})
+          </Button>
+        </div>
+
+        {viewTab === "posts" && (
+          <div className="flex gap-2">
             <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search posts by title, content or author..."
-              className="pl-9"
+              placeholder="Search posts..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && load()}
+              className="h-9 w-60"
             />
+            <Button size="sm" variant="outline" onClick={load}>
+              <Search className="size-3.5" />
+            </Button>
           </div>
-          <Button type="submit" variant="secondary">Search</Button>
-        </form>
-
-        <StateBlock
-          loading={loading}
-          error={error}
-          empty={!loading && posts.length === 0}
-          emptyText="No posts found."
-        />
-
-        {!loading && posts.length > 0 ? (
-          <div className="space-y-3">
-            {posts.map((p) => (
-              <Panel key={p._id} className="p-4 transition hover:border-primary/40">
-                <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent-foreground">
-                        {p.category || "General Law"}
-                      </span>
-                      <h3 className="font-display text-base font-semibold">{p.title}</h3>
-                      {p.authorType === "admin" ? (
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary font-medium">
-                          Official
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      By <span className="font-medium text-foreground">{p.authorName || "Anonymous"}</span> •{" "}
-                      {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "Recent"}
-                    </p>
-
-                    <p className="text-sm text-foreground/80 line-clamp-3 whitespace-pre-wrap mt-1">
-                      {p.content}
-                    </p>
-
-                    {p.tags && p.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {p.tags.map((t) => (
-                          <span key={t} className="rounded bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
-                      <span className="flex items-center gap-1">
-                        <Heart className="size-3.5 text-rose-500" /> {p.likes || 0} Likes
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="size-3.5 text-primary" /> {p.commentsCount || 0} Comments
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => openEdit(p)} className="gap-1">
-                      <Edit3 className="size-3.5" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteId(p._id)}
-                      className="text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </Panel>
-            ))}
-          </div>
-        ) : null}
+        )}
       </div>
 
-      {/* Edit / Create Modal */}
-      <Dialog open={!!editPost} onOpenChange={(open) => !open && setEditPost(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{isNew ? "Create Law Post" : "Edit Post"}</DialogTitle>
-          </DialogHeader>
+      <StateBlock
+        loading={loading}
+        error={error}
+        empty={!loading && (viewTab === "posts" ? items.length === 0 : reports.length === 0)}
+        emptyText={viewTab === "posts" ? "No posts found." : "No moderation reports pending."}
+      />
 
-          {editPost ? (
-            <form onSubmit={handleSave} className="space-y-4 py-2">
-              <Field label="Post Title *">
-                <Input
-                  required
-                  value={editPost.title || ""}
-                  onChange={(e) => setEditPost({ ...editPost, title: e.target.value })}
-                  placeholder="e.g. SC grants interim relief on bail plea in PMLA case"
-                />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Category">
-                  <Input
-                    value={editPost.category || ""}
-                    onChange={(e) => setEditPost({ ...editPost, category: e.target.value })}
-                    placeholder="e.g. Constitution, Criminal Law"
-                  />
-                </Field>
-                <Field label="Author Name">
-                  <Input
-                    value={editPost.authorName || ""}
-                    onChange={(e) => setEditPost({ ...editPost, authorName: e.target.value })}
-                    placeholder="Rishikesh Yadav"
-                  />
-                </Field>
+      {/* Posts List */}
+      {!loading && viewTab === "posts" && items.length > 0 ? (
+        <Panel className="divide-y divide-border">
+          {items.map((p) => (
+            <div key={p._id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent-foreground">
+                    {p.category || "General Law"}
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">{p.authorName}</span>
+                  {p.authorType === "admin" && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      Official
+                    </span>
+                  )}
+                  {p.status === "hidden" && (
+                    <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive">
+                      Hidden
+                    </span>
+                  )}
+                </div>
+                <h3 className="mt-1 font-display text-base font-semibold">{p.title}</h3>
+                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.content}</p>
+                <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                  <span>{p.likes ?? 0} Likes</span>
+                  <span>{p.commentsCount ?? 0} Comments</span>
+                </div>
               </div>
-
-              <Field label="Content *">
-                <Textarea
-                  required
-                  rows={5}
-                  value={editPost.content || ""}
-                  onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
-                  placeholder="Write post content, legal analysis or discussion..."
-                />
-              </Field>
-
-              <Field label="Hashtags (comma-separated)">
-                <Input
-                  value={(editPost.tags || []).join(", ")}
-                  onChange={(e) =>
-                    setEditPost({
-                      ...editPost,
-                      tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
-                    })
-                  }
-                  placeholder="SupremeCourt, Bail, PMLA, Article21"
-                />
-              </Field>
-
-              <DialogFooter className="pt-3">
-                <Button type="button" variant="outline" onClick={() => setEditPost(null)}>
-                  Cancel
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={p.status === "hidden" ? "secondary" : "outline"}
+                  onClick={() => toggleHidePost(p._id, p.status || "published")}
+                >
+                  <EyeOff className="size-4 mr-1" />
+                  {p.status === "hidden" ? "Unhide" : "Hide"}
                 </Button>
-                <Button type="submit" disabled={saveBusy}>
-                  {saveBusy ? "Saving..." : isNew ? "Publish Post" : "Save Changes"}
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(p._id)}>
+                  <Trash2 className="size-4" />
                 </Button>
-              </DialogFooter>
-            </form>
-          ) : null}
+              </div>
+            </div>
+          ))}
+        </Panel>
+      ) : null}
+
+      {/* Reports Queue List */}
+      {!loading && viewTab === "reports" && reports.length > 0 ? (
+        <Panel className="divide-y divide-border">
+          {reports.map((r) => (
+            <div key={r._id} className="p-4 space-y-2 hover:bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                    Reported {r.targetType}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Reporter: {r.reporterId?.name || "User"}</span>
+                </div>
+                <span className="text-xs font-semibold uppercase">{r.status}</span>
+              </div>
+              <p className="text-sm font-medium text-foreground">Reason: "{r.reason}"</p>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={() => handleResolveReport(r._id, "hide_target")}
+                >
+                  Hide Content & Resolve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="text-xs"
+                  onClick={() => handleResolveReport(r._id, "delete_target")}
+                >
+                  Delete Content & Resolve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs"
+                  onClick={() => handleResolveReport(r._id, "dismiss")}
+                >
+                  Dismiss Report
+                </Button>
+              </div>
+            </div>
+          ))}
+        </Panel>
+      ) : null}
+
+      {/* Create Official Post Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Publish Official Law Hub Post</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Field label="Category">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="Supreme Court">Supreme Court</option>
+                <option value="Constitution">Constitution</option>
+                <option value="Criminal Law">Criminal Law</option>
+                <option value="Civil Law">Civil Law</option>
+                <option value="General Law">General Law</option>
+              </select>
+            </Field>
+            <Field label="Title / Subject *">
+              <Input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="e.g. Landmark Judgment on Article 21 & Bail"
+              />
+            </Field>
+            <Field label="Content *">
+              <Textarea
+                rows={5}
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                placeholder="Write official legal brief, updates or insights..."
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createOfficialPost} disabled={saving || !newTitle.trim() || !newContent.trim()}>
+              {saving ? "Publishing…" : "Publish Official Post"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      {/* Delete Confirmation Alert */}
+      <AlertDialog open={Boolean(deletingId)} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogTitle>Delete Community Post</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to permanently delete this post?
+              Are you sure you want to permanently delete this post and its comments?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

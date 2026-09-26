@@ -1,5 +1,5 @@
 name: law_app
-description: "Rishikesh Law Hub - Learn Law, Find Cases, Understand Justice"
+description: "Rishikesh Law Hub - Comprehensive Legal Research & Community App"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,12 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  flutter_bloc: ^9.1.0
-  equatable: ^2.0.7
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
   http: ^1.2.2
   shared_preferences: ^2.3.2
   intl: ^0.19.0
-  google_fonts: ^6.2.1
   url_launcher: ^6.3.0
   share_plus: ^10.0.0
 

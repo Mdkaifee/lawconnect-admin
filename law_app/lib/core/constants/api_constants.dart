@@ -1,29 +1,31 @@
 class ApiConstants {
-  static const String baseUrl = 'https://lawconnect-admin.onrender.com';
-  static const String defaultApiUrl = baseUrl;
+  // Default base URL pointing to the live Render backend or local dev
+  static const String baseUrl = 'https://lawconnect-admin.onrender.com/api';
+  
+  // Auth endpoints
+  static const String login = '$baseUrl/auth/login';
+  static const String register = '$baseUrl/auth/register';
+  static const String me = '$baseUrl/auth/me';
 
-  // Auth
-  static const String login = '/api/auth/login';
-  static const String register = '/api/auth/register';
-  static const String me = '/api/auth/me';
+  // Cases endpoints
+  static const String cases = '$baseUrl/cases';
+  static const String caseSearch = '$baseUrl/cases/search';
+  static const String caseDoc = '$baseUrl/cases/doc';
 
-  // Cases
-  static const String cases = '/api/cases';
+  // Acts endpoints
+  static const String acts = '$baseUrl/acts';
+  static const String actSectionSearch = '$baseUrl/acts/search/sections';
 
-  // Acts
-  static const String acts = '/api/acts';
-  static const String searchSections = '/api/acts/search/sections';
+  // Updates endpoints
+  static const String updates = '$baseUrl/updates';
 
-  // Updates
-  static const String updates = '/api/updates';
+  // Posts & Social endpoints
+  static const String posts = '$baseUrl/posts';
+  static const String users = '$baseUrl/users';
 
-  // Posts
-  static const String posts = '/api/posts';
-  static String likePost(String id) => '/api/posts/$id/like';
-
-  // Notes & Bookmarks & History
-  static const String notes = '/api/notes';
-  static const String bookmarks = '/api/bookmarks';
-  static const String history = '/api/history';
-  static const String categories = '/api/categories';
+  // Personal user data
+  static const String notes = '$baseUrl/notes';
+  static const String bookmarks = '$baseUrl/bookmarks';
+  static const String history = '$baseUrl/history';
+  static const String categories = '$baseUrl/categories';
 }

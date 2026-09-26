@@ -8,7 +8,8 @@ import caseRoutes from "./routes/cases.js";
 import actRoutes from "./routes/acts.js";
 import updateRoutes from "./routes/updates.js";
 import postRoutes from "./routes/posts.js";
-import { categories, notes, bookmarks, history, users, stats } from "./routes/misc.js";
+import { categories, notes, bookmarks, history, users, stats, reports } from "./routes/misc.js";
+import { sanitizeLogOutput } from "./utils/security.js";
 
 const app = express();
 
@@ -30,10 +31,11 @@ app.use("/api/bookmarks", bookmarks);
 app.use("/api/history", history);
 app.use("/api/users", users);
 app.use("/api/stats", stats);
+app.use("/api/reports", reports);
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
 app.use((err, _req, res, _next) => {
-  console.error(err);
+  console.error(sanitizeLogOutput(err?.stack || err?.message || err));
   res.status(err.status || 500).json({ error: err.message || "Server error" });
 });
 

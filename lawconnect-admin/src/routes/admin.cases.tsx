@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
+import { useAdminGuard } from "@/lib/useAdmin";
+import { api } from "@/lib/api";
+import type { LawCase } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -21,390 +25,277 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAdminGuard } from "@/lib/useAdmin";
-import { api } from "@/lib/api";
-import type { LawCase } from "@/lib/types";
-import { Plus, Search, Trash2, Edit3, ExternalLink } from "lucide-react";
+import { Plus, Search, Trash2, Edit } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/cases")({
-  component: CasesPage,
+  head: () => ({ meta: [{ title: "Cases & Judgments — Admin" }] }),
+  component: CasesAdmin,
 });
 
-const COURTS = ["All", "Supreme Court", "High Court", "District Court", "Tribunal"];
+const EMPTY: Partial<LawCase> = {
+  title: "",
+  citation: "",
+  year: new Date().getFullYear(),
+  court: "Supreme Court of India",
+  courtType: "Supreme Court",
+  bench: "",
+  petitioners: "",
+  respondents: "",
+  summary: "",
+  simpleExplanation: "",
+  judgmentPdfUrl: "",
+  published: true,
+};
 
-function CasesPage() {
+function CasesAdmin() {
   const ready = useAdminGuard();
-  const [cases, setCases] = useState<LawCase[]>([]);
+  const [items, setItems] = useState<LawCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
   const [courtFilter, setCourtFilter] = useState("All");
 
-  // Dialog states
-  const [editCase, setEditCase] = useState<Partial<LawCase> | null>(null);
-  const [isNew, setIsNew] = useState(false);
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Partial<LawCase> | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  async function loadCases() {
-    try {
-      setLoading(true);
-      setError(null);
-      const params = new URLSearchParams({ all: "true" });
-      if (search.trim()) params.set("q", search.trim());
-      if (courtFilter !== "All") params.set("court", courtFilter);
-      const res = await api<{ items: LawCase[]; total: number }>(`/api/cases?${params.toString()}`);
-      setCases(res.items || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load cases");
-    } finally {
-      setLoading(false);
-    }
+  function load() {
+    if (!ready) return;
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams({ all: "true" });
+    if (query) params.set("q", query);
+    if (courtFilter !== "All") params.set("court", courtFilter);
+
+    api<{ items: LawCase[] }>(`/api/cases?${params.toString()}`)
+      .then((res) => setItems(res.items))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    if (!ready) return;
-    loadCases();
+    load();
   }, [ready, courtFilter]);
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    loadCases();
-  }
-
-  function openCreate() {
-    setIsNew(true);
-    setEditCase({
-      title: "",
-      citation: "",
-      year: new Date().getFullYear(),
-      court: "Supreme Court of India",
-      courtType: "Supreme Court",
-      bench: "",
-      petitioners: "",
-      respondents: "",
-      tags: [],
-      summary: "",
-      simpleExplanation: "",
-      judgmentPdfUrl: "",
-      published: true,
-    });
-  }
-
-  function openEdit(c: LawCase) {
-    setIsNew(false);
-    setEditCase({ ...c });
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editCase || !editCase.title) return;
-    setSaveBusy(true);
+  async function save() {
+    if (!editing || !editing.title) return;
+    setSaving(true);
     try {
-      if (isNew) {
-        await api("/api/cases", { method: "POST", body: editCase });
+      if (editing._id) {
+        await api(`/api/cases/${editing._id}`, { method: "PUT", body: editing });
       } else {
-        await api(`/api/cases/${editCase._id}`, { method: "PUT", body: editCase });
+        await api("/api/cases", { method: "POST", body: editing });
       }
-      setEditCase(null);
-      await loadCases();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Save failed");
+      setEditing(null);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to save case");
     } finally {
-      setSaveBusy(false);
+      setSaving(false);
     }
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
+  async function confirmDelete() {
+    if (!deletingId) return;
     try {
-      await api(`/api/cases/${deleteId}`, { method: "DELETE" });
-      setDeleteId(null);
-      await loadCases();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed");
+      await api(`/api/cases/${deletingId}`, { method: "DELETE" });
+      setDeletingId(null);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to delete case");
     }
   }
 
   return (
     <AdminShell
       title="Cases & Judgments"
-      subtitle="Manage landmark judgments, rulings and legal precedents"
+      subtitle="Curate landmark rulings and link Indian Kanoon precedents"
       actions={
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="size-4" /> Add Case
+        <Button onClick={() => setEditing({ ...EMPTY })} className="gap-2">
+          <Plus className="size-4" /> Add Landmark Case
         </Button>
       }
     >
-      <div className="space-y-4">
-        {/* Filter Bar */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <form onSubmit={handleSearch} className="flex flex-1 gap-2 max-w-md">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search cases by title, citation, bench..."
-                className="pl-9"
-              />
-            </div>
-            <Button type="submit" variant="secondary">Search</Button>
-          </form>
-
-          <div className="flex gap-1.5 overflow-x-auto">
-            {COURTS.map((c) => (
-              <Button
-                key={c}
-                variant={courtFilter === c ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCourtFilter(c)}
-              >
-                {c}
-              </Button>
-            ))}
-          </div>
+      <div className="mb-4 flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by title, citation, or keywords..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+            className="pl-9"
+          />
         </div>
-
-        {/* Content State */}
-        <StateBlock
-          loading={loading}
-          error={error}
-          empty={!loading && cases.length === 0}
-          emptyText="No cases found matching your criteria."
-        />
-
-        {/* Table / List */}
-        {!loading && cases.length > 0 ? (
-          <div className="space-y-3">
-            {cases.map((c) => (
-              <Panel key={c._id} className="p-4 transition hover:border-primary/40">
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display text-base font-semibold">{c.title}</h3>
-                      <span className="rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
-                        {c.courtType || c.court}
-                      </span>
-                      {c.published === false ? (
-                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
-                          Draft
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      {[c.citation, c.year, c.court, c.bench ? `Bench: ${c.bench}` : null]
-                        .filter(Boolean)
-                        .join(" • ")}
-                    </p>
-
-                    {c.summary ? (
-                      <p className="text-sm text-foreground/80 line-clamp-2 mt-1">{c.summary}</p>
-                    ) : null}
-
-                    {c.tags && c.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {c.tags.map((t) => (
-                          <span key={t} className="rounded bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex items-center gap-2 self-end md:self-start shrink-0">
-                    {c.judgmentPdfUrl ? (
-                      <a
-                        href={c.judgmentPdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="View PDF"
-                      >
-                        <ExternalLink className="size-4" />
-                      </a>
-                    ) : null}
-                    <Button variant="outline" size="sm" onClick={() => openEdit(c)} className="gap-1">
-                      <Edit3 className="size-3.5" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteId(c._id)}
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </Panel>
-            ))}
-          </div>
-        ) : null}
+        <select
+          value={courtFilter}
+          onChange={(e) => setCourtFilter(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="All">All Courts</option>
+          <option value="Supreme Court">Supreme Court</option>
+          <option value="High Court">High Court</option>
+          <option value="District Court">District Court</option>
+          <option value="Tribunal">Tribunal</option>
+        </select>
+        <Button variant="outline" onClick={load}>
+          Search
+        </Button>
       </div>
 
-      {/* Edit / Create Dialog */}
-      <Dialog open={!!editCase} onOpenChange={(open) => !open && setEditCase(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{isNew ? "Add Landmark Case" : "Edit Case Details"}</DialogTitle>
-          </DialogHeader>
+      <StateBlock loading={loading} error={error} empty={!loading && items.length === 0} emptyText="No cases found." />
 
-          {editCase ? (
-            <form onSubmit={handleSave} className="space-y-4 py-2">
+      {!loading && items.length > 0 ? (
+        <Panel className="divide-y divide-border">
+          {items.map((c) => (
+            <div key={c._id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    {c.courtType || "Supreme Court"}
+                  </span>
+                  {c.year ? <span className="text-xs text-muted-foreground">{c.year}</span> : null}
+                  {!c.published ? (
+                    <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                      Draft
+                    </span>
+                  ) : null}
+                </div>
+                <h3 className="mt-1 font-display text-base font-semibold">{c.title}</h3>
+                {c.citation ? <p className="text-xs font-medium text-accent-foreground">{c.citation}</p> : null}
+                {c.summary ? (
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.summary}</p>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
+                  <Edit className="size-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(c._id)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </Panel>
+      ) : null}
+
+      {/* Edit / Create Dialog */}
+      <Dialog open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editing?._id ? "Edit Case" : "Add Landmark Case"}</DialogTitle>
+          </DialogHeader>
+          {editing ? (
+            <div className="space-y-4 py-2">
               <Field label="Case Title *">
                 <Input
-                  required
-                  value={editCase.title || ""}
-                  onChange={(e) => setEditCase({ ...editCase, title: e.target.value })}
+                  value={editing.title ?? ""}
+                  onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                   placeholder="e.g. Kesavananda Bharati v. State of Kerala"
                 />
               </Field>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Citation">
                   <Input
-                    value={editCase.citation || ""}
-                    onChange={(e) => setEditCase({ ...editCase, citation: e.target.value })}
-                    placeholder="(1973) 4 SCC 225"
+                    value={editing.citation ?? ""}
+                    onChange={(e) => setEditing({ ...editing, citation: e.target.value })}
+                    placeholder="e.g. (1973) 4 SCC 225"
                   />
                 </Field>
                 <Field label="Year">
                   <Input
                     type="number"
-                    value={editCase.year || ""}
-                    onChange={(e) => setEditCase({ ...editCase, year: Number(e.target.value) })}
-                    placeholder="1973"
+                    value={editing.year ?? ""}
+                    onChange={(e) => setEditing({ ...editing, year: Number(e.target.value) || undefined })}
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Court">
+                  <Input
+                    value={editing.court ?? ""}
+                    onChange={(e) => setEditing({ ...editing, court: e.target.value })}
+                    placeholder="e.g. Supreme Court of India"
                   />
                 </Field>
                 <Field label="Court Type">
                   <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    value={editCase.courtType || "Supreme Court"}
-                    onChange={(e) => setEditCase({ ...editCase, courtType: e.target.value })}
+                    value={editing.courtType ?? "Supreme Court"}
+                    onChange={(e) => setEditing({ ...editing, courtType: e.target.value })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="Supreme Court">Supreme Court</option>
                     <option value="High Court">High Court</option>
                     <option value="District Court">District Court</option>
                     <option value="Tribunal">Tribunal</option>
+                    <option value="Other">Other</option>
                   </select>
                 </Field>
               </div>
-
-              <Field label="Court Name">
+              <Field label="Bench / Judges">
                 <Input
-                  value={editCase.court || ""}
-                  onChange={(e) => setEditCase({ ...editCase, court: e.target.value })}
-                  placeholder="Supreme Court of India"
+                  value={editing.bench ?? ""}
+                  onChange={(e) => setEditing({ ...editing, bench: e.target.value })}
+                  placeholder="e.g. Chief Justice S.M. Sikri & 12 Judges"
                 />
               </Field>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Bench / Judges">
-                  <Input
-                    value={editCase.bench || ""}
-                    onChange={(e) => setEditCase({ ...editCase, bench: e.target.value })}
-                    placeholder="Chief Justice S.M. Sikri & Others"
-                  />
-                </Field>
-                <Field label="Tags (comma-separated)">
-                  <Input
-                    value={(editCase.tags || []).join(", ")}
-                    onChange={(e) =>
-                      setEditCase({
-                        ...editCase,
-                        tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
-                      })
-                    }
-                    placeholder="Constitution, Basic Structure, Article 368"
-                  />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Petitioners">
-                  <Input
-                    value={editCase.petitioners || ""}
-                    onChange={(e) => setEditCase({ ...editCase, petitioners: e.target.value })}
-                    placeholder="Kesavananda Bharati (And Others)"
-                  />
-                </Field>
-                <Field label="Respondents">
-                  <Input
-                    value={editCase.respondents || ""}
-                    onChange={(e) => setEditCase({ ...editCase, respondents: e.target.value })}
-                    placeholder="State of Kerala (And Others)"
-                  />
-                </Field>
-              </div>
-
-              <Field label="Case Summary">
+              <Field label="Executive Summary">
                 <Textarea
                   rows={3}
-                  value={editCase.summary || ""}
-                  onChange={(e) => setEditCase({ ...editCase, summary: e.target.value })}
-                  placeholder="Summary of judgment and principles established..."
+                  value={editing.summary ?? ""}
+                  onChange={(e) => setEditing({ ...editing, summary: e.target.value })}
+                  placeholder="Core facts, issues and ruling..."
                 />
               </Field>
-
-              <Field label="Simple Language Explanation">
+              <Field label="Simple Ratio / Student Breakdown">
                 <Textarea
                   rows={3}
-                  value={editCase.simpleExplanation || ""}
-                  onChange={(e) => setEditCase({ ...editCase, simpleExplanation: e.target.value })}
-                  placeholder="Easy-to-understand explanation for law students and citizens..."
+                  value={editing.simpleExplanation ?? ""}
+                  onChange={(e) => setEditing({ ...editing, simpleExplanation: e.target.value })}
+                  placeholder="Key principle explained in plain language..."
                 />
               </Field>
-
-              <Field label="Judgment PDF Document URL">
+              <Field label="Judgment Document / Court Copy URL">
                 <Input
-                  value={editCase.judgmentPdfUrl || ""}
-                  onChange={(e) => setEditCase({ ...editCase, judgmentPdfUrl: e.target.value })}
+                  value={editing.judgmentPdfUrl ?? ""}
+                  onChange={(e) => setEditing({ ...editing, judgmentPdfUrl: e.target.value })}
                   placeholder="https://..."
                 />
               </Field>
-
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="case-published"
-                  checked={editCase.published !== false}
-                  onChange={(e) => setEditCase({ ...editCase, published: e.target.checked })}
-                  className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm font-medium">Published in App</span>
+                <Switch
+                  checked={editing.published ?? true}
+                  onCheckedChange={(val) => setEditing({ ...editing, published: val })}
                 />
-                <label htmlFor="case-published" className="text-sm font-medium">
-                  Published in mobile app
-                </label>
               </div>
-
-              <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" onClick={() => setEditCase(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={saveBusy}>
-                  {saveBusy ? "Saving..." : isNew ? "Create Case" : "Save Changes"}
-                </Button>
-              </DialogFooter>
-            </form>
+            </div>
           ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={saving || !editing?.title}>
+              {saving ? "Saving…" : "Save Case"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      {/* Delete Confirmation Alert */}
+      <AlertDialog open={Boolean(deletingId)} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Case</AlertDialogTitle>
+            <AlertDialogTitle>Delete Landmark Case</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to permanently delete this case? This action cannot be undone.
+              Are you sure you want to delete this case? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

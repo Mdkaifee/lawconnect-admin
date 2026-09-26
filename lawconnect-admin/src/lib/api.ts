@@ -1,11 +1,23 @@
 const DEFAULT_API = "http://localhost:4000";
+const LOCAL_API_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i;
+
+function isProductionHost(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.hostname === "rishikesh-law-hub-admin.onrender.com";
+}
 
 export function getApiBase(): string {
+  const env = import.meta.env["VITE_API_URL"] as string | undefined;
   if (typeof window !== "undefined") {
     const stored = window.localStorage.getItem("lawhub_api_base");
-    if (stored) return stored.replace(/\/$/, "");
+    if (stored) {
+      const normalized = stored.replace(/\/$/, "");
+      if (!(isProductionHost() && LOCAL_API_PATTERN.test(normalized))) {
+        return normalized;
+      }
+      window.localStorage.removeItem("lawhub_api_base");
+    }
   }
-  const env = import.meta.env["VITE_API_URL"] as string | undefined;
   return (env || DEFAULT_API).replace(/\/$/, "");
 }
 

@@ -51,7 +51,6 @@ export function AdminShell({
 
   function confirmSignOut() {
     setToken(null);
-    setLogoutOpen(false);
     navigate({ to: "/", replace: true });
   }
 
@@ -76,7 +75,7 @@ export function AdminShell({
                 to={to}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                   active
-                    ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                    ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                 }`}
               >
@@ -87,30 +86,29 @@ export function AdminShell({
           })}
         </nav>
 
-        <div className="p-3">
-          <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
-            <AlertDialogTrigger asChild>
-              <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-destructive/10 hover:text-destructive">
-                <LogOut className="size-4" />
+        {/* Custom Radix Confirmation Logout Modal */}
+        <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+          <AlertDialogTrigger asChild>
+            <button className="m-3 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60 cursor-pointer">
+              <LogOut className="size-4" />
+              Log out
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to log out of the Rishikesh Law Hub admin panel?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Log out
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirm Log Out</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to log out of the Rishikesh Law Hub admin panel?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Log out
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -121,23 +119,17 @@ export function AdminShell({
           </div>
           <div className="flex items-center gap-2">{actions}</div>
         </header>
-        <div className="flex gap-2 overflow-x-auto border-b border-border bg-card px-4 py-2 md:hidden">
-          {NAV.map(({ to, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs transition-colors ${
-                pathname === to || (to !== "/admin" && pathname.startsWith(to))
-                  ? "bg-primary text-primary-foreground font-medium"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto border-b border-border bg-card px-4 py-2 md:hidden">
+          <div className="flex gap-2">
+            {NAV.map(({ to, label }) => (
+              <Link key={to} to={to} className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+                {label}
+              </Link>
+            ))}
+          </div>
           <button
             onClick={() => setLogoutOpen(true)}
-            className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+            className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-muted"
           >
             Log out
           </button>
