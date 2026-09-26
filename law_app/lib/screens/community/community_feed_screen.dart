@@ -335,6 +335,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreatePostDialog(context),
         backgroundColor: AppColors.primaryNavy,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Column(

@@ -85,7 +85,7 @@ class AboutUsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F1E36).withOpacity(0.2),
+                        color: const Color(0xFF0F1E36).withValues(alpha: 0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -153,7 +153,7 @@ class AboutUsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F1E36).withOpacity(0.18),
+                  color: const Color(0xFF0F1E36).withValues(alpha: 0.18),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),

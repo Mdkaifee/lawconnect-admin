@@ -85,6 +85,9 @@ class _NotesScreenState extends State<NotesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showEditNoteDialog(context),
         backgroundColor: AppColors.primaryNavy,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: const Icon(Icons.add, color: AppColors.goldAccent),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(

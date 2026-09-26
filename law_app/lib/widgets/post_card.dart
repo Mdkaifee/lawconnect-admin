@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/theme/app_theme.dart';
 import '../models/post_model.dart';
@@ -29,9 +30,20 @@ class PostCard extends StatelessWidget {
     this.isSelf = false,
   });
 
+  String _formatDateTime(String rawDate) {
+    if (rawDate.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(rawDate).toLocal();
+      return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+    } catch (_) {
+      return rawDate;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdminAuthor = post.authorType == 'admin';
+    final formattedTime = _formatDateTime(post.createdAt);
 
     return Card(
       elevation: 0,
@@ -94,9 +106,36 @@ class PostCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                      Text(
-                        post.category,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              post.category,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryNavy,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (formattedTime.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            const Text(
+                              '•',
+                              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                formattedTime,
+                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),

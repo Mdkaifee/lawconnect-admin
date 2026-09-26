@@ -6,6 +6,8 @@ class ApiConstants {
   static const String login = '$baseUrl/auth/login';
   static const String register = '$baseUrl/auth/register';
   static const String me = '$baseUrl/auth/me';
+  static const String follow = '$baseUrl/auth/follow';
+  static const String following = '$baseUrl/auth/following';
 
   // Cases endpoints
   static const String cases = '$baseUrl/cases';
@@ -29,4 +31,3 @@ class ApiConstants {
   static const String history = '$baseUrl/history';
   static const String categories = '$baseUrl/categories';
 }
-

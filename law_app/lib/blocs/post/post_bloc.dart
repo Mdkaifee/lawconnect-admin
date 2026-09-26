@@ -14,11 +14,21 @@ class LoadPostsEvent extends PostEvent {
   final String? category;
   final String? query;
   final bool mine;
+  final bool following;
   final int page;
   final bool isNewLoad;
-  const LoadPostsEvent({this.category, this.query, this.mine = false, this.page = 1, this.isNewLoad = true});
+
+  const LoadPostsEvent({
+    this.category,
+    this.query,
+    this.mine = false,
+    this.following = false,
+    this.page = 1,
+    this.isNewLoad = true,
+  });
+
   @override
-  List<Object?> get props => [category, query, mine, page, isNewLoad];
+  List<Object?> get props => [category, query, mine, following, page, isNewLoad];
 }
 
 class CreatePostEvent extends PostEvent {
@@ -121,7 +131,13 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   Future<void> _onLoadPosts(LoadPostsEvent event, Emitter<PostState> emit) async {
     if (event.isNewLoad) emit(PostLoading());
     try {
-      final result = await _postRepository.getPosts(category: event.category, query: event.query, mine: event.mine, page: event.page);
+      final result = await _postRepository.getPosts(
+        category: event.category,
+        query: event.query,
+        mine: event.mine,
+        following: event.following,
+        page: event.page,
+      );
       final combinedPosts = !event.isNewLoad && state is PostLoaded
           ? [...(state as PostLoaded).posts, ...result.items]
           : result.items;
@@ -257,4 +273,3 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     }
   }
 }
-

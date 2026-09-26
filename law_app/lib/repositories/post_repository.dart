@@ -41,18 +41,31 @@ class PostRepository {
       : _authRepo = authRepo,
         _client = client ?? http.Client();
 
-  Future<PostPageResult> getPosts({String? category, String? query, bool mine = false, int page = 1, int limit = 25}) async {
-    final queryParams = {
-      if (category != null && category != 'All' && category != 'Feed') 'category': category,
+  Future<PostPageResult> getPosts({
+    String? category,
+    String? query,
+    bool mine = false,
+    bool following = false,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    final queryParams = <String, String>{
+      if (category != null && category != 'All' && category != 'Feed' && category != 'Following') 'category': category,
       if (query != null && query.isNotEmpty) 'q': query.trim(),
-      if (mine && _authRepo.currentUser != null) 'scope': 'mine',
-      if (mine && _authRepo.currentUser != null) 'authorId': _authRepo.currentUser!.id,
+      if (mine && _authRepo.currentUser != null) ...{
+        'scope': 'mine',
+        'authorId': _authRepo.currentUser!.id,
+      },
+      if (following && _authRepo.currentUser != null) 'scope': 'following',
       'page': page.toString(),
       'limit': limit.toString(),
     };
 
     final uri = Uri.parse(ApiConstants.posts).replace(queryParameters: queryParams);
-    final response = await _client.get(uri);
+    final response = await _client.get(
+      uri,
+      headers: _authRepo.authHeaders,
+    );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = jsonDecode(response.body);
@@ -68,6 +81,46 @@ class PostRepository {
     } else {
       throw Exception('Failed to load posts: ${response.statusCode}');
     }
+  }
+
+  Future<Map<String, dynamic>> toggleFollowAuthor(String authorId) async {
+    final response = await _client.post(
+      Uri.parse('${ApiConstants.follow}/$authorId'),
+      headers: _authRepo.authHeaders,
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+      return {
+        'ok': data['ok'] == true,
+        'isFollowing': data['isFollowing'] == true,
+        'message': data['message']?.toString() ?? '',
+        'following': (data['following'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      };
+    } else {
+      try {
+        final err = jsonDecode(response.body);
+        throw Exception(err['error'] ?? 'Failed to follow/unfollow author');
+      } catch (e) {
+        if (e is Exception) rethrow;
+        throw Exception('Failed to follow/unfollow author');
+      }
+    }
+  }
+
+  Future<List<String>> getFollowingAuthors() async {
+    try {
+      final response = await _client.get(
+        Uri.parse(ApiConstants.following),
+        headers: _authRepo.authHeaders,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        return (data['following'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      }
+    } catch (_) {}
+    return [];
   }
 
   Future<PostModel> createPost({
@@ -163,4 +216,3 @@ class PostRepository {
     }
   }
 }
-
