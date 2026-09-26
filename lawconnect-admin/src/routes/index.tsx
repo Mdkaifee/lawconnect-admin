@@ -9,7 +9,7 @@ import { api, getToken, setToken } from "@/lib/api";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Admin Login — Rishikesh Law Hub" },
+      { title: "Rishikesh Law Hub" },
       { name: "description", content: "Owner login for the Rishikesh Law Hub admin panel: manage cases, acts, legal updates and posts." },
       { property: "og:title", content: "Admin Login — Rishikesh Law Hub" },
       { property: "og:description", content: "Owner login for the Rishikesh Law Hub admin panel." },
