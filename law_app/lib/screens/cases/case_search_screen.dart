@@ -121,7 +121,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
         iconTheme: const IconThemeData(color: AppColors.primaryNavy),
         leading: IconButton(
           color: AppColors.primaryNavy,
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const MainNavigationScreen(initialIndex: 0)),

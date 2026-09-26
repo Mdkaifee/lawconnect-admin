@@ -25,7 +25,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('Reading History'),

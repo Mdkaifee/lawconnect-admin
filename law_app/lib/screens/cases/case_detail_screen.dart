@@ -202,6 +202,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                     shadowColor: Colors.transparent,
                     foregroundColor: AppColors.primaryNavy,
                     iconTheme: const IconThemeData(color: AppColors.primaryNavy),
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
                     title: const Text('Case Details', style: TextStyle(color: AppColors.primaryNavy, fontSize: 16, fontWeight: FontWeight.w700)),
                     pinned: true,
                     expandedHeight: 0,

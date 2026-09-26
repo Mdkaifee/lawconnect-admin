@@ -61,6 +61,10 @@ class _ActsListScreenState extends State<ActsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Bare Acts & Codes'),
         actions: [
           IconButton(

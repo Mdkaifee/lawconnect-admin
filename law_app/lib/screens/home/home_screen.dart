@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
@@ -10,9 +11,14 @@ import '../cases/case_search_screen.dart';
 import '../cases/case_detail_screen.dart';
 import '../acts/act_detail_screen.dart';
 import '../acts/acts_list_screen.dart';
-import '../updates/updates_screen.dart';
-import '../profile/profile_screen.dart';
+import '../community/community_feed_screen.dart';
+import '../profile/about_us_screen.dart';
+import '../profile/bookmarks_screen.dart';
+import '../profile/history_screen.dart';
+import '../profile/notes_screen.dart';
+import '../profile/settings_screen.dart';
 import '../../widgets/case_card.dart';
+import '../../widgets/custom_confirmation_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,23 +45,247 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _openGmailSupport(BuildContext context) async {
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: 'rishikesh4287@gmail.com',
+    );
+
+    try {
+      final launched = await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        await launchUrl(emailUri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contact support: rishikesh4287@gmail.com'),
+            backgroundColor: Color(0xFF0F1E36),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildDrawerMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+          leading: Icon(icon, color: const Color(0xFF0F1E36), size: 22),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F1E36),
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+          onTap: onTap,
+        ),
+        const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 20, endIndent: 20),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       drawer: Drawer(
+        backgroundColor: Colors.white,
         child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const DrawerHeader(
-                decoration: BoxDecoration(color: AppColors.primaryNavy),
-                child: Align(alignment: Alignment.bottomLeft, child: Text('Rishikesh Law Hub', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800))),
-              ),
-              ListTile(leading: const Icon(Icons.menu_book_rounded), title: const Text('Acts & Sections'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ActsListScreen())); }),
-              ListTile(leading: const Icon(Icons.newspaper_rounded), title: const Text('Legal Updates'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const UpdatesScreen())); }),
-              ListTile(leading: const Icon(Icons.person_rounded), title: const Text('Profile'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())); }),
-            ],
+          child: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              final user = state is Authenticated ? state.user : null;
+              final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
+              final college = user?.college ?? 'Galgotias University';
+
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    // Top Profile Header Row (Avatar + Name + Subtitle)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Circular Profile Avatar
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF0F1E36),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                            ),
+                            child: Center(
+                              child: Text(
+                                userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          // Name & Subtitle
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userName,
+                                  style: const TextStyle(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F1E36),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'Law Student | Future Advocate',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                                Text(
+                                  college,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+                    // Menu Items List (matching exact profile screen)
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.bookmark_border_rounded,
+                      title: 'My Posts',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CommunityFeedScreen(showBackButton: true)),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.assignment_outlined,
+                      title: 'My Notes',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const NotesScreen(showBackButton: true)),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.bookmark_outline_rounded,
+                      title: 'Bookmarks',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const BookmarksScreen(showBackButton: true)),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.history_rounded,
+                      title: 'Reading History',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.settings_outlined,
+                      title: 'Settings',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.help_outline_rounded,
+                      title: 'Help & Support',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openGmailSupport(context);
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.info_outline_rounded,
+                      title: 'About Us',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AboutUsScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.logout_rounded,
+                      title: 'Log Out',
+                      onTap: () {
+                        Navigator.pop(context);
+                        CustomConfirmationDialog.show(
+                          context,
+                          title: 'Confirm Sign Out',
+                          message: 'Are you sure you want to log out of Rishikesh Law Hub?',
+                          confirmText: 'Log Out',
+                          cancelText: 'Cancel',
+                          icon: Icons.logout_rounded,
+                          iconColor: const Color(0xFFEF4444),
+                          onConfirm: () {
+                            context.read<AuthBloc>().add(LogoutEvent());
+                          },
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -63,9 +293,11 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.backgroundLight,
         foregroundColor: AppColors.primaryNavy,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.primaryNavy),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: AppColors.primaryNavy),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
         ),
         title: Row(
           children: [
@@ -84,10 +316,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primaryNavy),
-              onPressed: () {},
-            ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primaryNavy),
+            onPressed: () {},
+          ),
         ],
       ),
       body: RefreshIndicator(
