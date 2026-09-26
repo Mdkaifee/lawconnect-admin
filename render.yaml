@@ -19,7 +19,7 @@ services:
     name: rishikesh-law-hub-admin
     runtime: node
     rootDir: lawconnect-admin
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: VITE_API_URL
