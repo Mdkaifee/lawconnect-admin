@@ -1,238 +1,241 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/date_formatter.dart';
 import '../models/post_model.dart';
 
 class PostCard extends StatelessWidget {
   final PostModel post;
   final VoidCallback onLike;
   final VoidCallback onComment;
-  final VoidCallback onReport;
+  final VoidCallback? onBookmark;
+  final VoidCallback? onTap;
+  final bool isBookmarked;
 
   const PostCard({
     super.key,
     required this.post,
     required this.onLike,
     required this.onComment,
-    required this.onReport,
+    this.onBookmark,
+    this.onTap,
+    this.isBookmarked = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isAdminAuthor = post.authorType == 'admin';
+    final timeStr = DateFormatter.timeAgo(post.createdAt);
+    final subtitleText = '$timeStr • ${post.category}';
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.borderLight, width: 1),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Author header
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: isAdminAuthor ? AppColors.goldAccent : AppColors.primaryNavy,
-                  child: Text(
-                    post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'A',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+      child: InkWell(
+        onTap: onTap ?? onComment,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Avatar + User info + Chevron Right
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF0F1E36),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                    ),
+                    child: Center(
+                      child: Text(
+                        post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'R',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              post.authorName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primaryNavy,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.authorName.isNotEmpty ? post.authorName : 'Rishikesh Yadav',
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F1E36),
                           ),
-                          if (isAdminAuthor) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.goldAccent.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Verified Hub',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.goldAccent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      Text(
-                        post.category,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                      ),
-                    ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitleText,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 20,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Post Title
+              Text(
+                post.title,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F1E36),
+                  height: 1.3,
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onSelected: (val) {
-                    if (val == 'report') onReport();
-                    if (val == 'share') {
-                      Share.share('${post.title}\n\n${post.content}\n\n- Shared from Rishikesh Law Hub');
-                    }
-                  },
-                  itemBuilder: (ctx) => [
-                    const PopupMenuItem(
-                      value: 'share',
-                      child: Row(
-                        children: [
-                          Icon(Icons.share_outlined, size: 18, color: AppColors.primaryNavy),
-                          SizedBox(width: 8),
-                          Text('Share Post'),
-                        ],
+              ),
+
+              // Tags (shown above excerpt if tags exist)
+              if (post.tags.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: post.tags.map((tag) {
+                    final cleanTag = tag.startsWith('#') ? tag : '#$tag';
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'report',
-                      child: Row(
-                        children: [
-                          Icon(Icons.flag_outlined, size: 18, color: AppColors.danger),
-                          SizedBox(width: 8),
-                          Text('Report Content', style: TextStyle(color: AppColors.danger)),
-                        ],
+                      child: Text(
+                        cleanTag,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D4ED8),
+                        ),
                       ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
 
-            // Post Title & Content
-            Text(
-              post.title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primaryNavy,
-                height: 1.3,
+              // Post Content / Excerpt
+              const SizedBox(height: 8),
+              Text(
+                post.content,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF334155),
+                  height: 1.45,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              post.content,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-                height: 1.45,
-              ),
-            ),
-            if (post.tags.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: post.tags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.borderLight),
+              const SizedBox(height: 12),
+
+              // Bottom Actions Row (Likes, Comments, Bookmark)
+              Row(
+                children: [
+                  // Like
+                  InkWell(
+                    onTap: onLike,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.favorite,
+                            size: 17,
+                            color: const Color(0xFFEF4444),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${post.likesCount}',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Text(
-                      '#$tag',
-                      style: const TextStyle(fontSize: 11, color: AppColors.primaryNavyLight, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(width: 14),
+
+                  // Comment
+                  InkWell(
+                    onTap: onComment,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 16,
+                            color: Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${post.commentsCount}',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }).toList(),
+                  ),
+
+                  const Spacer(),
+
+                  // Bookmark
+                  InkWell(
+                    onTap: onBookmark,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                        size: 20,
+                        color: const Color(0xFF0F1E36),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 14),
-
-            // Action Buttons Row (Like, Comment, Share)
-            const Divider(height: 1, color: AppColors.borderLight),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                InkWell(
-                  onTap: onLike,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    child: Row(
-                      children: [
-                        Icon(
-                          post.isLiked ? Icons.favorite : Icons.favorite_border,
-                          size: 19,
-                          color: post.isLiked ? AppColors.danger : AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${post.likesCount}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: post.isLiked ? AppColors.danger : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                InkWell(
-                  onTap: onComment,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.textSecondary),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${post.commentsCount}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, size: 18, color: AppColors.textSecondary),
-                  onPressed: () {
-                    Share.share('${post.title}\n\n${post.content}\n\n- Shared from Rishikesh Law Hub');
-                  },
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
-
