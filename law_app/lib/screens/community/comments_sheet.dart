@@ -96,7 +96,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
       final postRepo = RepositoryProvider.of<PostRepository>(context);
       final comment = await postRepo.addComment(widget.postId, text);
       if (mounted) {
-        context.read<PostBloc>().add(AddCommentEvent(postId: widget.postId, content: text));
+        // The comment was already persisted above. Only update the feed count;
+        // dispatching AddCommentEvent here would POST the same comment again.
+        context.read<PostBloc>().add(CommentAddedLocallyEvent(widget.postId));
         setState(() {
           _comments.add(comment);
           _commentController.clear();

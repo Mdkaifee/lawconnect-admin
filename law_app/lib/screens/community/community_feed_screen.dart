@@ -245,19 +245,22 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     return const Center(child: Text('No community posts in this category.'));
                   }
 
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.only(top: 8, bottom: 80),
-                    itemCount: state.posts.length + (state.hasMore ? 1 : 0),
-                    itemBuilder: (context, idx) {
+                  return RefreshIndicator(
+                    onRefresh: () async => _fetchPosts(),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(top: 8, bottom: 80),
+                      itemCount: state.posts.length + (state.hasMore ? 1 : 0),
+                      itemBuilder: (context, idx) {
                       if (idx == state.posts.length) {
                         return const Padding(
                           padding: EdgeInsets.all(16),
                           child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
                         );
                       }
-                      final post = state.posts[idx];
-                      return PostCard(
+                        final post = state.posts[idx];
+                        return PostCard(
                         post: post,
                         onLike: () {
                           context.read<PostBloc>().add(ToggleLikePostEvent(post.id));
@@ -266,8 +269,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                           CommentsSheet.show(context, postId: post.id, postTitle: post.title);
                         },
                         onReport: () => _showReportDialog(context, post.id),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   );
                 }
 

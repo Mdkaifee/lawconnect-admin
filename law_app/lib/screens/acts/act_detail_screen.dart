@@ -122,6 +122,10 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                           itemCount: filteredSections.length,
                           itemBuilder: (context, idx) {
                             final s = filteredSections[idx];
+                            final refId = '${act.id}_${s.number}';
+                            final userState = context.watch<UserDataBloc>().state;
+                            final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(refId);
+                            final isBookmarkBusy = _bookmarkBusy.contains(refId);
                             return Card(
                               elevation: 0,
                               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -213,23 +217,41 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             ElevatedButton.icon(
-                                              icon: _bookmarkBusy.contains('${act.id}_${s.number}')
+                                              icon: isBookmarkBusy
                                                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                                  : const Icon(Icons.bookmark_border, size: 16),
-                                              label: const Text('Bookmark'),
+                                                  : Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, size: 16),
+                                              label: Text(isBookmarked ? 'Bookmarked' : 'Bookmark'),
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppColors.primaryNavy,
+                                                backgroundColor: isBookmarked
+                                                    ? AppColors.goldAccent.withValues(alpha: 0.22)
+                                                    : AppColors.primaryNavy,
+                                                foregroundColor: isBookmarked ? AppColors.primaryNavy : Colors.white,
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                               ),
-                                              onPressed: _bookmarkBusy.contains('${act.id}_${s.number}') ? null : () async {
-                                                final refId = '${act.id}_${s.number}';
+                                              onPressed: isBookmarkBusy ? null : () async {
                                                 setState(() => _bookmarkBusy.add(refId));
                                                 try {
-                                                  await context.read<UserDataRepository>().addBookmark(
-                                                    refType: 'section', refId: refId,
-                                                    title: '${act.shortName} - ${s.number}', subtitle: s.title,
-                                                  );
+                                                  final repository = context.read<UserDataRepository>();
+                                                  if (isBookmarked) {
+                                                    await repository.removeBookmark(refId);
+                                                  } else {
+                                                    await repository.addBookmark(
+                                                      refType: 'section', refId: refId,
+                                                      title: '${act.shortName} - ${s.number}', subtitle: s.title,
+                                                    );
+                                                  }
                                                   if (mounted) context.read<UserDataBloc>().add(LoadUserDataEvent());
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text(isBookmarked ? 'Removed from bookmarks' : 'Bookmarked successfully')),
+                                                    );
+                                                  }
+                                                } catch (_) {
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('Could not update bookmark')),
+                                                    );
+                                                  }
                                                 } finally {
                                                   if (mounted) setState(() => _bookmarkBusy.remove(refId));
                                                 }

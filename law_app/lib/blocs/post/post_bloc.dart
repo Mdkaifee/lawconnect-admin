@@ -52,6 +52,13 @@ class AddCommentEvent extends PostEvent {
   List<Object?> get props => [postId, content];
 }
 
+class CommentAddedLocallyEvent extends PostEvent {
+  final String postId;
+  const CommentAddedLocallyEvent(this.postId);
+  @override
+  List<Object?> get props => [postId];
+}
+
 class ReportPostEvent extends PostEvent {
   final String postId;
   final String reason;
@@ -106,6 +113,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<CreatePostEvent>(_onCreatePost);
     on<ToggleLikePostEvent>(_onToggleLike);
     on<AddCommentEvent>(_onAddComment);
+    on<CommentAddedLocallyEvent>(_onCommentAddedLocally);
     on<ReportPostEvent>(_onReportPost);
   }
 
@@ -223,6 +231,21 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     } catch (e) {
       emit(PostError(e.toString().replaceAll('Exception: ', '')));
     }
+  }
+
+  void _onCommentAddedLocally(CommentAddedLocallyEvent event, Emitter<PostState> emit) {
+    final currentState = state;
+    if (currentState is! PostLoaded) return;
+    emit(PostLoaded(
+      currentState.posts.map((post) {
+        if (post.id != event.postId) return post;
+        return post.copyWith(commentsCount: post.commentsCount + 1);
+      }).toList(),
+      selectedCategory: currentState.selectedCategory,
+      page: currentState.page,
+      total: currentState.total,
+      hasMore: currentState.hasMore,
+    ));
   }
 
   Future<void> _onReportPost(ReportPostEvent event, Emitter<PostState> emit) async {

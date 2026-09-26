@@ -24,6 +24,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
   String _selectedCourt = 'All';
   int? _selectedYear;
   final Set<String> _loadingBookmarks = {};
+  final Map<String, bool> _bookmarkOverrides = {};
 
   final List<String> _courtFilters = ['All', 'Supreme Court', 'High Court'];
 
@@ -292,7 +293,8 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                       final item = state.items[idx];
                       return BlocBuilder<UserDataBloc, UserDataState>(
                         builder: (context, userState) {
-                          final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(item.id);
+                          final serverBookmarked = userState is UserDataLoaded && userState.isBookmarked(item.id);
+                          final isBookmarked = _bookmarkOverrides[item.id] ?? serverBookmarked;
                           final isBookmarkLoading = _loadingBookmarks.contains(item.id);
 
                           return CaseCard(
@@ -316,6 +318,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                                         );
                                       }
                                       if (mounted) {
+                                        setState(() => _bookmarkOverrides[item.id] = !isBookmarked);
                                         context.read<UserDataBloc>().add(LoadUserDataEvent());
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
@@ -356,4 +359,3 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
     );
   }
 }
-

@@ -153,30 +153,45 @@ class CaseCard extends StatelessWidget {
               // Footer
               Row(
                 children: [
-                  if (caseItem.dateOfJudgment != null && caseItem.dateOfJudgment!.isNotEmpty) ...[
-                    const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMuted),
-                    const SizedBox(width: 4),
-                    Text(
-                      caseItem.dateOfJudgment!,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (caseItem.dateOfJudgment != null && caseItem.dateOfJudgment!.isNotEmpty) ...[
+                          const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              caseItem.dateOfJudgment!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        if (caseItem.hasCourtCopy) ...[
+                          const Icon(Icons.picture_as_pdf_outlined, size: 13, color: AppColors.success),
+                          const SizedBox(width: 4),
+                          const Flexible(
+                            child: Text(
+                              'Court Copy Available',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                  ],
-                  if (caseItem.hasCourtCopy) ...[
-                    const Icon(Icons.picture_as_pdf_outlined, size: 13, color: AppColors.success),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'Court Copy Available',
-                      style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                  const Spacer(),
-                  const Text(
-                    'Read Full Judgment',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryNavy,
+                  ),
+                  const SizedBox(width: 8),
+                  const Flexible(
+                    child: Text(
+                      'Read Full Judgment',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryNavy),
                     ),
                   ),
                   const SizedBox(width: 2),

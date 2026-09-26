@@ -170,20 +170,24 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                     return const Center(child: Text('No legal updates found.'));
                   }
 
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: state.updates.length + (state.hasMore ? 1 : 0),
-                    itemBuilder: (context, idx) {
+                  return RefreshIndicator(
+                    onRefresh: () async => _fetchUpdates(),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: state.updates.length + (state.hasMore ? 1 : 0),
+                      itemBuilder: (context, idx) {
                       if (idx == state.updates.length) {
                         return const Padding(
                           padding: EdgeInsets.all(16),
                           child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
                         );
                       }
-                      final u = state.updates[idx];
-                      return _buildUpdateCard(u);
-                    },
+                        final u = state.updates[idx];
+                        return _buildUpdateCard(u);
+                      },
+                    ),
                   );
                 }
 
@@ -223,11 +227,15 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  u.source,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                Expanded(
+                  child: Text(
+                    u.source,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (u.verificationStatus == 'verified') ...[
                   const Icon(Icons.verified, size: 15, color: AppColors.success),
                   const SizedBox(width: 4),

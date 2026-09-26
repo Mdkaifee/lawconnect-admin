@@ -153,29 +153,33 @@ class _ActsListScreenState extends State<ActsListScreen> {
                     );
                   }
 
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    itemCount: state.acts.length + (state.hasMore ? 1 : 0),
-                    itemBuilder: (context, idx) {
+                  return RefreshIndicator(
+                    onRefresh: () async => _fetchActs(),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      itemCount: state.acts.length + (state.hasMore ? 1 : 0),
+                      itemBuilder: (context, idx) {
                       if (idx == state.acts.length) {
                         return const Padding(
                           padding: EdgeInsets.all(16),
                           child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
                         );
                       }
-                      final act = state.acts[idx];
-                      return ActCard(
+                        final act = state.acts[idx];
+                        return ActCard(
                         act: act,
-                        onTap: () {
-                          Navigator.of(context).push(
+                          onTap: () {
+                            Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => ActDetailScreen(actId: act.id, actName: act.name),
                             ),
-                          );
-                        },
-                      );
-                    },
+                            ).then((_) => _fetchActs());
+                          },
+                        );
+                      },
+                    ),
                   );
                 }
 
