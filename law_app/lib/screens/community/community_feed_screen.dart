@@ -336,7 +336,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         onPressed: () => _showCreatePostDialog(context),
         backgroundColor: AppColors.primaryNavy,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(999),
         ),
         child: const Icon(Icons.add, color: Colors.white),
       ),
