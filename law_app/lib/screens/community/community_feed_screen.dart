@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
+import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/post_card.dart';
+import '../../repositories/user_data_repository.dart';
 import 'comments_sheet.dart';
 
 class CommunityFeedScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
   final List<String> _categories = ['All', 'My Posts', 'Following'];
+  final Set<String> _bookmarkBusyPostIds = {};
 
   @override
   void initState() {
@@ -33,8 +36,38 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
   void _fetchPosts() {
     context.read<PostBloc>().add(
-          LoadPostsEvent(category: _selectedCategory == 'All' ? null : _selectedCategory),
+          LoadPostsEvent(mine: _selectedCategory == 'My Posts'),
         );
+  }
+
+  Future<void> _togglePostBookmark(post, bool isBookmarked) async {
+    if (_bookmarkBusyPostIds.contains(post.id)) return;
+    setState(() => _bookmarkBusyPostIds.add(post.id));
+    try {
+      final repository = context.read<UserDataRepository>();
+      if (isBookmarked) {
+        await repository.removeBookmark(post.id);
+      } else {
+        await repository.addBookmark(
+          refType: 'post',
+          refId: post.id,
+          title: post.title,
+          subtitle: post.category,
+        );
+      }
+      if (mounted) {
+        context.read<UserDataBloc>().add(LoadUserDataEvent());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isBookmarked ? 'Post removed from bookmarks' : 'Post bookmarked')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to update bookmark')));
+      }
+    } finally {
+      if (mounted) setState(() => _bookmarkBusyPostIds.remove(post.id));
+    }
   }
 
   void _onScroll() {
@@ -43,7 +76,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     if (state is PostLoaded && state.hasMore) {
       context.read<PostBloc>().add(
             LoadPostsEvent(
-              category: _selectedCategory == 'All' ? null : _selectedCategory,
+              category: null,
+              mine: _selectedCategory == 'My Posts',
               page: state.page + 1,
               isNewLoad: false,
             ),
@@ -271,15 +305,19 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         );
                       }
                         final post = state.posts[idx];
-                        return PostCard(
-                        post: post,
-                        onLike: () {
-                          context.read<PostBloc>().add(ToggleLikePostEvent(post.id));
-                        },
-                        onComment: () {
-                          CommentsSheet.show(context, postId: post.id, postTitle: post.title);
-                        },
-                        onReport: () => _showReportDialog(context, post.id),
+                        return BlocBuilder<UserDataBloc, UserDataState>(
+                          builder: (context, userState) {
+                            final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(post.id);
+                            return PostCard(
+                              post: post,
+                              isBookmarked: isBookmarked,
+                              bookmarkBusy: _bookmarkBusyPostIds.contains(post.id),
+                              onBookmark: () => _togglePostBookmark(post, isBookmarked),
+                              onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(post.id)),
+                              onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
+                              onReport: () => _showReportDialog(context, post.id),
+                            );
+                          },
                         );
                       },
                     ),

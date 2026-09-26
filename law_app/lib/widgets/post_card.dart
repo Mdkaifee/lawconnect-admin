@@ -8,6 +8,9 @@ class PostCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onReport;
+  final VoidCallback onBookmark;
+  final bool isBookmarked;
+  final bool bookmarkBusy;
 
   const PostCard({
     super.key,
@@ -15,6 +18,9 @@ class PostCard extends StatelessWidget {
     required this.onLike,
     required this.onComment,
     required this.onReport,
+    required this.onBookmark,
+    this.isBookmarked = false,
+    this.bookmarkBusy = false,
   });
 
   @override
@@ -221,9 +227,19 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Icon(Icons.bookmark_border_rounded, size: 20, color: AppColors.primaryNavy),
+                InkWell(
+                  onTap: bookmarkBusy ? null : onBookmark,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: bookmarkBusy
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryNavy))
+                        : Icon(
+                            isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                            size: 20,
+                            color: isBookmarked ? AppColors.goldAccent : AppColors.primaryNavy,
+                          ),
+                  ),
                 ),
               ],
             ),

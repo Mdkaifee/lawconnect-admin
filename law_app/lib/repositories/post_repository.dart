@@ -41,10 +41,12 @@ class PostRepository {
       : _authRepo = authRepo,
         _client = client ?? http.Client();
 
-  Future<PostPageResult> getPosts({String? category, String? query, int page = 1, int limit = 25}) async {
+  Future<PostPageResult> getPosts({String? category, String? query, bool mine = false, int page = 1, int limit = 25}) async {
     final queryParams = {
       if (category != null && category != 'All' && category != 'Feed') 'category': category,
       if (query != null && query.isNotEmpty) 'q': query.trim(),
+      if (mine && _authRepo.currentUser != null) 'scope': 'mine',
+      if (mine && _authRepo.currentUser != null) 'authorId': _authRepo.currentUser!.id,
       'page': page.toString(),
       'limit': limit.toString(),
     };
