@@ -8,7 +8,7 @@ const router = Router();
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const { court, category, q, limit = 50, all } = req.query;
+    const { court, category, q, page = 1, limit = 20, all } = req.query;
     const filter = {};
     if (!all) filter.published = true;
     if (court && court !== "Latest" && court !== "All") filter.court = court;
@@ -17,8 +17,15 @@ router.get(
       const rx = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
       filter.$or = [{ title: rx }, { summary: rx }, { body: rx }, { source: rx }];
     }
-    const items = await LegalUpdate.find(filter).sort({ publishedAt: -1 }).limit(Number(limit));
-    res.json({ items, total: items.length });
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [items, total] = await Promise.all([
+      LegalUpdate.find(filter).sort({ publishedAt: -1 }).skip(skip).limit(limitNum),
+      LegalUpdate.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 

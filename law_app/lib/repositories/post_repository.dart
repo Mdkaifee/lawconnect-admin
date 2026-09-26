@@ -5,6 +5,34 @@ import '../models/post_model.dart';
 import '../models/comment_model.dart';
 import 'auth_repository.dart';
 
+class PostPageResult {
+  final List<PostModel> items;
+  final int total;
+  final int page;
+  final int limit;
+
+  const PostPageResult({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.limit,
+  });
+}
+
+class CommentPageResult {
+  final List<CommentModel> items;
+  final int total;
+  final int page;
+  final int limit;
+
+  const CommentPageResult({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.limit,
+  });
+}
+
 class PostRepository {
   final http.Client _client;
   final AuthRepository _authRepo;
@@ -13,12 +41,12 @@ class PostRepository {
       : _authRepo = authRepo,
         _client = client ?? http.Client();
 
-  Future<List<PostModel>> getPosts({String? category, String? query, int page = 1}) async {
+  Future<PostPageResult> getPosts({String? category, String? query, int page = 1, int limit = 25}) async {
     final queryParams = {
       if (category != null && category != 'All' && category != 'Feed') 'category': category,
       if (query != null && query.isNotEmpty) 'q': query.trim(),
       'page': page.toString(),
-      'limit': '25',
+      'limit': limit.toString(),
     };
 
     final uri = Uri.parse(ApiConstants.posts).replace(queryParameters: queryParams);
@@ -28,7 +56,13 @@ class PostRepository {
       final data = jsonDecode(response.body);
       final rawItems = (data['items'] as List<dynamic>?) ?? [];
       final currentUserId = _authRepo.currentUser?.id;
-      return rawItems.map((e) => PostModel.fromJson(e as Map<String, dynamic>, currentUserId: currentUserId)).toList();
+      final items = rawItems.map((e) => PostModel.fromJson(e as Map<String, dynamic>, currentUserId: currentUserId)).toList();
+      return PostPageResult(
+        items: items,
+        total: (data['total'] as num?)?.toInt() ?? items.length,
+        page: (data['page'] as num?)?.toInt() ?? page,
+        limit: (data['limit'] as num?)?.toInt() ?? limit,
+      );
     } else {
       throw Exception('Failed to load posts: ${response.statusCode}');
     }
@@ -77,16 +111,27 @@ class PostRepository {
     }
   }
 
-  Future<List<CommentModel>> getComments(String postId) async {
-    final uri = Uri.parse('${ApiConstants.posts}/$postId/comments');
+  Future<CommentPageResult> getComments(String postId, {int page = 1, int limit = 20}) async {
+    final uri = Uri.parse('${ApiConstants.posts}/$postId/comments').replace(
+      queryParameters: {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      },
+    );
     final response = await _client.get(uri);
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = jsonDecode(response.body);
       final rawItems = (data['items'] as List<dynamic>?) ?? [];
-      return rawItems.map((e) => CommentModel.fromJson(e as Map<String, dynamic>)).toList();
+      final items = rawItems.map((e) => CommentModel.fromJson(e as Map<String, dynamic>)).toList();
+      return CommentPageResult(
+        items: items,
+        total: (data['total'] as num?)?.toInt() ?? items.length,
+        page: (data['page'] as num?)?.toInt() ?? page,
+        limit: (data['limit'] as num?)?.toInt() ?? limit,
+      );
     }
-    return [];
+    return const CommentPageResult(items: [], total: 0, page: 1, limit: 20);
   }
 
   Future<CommentModel> addComment(String postId, String content) async {

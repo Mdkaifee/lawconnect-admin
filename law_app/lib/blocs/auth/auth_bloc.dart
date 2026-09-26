@@ -74,12 +74,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onCheckAuth(CheckAuthEvent event, Emitter<AuthState> emit) async {
     await _authRepository.init();
     if (_authRepository.isAuthenticated && _authRepository.currentUser != null) {
+      if (emit.isDone) return;
       emit(Authenticated(_authRepository.currentUser!));
-      // Refresh in background
-      _authRepository.fetchProfile().then((u) {
-        if (u != null && !isClosed) emit(Authenticated(u));
-      });
+      final refreshedUser = await _authRepository.fetchProfile();
+      if (refreshedUser != null && !emit.isDone) {
+        emit(Authenticated(refreshedUser));
+      }
     } else {
+      if (emit.isDone) return;
       emit(Unauthenticated());
     }
   }

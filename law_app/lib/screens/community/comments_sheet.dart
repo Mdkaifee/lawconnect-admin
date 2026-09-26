@@ -26,35 +26,64 @@ class CommentsSheet extends StatefulWidget {
 
 class _CommentsSheetState extends State<CommentsSheet> {
   final TextEditingController _commentController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   List<CommentModel> _comments = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   bool _isSubmitting = false;
+  int _page = 1;
+  int _total = 0;
+  static const int _limit = 20;
 
   @override
   void initState() {
     super.initState();
     _loadComments();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _commentController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadComments() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadComments({int page = 1, bool append = false}) async {
+    if (append && _isLoadingMore) return;
+    setState(() {
+      if (append) {
+        _isLoadingMore = true;
+      } else {
+        _isLoading = true;
+      }
+    });
     try {
       final postRepo = RepositoryProvider.of<PostRepository>(context);
-      final items = await postRepo.getComments(widget.postId);
+      final result = await postRepo.getComments(widget.postId, page: page, limit: _limit);
       if (mounted) {
         setState(() {
-          _comments = items;
+          _comments = append ? [..._comments, ...result.items] : result.items;
+          _page = result.page;
+          _total = result.total;
           _isLoading = false;
+          _isLoadingMore = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels < _scrollController.position.maxScrollExtent - 120) return;
+    if (_comments.length < _total) {
+      _loadComments(page: _page + 1, append: true);
     }
   }
 
@@ -134,9 +163,16 @@ class _CommentsSheetState extends State<CommentsSheet> {
                         child: Text('No comments yet. Be the first advocate to reply!'),
                       )
                     : ListView.builder(
+                        controller: _scrollController,
                         padding: const EdgeInsets.all(16),
-                        itemCount: _comments.length,
+                        itemCount: _comments.length + (_comments.length < _total ? 1 : 0),
                         itemBuilder: (context, idx) {
+                          if (idx == _comments.length) {
+                            return const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
+                            );
+                          }
                           final c = _comments[idx];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
@@ -219,4 +255,3 @@ class _CommentsSheetState extends State<CommentsSheet> {
     );
   }
 }
-

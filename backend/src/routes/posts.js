@@ -135,8 +135,15 @@ router.post(
 router.get(
   "/:id/comments",
   asyncHandler(async (req, res) => {
-    const comments = await Comment.find({ postId: req.params.id, status: "published" }).sort({ createdAt: 1 });
-    res.json({ items: comments, total: comments.length });
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+    const filter = { postId: req.params.id, status: "published" };
+    const [comments, total] = await Promise.all([
+      Comment.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limitNum),
+      Comment.countDocuments(filter),
+    ]);
+    res.json({ items: comments, total, page: pageNum, limit: limitNum });
   }),
 );
 

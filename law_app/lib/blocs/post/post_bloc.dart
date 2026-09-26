@@ -13,9 +13,11 @@ abstract class PostEvent extends Equatable {
 class LoadPostsEvent extends PostEvent {
   final String? category;
   final String? query;
-  const LoadPostsEvent({this.category, this.query});
+  final int page;
+  final bool isNewLoad;
+  const LoadPostsEvent({this.category, this.query, this.page = 1, this.isNewLoad = true});
   @override
-  List<Object?> get props => [category, query];
+  List<Object?> get props => [category, query, page, isNewLoad];
 }
 
 class CreatePostEvent extends PostEvent {
@@ -72,9 +74,18 @@ class PostLoading extends PostState {}
 class PostLoaded extends PostState {
   final List<PostModel> posts;
   final String? selectedCategory;
-  const PostLoaded(this.posts, {this.selectedCategory});
+  final int page;
+  final int total;
+  final bool hasMore;
+  const PostLoaded(
+    this.posts, {
+    this.selectedCategory,
+    required this.page,
+    required this.total,
+    required this.hasMore,
+  });
   @override
-  List<Object?> get props => [posts, selectedCategory];
+  List<Object?> get props => [posts, selectedCategory, page, total, hasMore];
 }
 
 class PostError extends PostState {
@@ -99,10 +110,19 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   }
 
   Future<void> _onLoadPosts(LoadPostsEvent event, Emitter<PostState> emit) async {
-    emit(PostLoading());
+    if (event.isNewLoad) emit(PostLoading());
     try {
-      final posts = await _postRepository.getPosts(category: event.category, query: event.query);
-      emit(PostLoaded(posts, selectedCategory: event.category));
+      final result = await _postRepository.getPosts(category: event.category, query: event.query, page: event.page);
+      final combinedPosts = !event.isNewLoad && state is PostLoaded
+          ? [...(state as PostLoaded).posts, ...result.items]
+          : result.items;
+      emit(PostLoaded(
+        combinedPosts,
+        selectedCategory: event.category,
+        page: result.page,
+        total: result.total,
+        hasMore: combinedPosts.length < result.total && result.items.isNotEmpty,
+      ));
     } catch (e) {
       emit(PostError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -117,8 +137,15 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         tags: event.tags,
       );
       if (state is PostLoaded) {
-        final currentPosts = (state as PostLoaded).posts;
-        emit(PostLoaded([newPost, ...currentPosts], selectedCategory: (state as PostLoaded).selectedCategory));
+        final currentState = state as PostLoaded;
+        final currentPosts = currentState.posts;
+        emit(PostLoaded(
+          [newPost, ...currentPosts],
+          selectedCategory: currentState.selectedCategory,
+          page: currentState.page,
+          total: currentState.total + 1,
+          hasMore: currentState.hasMore,
+        ));
       } else {
         add(const LoadPostsEvent());
       }
@@ -141,7 +168,13 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       return p;
     }).toList();
 
-    emit(PostLoaded(updatedPosts, selectedCategory: currentState.selectedCategory));
+    emit(PostLoaded(
+      updatedPosts,
+      selectedCategory: currentState.selectedCategory,
+      page: currentState.page,
+      total: currentState.total,
+      hasMore: currentState.hasMore,
+    ));
 
     try {
       final result = await _postRepository.toggleLike(event.postId);
@@ -155,7 +188,13 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         }
         return p;
       }).toList();
-      emit(PostLoaded(confirmedPosts, selectedCategory: currentState.selectedCategory));
+      emit(PostLoaded(
+        confirmedPosts,
+        selectedCategory: currentState.selectedCategory,
+        page: currentState.page,
+        total: currentState.total,
+        hasMore: currentState.hasMore,
+      ));
     } catch (_) {
       // Revert on failure
       emit(currentState);
@@ -173,7 +212,13 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           }
           return p;
         }).toList();
-        emit(PostLoaded(updatedPosts, selectedCategory: currentState.selectedCategory));
+        emit(PostLoaded(
+          updatedPosts,
+          selectedCategory: currentState.selectedCategory,
+          page: currentState.page,
+          total: currentState.total,
+          hasMore: currentState.hasMore,
+        ));
       }
     } catch (e) {
       emit(PostError(e.toString().replaceAll('Exception: ', '')));

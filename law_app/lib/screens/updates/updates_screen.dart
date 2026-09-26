@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/url_helper.dart';
 import '../../models/update_model.dart';
 
 class UpdatesScreen extends StatefulWidget {
@@ -15,6 +15,7 @@ class UpdatesScreen extends StatefulWidget {
 class _UpdatesScreenState extends State<UpdatesScreen> {
   String _selectedCourt = 'All';
   String _selectedCategory = 'All';
+  final ScrollController _scrollController = ScrollController();
 
   final List<String> _courts = ['All', 'Supreme Court', 'High Court'];
   final List<String> _categories = ['All', 'Judgments', 'Government Notifications', 'Amendments', 'New Rules'];
@@ -23,6 +24,13 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
   void initState() {
     super.initState();
     _fetchUpdates();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _fetchUpdates() {
@@ -34,12 +42,23 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
         );
   }
 
-  void _openSourceUrl(String? url) async {
-    if (url == null || url.isEmpty) return;
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  void _onScroll() {
+    if (_scrollController.position.pixels < _scrollController.position.maxScrollExtent - 200) return;
+    final state = context.read<UpdateBloc>().state;
+    if (state is UpdateLoaded && state.hasMore) {
+      context.read<UpdateBloc>().add(
+            LoadUpdatesEvent(
+              court: _selectedCourt == 'All' ? null : _selectedCourt,
+              category: _selectedCategory == 'All' ? null : _selectedCategory,
+              page: state.page + 1,
+              isNewLoad: false,
+            ),
+          );
     }
+  }
+
+  void _openSourceUrl(String? url) {
+    UrlHelper.openInAppUrl(context, url);
   }
 
   @override
@@ -154,9 +173,16 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: state.updates.length,
+                    itemCount: state.updates.length + (state.hasMore ? 1 : 0),
                     itemBuilder: (context, idx) {
+                      if (idx == state.updates.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
+                        );
+                      }
                       final u = state.updates[idx];
                       return _buildUpdateCard(u);
                     },
@@ -246,4 +272,3 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     );
   }
 }
-

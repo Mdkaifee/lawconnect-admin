@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Panel, StateBlock } from "@/components/admin/DataPanel";
+import { Panel, StateBlock, Pager } from "@/components/admin/DataPanel";
 import { useAdminGuard } from "@/lib/useAdmin";
 import { api } from "@/lib/api";
 import type { LegalUpdate } from "@/lib/types";
@@ -38,6 +38,9 @@ function UpdatesAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUpdate, setEditingUpdate] = useState<LegalUpdate | null>(null);
@@ -53,12 +56,18 @@ function UpdatesAdmin() {
   const [url, setUrl] = useState("");
   const [published, setPublished] = useState(true);
 
-  function load() {
+  function load(nextPage = page) {
     if (!ready) return;
     setLoading(true);
     setError(null);
-    api<{ items: LegalUpdate[] }>(`/api/updates?all=true${query ? `&q=${query}` : ""}`)
-      .then((res) => setItems(res.items || []))
+    const params = new URLSearchParams({ all: "true", page: String(nextPage), limit: String(limit) });
+    if (query) params.set("q", query);
+    api<{ items: LegalUpdate[]; total: number; page: number }>(`/api/updates?${params.toString()}`)
+      .then((res) => {
+        setItems(res.items || []);
+        setTotal(res.total || 0);
+        setPage(res.page || nextPage);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }
@@ -147,12 +156,14 @@ function UpdatesAdmin() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") load(1);
+            }}
             placeholder="Search updates by headline or content..."
             className="pl-9"
           />
         </div>
-        <Button onClick={load} variant="secondary">
+        <Button onClick={() => load(1)} variant="secondary">
           Search
         </Button>
       </div>
@@ -239,6 +250,7 @@ function UpdatesAdmin() {
               </div>
             </div>
           ))}
+          <Pager page={page} limit={limit} total={total} onPageChange={load} />
         </div>
       )}
 

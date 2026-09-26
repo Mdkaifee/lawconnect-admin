@@ -14,18 +14,40 @@ class CommunityFeedScreen extends StatefulWidget {
 
 class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   String _selectedCategory = 'All';
+  final ScrollController _scrollController = ScrollController();
   final List<String> _categories = ['All', 'Constitution', 'Supreme Court', 'Criminal Law', 'Civil Law', 'General Law'];
 
   @override
   void initState() {
     super.initState();
     _fetchPosts();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _fetchPosts() {
     context.read<PostBloc>().add(
           LoadPostsEvent(category: _selectedCategory == 'All' ? null : _selectedCategory),
         );
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels < _scrollController.position.maxScrollExtent - 200) return;
+    final state = context.read<PostBloc>().state;
+    if (state is PostLoaded && state.hasMore) {
+      context.read<PostBloc>().add(
+            LoadPostsEvent(
+              category: _selectedCategory == 'All' ? null : _selectedCategory,
+              page: state.page + 1,
+              isNewLoad: false,
+            ),
+          );
+    }
   }
 
   void _showCreatePostDialog(BuildContext context) {
@@ -224,9 +246,16 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.only(top: 8, bottom: 80),
-                    itemCount: state.posts.length,
+                    itemCount: state.posts.length + (state.hasMore ? 1 : 0),
                     itemBuilder: (context, idx) {
+                      if (idx == state.posts.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
+                        );
+                      }
                       final post = state.posts[idx];
                       return PostCard(
                         post: post,

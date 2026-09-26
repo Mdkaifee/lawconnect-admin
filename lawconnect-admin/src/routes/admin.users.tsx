@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Panel, StateBlock } from "@/components/admin/DataPanel";
+import { Panel, StateBlock, Pager } from "@/components/admin/DataPanel";
 import { useAdminGuard } from "@/lib/useAdmin";
 import { api } from "@/lib/api";
 import type { AppUser } from "@/lib/types";
@@ -37,6 +37,9 @@ function UsersAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -49,12 +52,18 @@ function UsersAdmin() {
   const [headline, setHeadline] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  function load() {
+  function load(nextPage = page) {
     if (!ready) return;
     setLoading(true);
     setError(null);
-    api<{ items: AppUser[] }>(`/api/users${query ? `?q=${query}` : ""}`)
-      .then((res) => setItems(res.items || []))
+    const params = new URLSearchParams({ page: String(nextPage), limit: String(limit) });
+    if (query) params.set("q", query);
+    api<{ items: AppUser[]; total: number; page: number }>(`/api/users?${params.toString()}`)
+      .then((res) => {
+        setItems(res.items || []);
+        setTotal(res.total || 0);
+        setPage(res.page || nextPage);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }
@@ -119,12 +128,14 @@ function UsersAdmin() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") load(1);
+            }}
             placeholder="Search users by name, email or college/firm..."
             className="pl-9"
           />
         </div>
-        <Button onClick={load} variant="secondary">
+        <Button onClick={() => load(1)} variant="secondary">
           Search
         </Button>
       </div>
@@ -195,6 +206,9 @@ function UsersAdmin() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="border-t border-border px-5 pb-4">
+            <Pager page={page} limit={limit} total={total} onPageChange={load} />
           </div>
         </div>
       )}

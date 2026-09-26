@@ -52,8 +52,14 @@ notes.get(
   asyncHandler(async (req, res) => {
     const filter = { userId: req.auth.id };
     if (req.query.refType) filter.refType = req.query.refType;
-    const items = await Note.find(filter).sort({ updatedAt: -1 });
-    res.json({ items, total: items.length });
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+    const [items, total] = await Promise.all([
+      Note.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limitNum),
+      Note.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 
@@ -103,8 +109,14 @@ bookmarks.get(
   asyncHandler(async (req, res) => {
     const filter = { userId: req.auth.id };
     if (req.query.refType) filter.refType = req.query.refType;
-    const items = await Bookmark.find(filter).sort({ createdAt: -1 });
-    res.json({ items, total: items.length });
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+    const [items, total] = await Promise.all([
+      Bookmark.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Bookmark.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 
@@ -146,8 +158,15 @@ history.use(auth(), requireUser);
 history.get(
   "/",
   asyncHandler(async (req, res) => {
-    const items = await History.find({ userId: req.auth.id }).sort({ viewedAt: -1 }).limit(100);
-    res.json({ items, total: items.length });
+    const filter = { userId: req.auth.id };
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+    const [items, total] = await Promise.all([
+      History.find(filter).sort({ viewedAt: -1 }).skip(skip).limit(limitNum),
+      History.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 
@@ -241,8 +260,14 @@ users.get(
     const filter = req.query.q
       ? { $or: [{ name: new RegExp(req.query.q, "i") }, { email: new RegExp(req.query.q, "i") }] }
       : {};
-    const items = await User.find(filter).select("-passwordHash").sort({ createdAt: -1 }).limit(200);
-    res.json({ items, total: items.length });
+    const pageNum = Math.max(1, Number(req.query.page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+    const [items, total] = await Promise.all([
+      User.find(filter).select("-passwordHash").sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      User.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 
@@ -280,10 +305,16 @@ reports.get(
   auth(),
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const { status = "pending" } = req.query;
+    const { status = "pending", page = 1, limit = 20 } = req.query;
     const filter = status !== "all" ? { status } : {};
-    const items = await Report.find(filter).populate("reporterId", "name email").sort({ createdAt: -1 });
-    res.json({ items, total: items.length });
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+    const [items, total] = await Promise.all([
+      Report.find(filter).populate("reporterId", "name email").sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Report.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 

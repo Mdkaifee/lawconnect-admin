@@ -18,6 +18,7 @@ class ActDetailScreen extends StatefulWidget {
 class _ActDetailScreenState extends State<ActDetailScreen> {
   final TextEditingController _sectionSearchController = TextEditingController();
   String _sectionQuery = '';
+  final Set<String> _loadingSectionBookmarks = {};
 
   @override
   void initState() {
@@ -210,24 +211,72 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                               },
                                             ),
                                             const SizedBox(width: 8),
-                                            ElevatedButton.icon(
-                                              icon: const Icon(Icons.bookmark_border, size: 16),
-                                              label: const Text('Bookmark'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppColors.primaryNavy,
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              ),
-                                              onPressed: () {
-                                                context.read<UserDataBloc>().add(
-                                                      ToggleBookmarkEvent(
-                                                        refType: 'section',
-                                                        refId: '${act.id}_${s.number}',
-                                                        title: '${act.shortName} - ${s.number}',
-                                                        subtitle: s.title,
-                                                      ),
-                                                    );
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Bookmark updated!')),
+                                            BlocBuilder<UserDataBloc, UserDataState>(
+                                              builder: (context, userState) {
+                                                final refId = '${act.id}_${s.number}';
+                                                final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(refId);
+                                                final isLoading = _loadingSectionBookmarks.contains(refId);
+
+                                                return ElevatedButton.icon(
+                                                  icon: isLoading
+                                                      ? const SizedBox(
+                                                          width: 14,
+                                                          height: 14,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                                                          size: 16,
+                                                          color: isBookmarked ? AppColors.goldAccent : Colors.white,
+                                                        ),
+                                                  label: Text(
+                                                    isLoading
+                                                        ? 'Saving...'
+                                                        : (isBookmarked ? 'Bookmarked' : 'Bookmark'),
+                                                    style: TextStyle(
+                                                      color: isBookmarked ? AppColors.goldAccent : Colors.white,
+                                                      fontWeight: FontWeight.w700,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: AppColors.primaryNavy,
+                                                    side: isBookmarked
+                                                        ? const BorderSide(color: AppColors.goldAccent, width: 1.2)
+                                                        : BorderSide.none,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                  ),
+                                                  onPressed: isLoading
+                                                      ? null
+                                                      : () async {
+                                                          final messenger = ScaffoldMessenger.of(context);
+                                                          setState(() => _loadingSectionBookmarks.add(refId));
+                                                          context.read<UserDataBloc>().add(
+                                                                ToggleBookmarkEvent(
+                                                                  refType: 'section',
+                                                                  refId: refId,
+                                                                  title: '${act.shortName} - ${s.number}',
+                                                                  subtitle: s.title,
+                                                                ),
+                                                              );
+                                                          await Future.delayed(const Duration(milliseconds: 300));
+                                                          if (mounted) {
+                                                            setState(() => _loadingSectionBookmarks.remove(refId));
+                                                            messenger.showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(
+                                                                  isBookmarked
+                                                                      ? 'Section removed from bookmarks'
+                                                                      : 'Section saved to bookmarks!',
+                                                                ),
+                                                                duration: const Duration(seconds: 2),
+                                                              ),
+                                                            );
+                                                          }
+                                                        },
                                                 );
                                               },
                                             ),
@@ -252,4 +301,3 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
     );
   }
 }
-

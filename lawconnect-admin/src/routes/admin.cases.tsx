@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
+import { Panel, StateBlock, Field, Pager } from "@/components/admin/DataPanel";
 import { useAdminGuard } from "@/lib/useAdmin";
 import { api } from "@/lib/api";
 import type { LawCase } from "@/lib/types";
@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download } from "lucide-react";
+import { Plus, Search, Trash2, Edit, Eye, Gavel, ExternalLink, Download, CloudDownload, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/cases")({
@@ -39,6 +39,9 @@ function CasesAdmin() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [courtFilter, setCourtFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<LawCase | null>(null);
@@ -59,18 +62,41 @@ function CasesAdmin() {
   const [fullText, setFullText] = useState("");
   const [judgmentPdfUrl, setJudgmentPdfUrl] = useState("");
   const [published, setPublished] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
-  function load() {
+  async function handleSyncKanoon() {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await api<{ ok: boolean; message: string }>("/api/cases/sync-kanoon", { method: "POST" });
+      setSyncMessage(res.message || "Database synchronized successfully!");
+      load(1);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  function load(nextPage = page) {
     if (!ready) return;
     setLoading(true);
     setError(null);
 
     const params = new URLSearchParams();
+    params.set("all", "true");
+    params.set("page", String(nextPage));
+    params.set("limit", String(limit));
     if (query) params.set("q", query);
     if (courtFilter !== "all") params.set("court", courtFilter);
 
-    api<{ items: LawCase[] }>(`/api/cases?${params.toString()}`)
-      .then((res) => setItems(res.items || []))
+    api<{ items: LawCase[]; total: number; page: number }>(`/api/cases?${params.toString()}`)
+      .then((res) => {
+        setItems(res.items || []);
+        setTotal(res.total || 0);
+        setPage(res.page || nextPage);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }
@@ -164,11 +190,38 @@ function CasesAdmin() {
       title="Cases & Judgments"
       subtitle="Publish, inspect and manage landmark judgments, case briefs and Kanoon citations"
       actions={
-        <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Plus className="size-4" /> Add Case Judgment
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleSyncKanoon}
+            disabled={syncing}
+            variant="outline"
+            className="gap-2 shadow-sm font-semibold border-primary/30 hover:bg-primary/10"
+          >
+            {syncing ? (
+              <>
+                <RefreshCw className="size-4 animate-spin text-primary" />
+                Syncing Kanoon...
+              </>
+            ) : (
+              <>
+                <CloudDownload className="size-4 text-primary" />
+                Fetch Data from Indian Kanoon
+              </>
+            )}
+          </Button>
+          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+            <Plus className="size-4" /> Add Case Judgment
+          </Button>
+        </div>
       }
     >
+      {syncMessage && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-900 dark:text-emerald-200">
+          <CheckCircle2 className="size-4 text-emerald-600" />
+          <span>{syncMessage}</span>
+        </div>
+      )}
+
       {/* Search & Filter Bar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-64 flex-1">
@@ -176,7 +229,9 @@ function CasesAdmin() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") load(1);
+            }}
             placeholder="Search cases by title, citation or keywords..."
             className="pl-9"
           />
@@ -186,7 +241,7 @@ function CasesAdmin() {
           value={courtFilter}
           onChange={(e) => {
             setCourtFilter(e.target.value);
-            setTimeout(load, 50);
+            setPage(1);
           }}
           className="h-10 rounded-md border border-input bg-card px-3 text-sm"
         >
@@ -199,7 +254,7 @@ function CasesAdmin() {
           <option value="Madras High Court">Madras High Court</option>
         </select>
 
-        <Button onClick={load} variant="secondary">
+        <Button onClick={() => load(1)} variant="secondary">
           Search
         </Button>
       </div>
@@ -211,11 +266,16 @@ function CasesAdmin() {
         <StateBlock message={error} onRetry={load} />
       ) : items.length === 0 ? (
         <StateBlock
-          message="No case judgments found. Tap 'Add Case Judgment' above to create your first judgment."
+          message="No case judgments found. Tap 'Add Case Judgment' or 'Fetch Data from Indian Kanoon' above."
           action={
-            <Button onClick={openCreate} className="gap-2">
-              <Plus className="size-4" /> Add First Case
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSyncKanoon} disabled={syncing} variant="outline" className="gap-2">
+                <CloudDownload className="size-4" /> Fetch from Indian Kanoon
+              </Button>
+              <Button onClick={openCreate} className="gap-2">
+                <Plus className="size-4" /> Add First Case
+              </Button>
+            </div>
           }
         />
       ) : (
@@ -278,6 +338,7 @@ function CasesAdmin() {
               </div>
             </div>
           ))}
+          <Pager page={page} limit={limit} total={total} onPageChange={load} />
         </div>
       )}
 

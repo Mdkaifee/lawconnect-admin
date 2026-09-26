@@ -7,6 +7,7 @@ class CaseCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onBookmark;
   final bool isBookmarked;
+  final bool isBookmarkLoading;
 
   const CaseCard({
     super.key,
@@ -14,6 +15,7 @@ class CaseCard extends StatelessWidget {
     required this.onTap,
     this.onBookmark,
     this.isBookmarked = false,
+    this.isBookmarkLoading = false,
   });
 
   @override
@@ -84,18 +86,25 @@ class CaseCard extends StatelessWidget {
                     ),
                   ],
                   const Spacer(),
-                  if (onBookmark != null)
-                    IconButton(
-                      icon: Icon(
-                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                        color: isBookmarked ? AppColors.goldAccent : AppColors.textMuted,
-                        size: 22,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: onBookmark,
-                    ),
+                  if (onBookmark != null || isBookmarkLoading)
+                    isBookmarkLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.goldAccent),
+                          )
+                        : IconButton(
+                            tooltip: isBookmarked ? 'Bookmarked' : 'Bookmark',
+                            icon: Icon(
+                              isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                              color: isBookmarked ? AppColors.goldAccent : AppColors.textMuted,
+                              size: 22,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: onBookmark,
+                          ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -181,4 +190,3 @@ class CaseCard extends StatelessWidget {
     );
   }
 }
-

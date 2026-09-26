@@ -9,7 +9,7 @@ const router = Router();
 router.get(
   "/",
   asyncHandler(async (req, res) => {
-    const { q, type, year, all } = req.query;
+    const { q, type, year, all, page = 1, limit = 20 } = req.query;
     const filter = {};
     if (!all) filter.published = true;
     if (type && type !== "All" && type !== "All Acts") {
@@ -28,8 +28,15 @@ router.get(
         { "sections.title": rx },
       ];
     }
-    const items = await Act.find(filter).sort({ name: 1 }).lean();
-    res.json({ items, total: items.length });
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [items, total] = await Promise.all([
+      Act.find(filter).sort({ name: 1 }).skip(skip).limit(limitNum).lean(),
+      Act.countDocuments(filter),
+    ]);
+    res.json({ items, total, page: pageNum, limit: limitNum });
   }),
 );
 

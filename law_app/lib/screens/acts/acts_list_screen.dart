@@ -14,6 +14,7 @@ class ActsListScreen extends StatefulWidget {
 
 class _ActsListScreenState extends State<ActsListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _selectedType = 'All';
   final List<String> _typeFilters = ['All', 'Central', 'State'];
 
@@ -21,11 +22,13 @@ class _ActsListScreenState extends State<ActsListScreen> {
   void initState() {
     super.initState();
     _fetchActs();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -36,6 +39,21 @@ class _ActsListScreenState extends State<ActsListScreen> {
             type: _selectedType == 'All' ? null : _selectedType,
           ),
         );
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels < _scrollController.position.maxScrollExtent - 200) return;
+    final state = context.read<ActBloc>().state;
+    if (state is ActListLoaded && state.hasMore) {
+      context.read<ActBloc>().add(
+            LoadActsEvent(
+              query: _searchController.text.trim(),
+              type: _selectedType == 'All' ? null : _selectedType,
+              page: state.page + 1,
+              isNewLoad: false,
+            ),
+          );
+    }
   }
 
   @override
@@ -136,9 +154,16 @@ class _ActsListScreenState extends State<ActsListScreen> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    itemCount: state.acts.length,
+                    itemCount: state.acts.length + (state.hasMore ? 1 : 0),
                     itemBuilder: (context, idx) {
+                      if (idx == state.acts.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
+                        );
+                      }
                       final act = state.acts[idx];
                       return ActCard(
                         act: act,

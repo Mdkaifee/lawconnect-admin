@@ -13,9 +13,11 @@ abstract class ActEvent extends Equatable {
 class LoadActsEvent extends ActEvent {
   final String? query;
   final String? type;
-  const LoadActsEvent({this.query, this.type});
+  final int page;
+  final bool isNewLoad;
+  const LoadActsEvent({this.query, this.type, this.page = 1, this.isNewLoad = true});
   @override
-  List<Object?> get props => [query, type];
+  List<Object?> get props => [query, type, page, isNewLoad];
 }
 
 class LoadActDetailsEvent extends ActEvent {
@@ -39,9 +41,20 @@ class ActLoading extends ActState {}
 class ActListLoaded extends ActState {
   final List<ActModel> acts;
   final String? filterType;
-  const ActListLoaded(this.acts, {this.filterType});
+  final String? query;
+  final int page;
+  final int total;
+  final bool hasMore;
+  const ActListLoaded(
+    this.acts, {
+    this.filterType,
+    this.query,
+    required this.page,
+    required this.total,
+    required this.hasMore,
+  });
   @override
-  List<Object?> get props => [acts, filterType];
+  List<Object?> get props => [acts, filterType, query, page, total, hasMore];
 }
 
 class ActDetailsLoaded extends ActState {
@@ -70,10 +83,20 @@ class ActBloc extends Bloc<ActEvent, ActState> {
   }
 
   Future<void> _onLoadActs(LoadActsEvent event, Emitter<ActState> emit) async {
-    emit(ActLoading());
+    if (event.isNewLoad) emit(ActLoading());
     try {
-      final acts = await _actRepository.getActs(query: event.query, type: event.type);
-      emit(ActListLoaded(acts, filterType: event.type));
+      final result = await _actRepository.getActs(query: event.query, type: event.type, page: event.page);
+      final combinedActs = !event.isNewLoad && state is ActListLoaded
+          ? [...(state as ActListLoaded).acts, ...result.items]
+          : result.items;
+      emit(ActListLoaded(
+        combinedActs,
+        filterType: event.type,
+        query: event.query,
+        page: result.page,
+        total: result.total,
+        hasMore: combinedActs.length < result.total && result.items.isNotEmpty,
+      ));
     } catch (e) {
       emit(ActError(e.toString().replaceAll('Exception: ', '')));
     }

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
+import { Panel, StateBlock, Field, Pager } from "@/components/admin/DataPanel";
 import { useAdminGuard } from "@/lib/useAdmin";
 import { api } from "@/lib/api";
 import type { Post } from "@/lib/types";
@@ -40,6 +40,11 @@ function PostsAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [postsPage, setPostsPage] = useState(1);
+  const [postsTotal, setPostsTotal] = useState(0);
+  const [reportsPage, setReportsPage] = useState(1);
+  const [reportsTotal, setReportsTotal] = useState(0);
+  const limit = 20;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -49,18 +54,39 @@ function PostsAdmin() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  function load() {
+  function load(nextPostsPage = postsPage, nextReportsPage = reportsPage) {
     if (!ready) return;
     setLoading(true);
     setError(null);
 
+    const postParams = new URLSearchParams({
+      all: "true",
+      page: String(nextPostsPage),
+      limit: String(limit),
+    });
+    if (query) postParams.set("q", query);
+
+    const reportParams = new URLSearchParams({
+      status: "all",
+      page: String(nextReportsPage),
+      limit: String(limit),
+    });
+
     Promise.all([
-      api<{ items: Post[] }>(`/api/posts?all=true${query ? `&q=${query}` : ""}`),
-      api<{ items: any[] }>("/api/reports?status=all").catch(() => ({ items: [] })),
+      api<{ items: Post[]; total: number; page: number }>(`/api/posts?${postParams.toString()}`),
+      api<{ items: any[]; total: number; page: number }>(`/api/reports?${reportParams.toString()}`).catch(() => ({
+        items: [],
+        total: 0,
+        page: nextReportsPage,
+      })),
     ])
       .then(([postsRes, reportsRes]) => {
-        setItems(postsRes.items);
-        setReports(reportsRes.items);
+        setItems(postsRes.items || []);
+        setPostsTotal(postsRes.total || 0);
+        setPostsPage(postsRes.page || nextPostsPage);
+        setReports(reportsRes.items || []);
+        setReportsTotal(reportsRes.total || 0);
+        setReportsPage(reportsRes.page || nextReportsPage);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -166,10 +192,12 @@ function PostsAdmin() {
               placeholder="Search posts..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") load(1, reportsPage);
+              }}
               className="h-9 w-60"
             />
-            <Button size="sm" variant="outline" onClick={load}>
+            <Button size="sm" variant="outline" onClick={() => load(1, reportsPage)}>
               <Search className="size-3.5" />
             </Button>
           </div>
@@ -227,6 +255,9 @@ function PostsAdmin() {
               </div>
             </div>
           ))}
+          <div className="p-4">
+            <Pager page={postsPage} limit={limit} total={postsTotal} onPageChange={(next) => load(next, reportsPage)} />
+          </div>
         </Panel>
       ) : null}
 
@@ -273,6 +304,9 @@ function PostsAdmin() {
               </div>
             </div>
           ))}
+          <div className="p-4">
+            <Pager page={reportsPage} limit={limit} total={reportsTotal} onPageChange={(next) => load(postsPage, next)} />
+          </div>
         </Panel>
       ) : null}
 

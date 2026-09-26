@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../repositories/user_data_repository.dart';
 import '../../widgets/case_card.dart';
 import 'case_detail_screen.dart';
 
@@ -22,6 +23,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
 
   String _selectedCourt = 'All';
   int? _selectedYear;
+  final Set<String> _loadingBookmarks = {};
 
   final List<String> _courtFilters = ['All', 'Supreme Court', 'High Court'];
 
@@ -291,20 +293,43 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                       return BlocBuilder<UserDataBloc, UserDataState>(
                         builder: (context, userState) {
                           final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(item.id);
+                          final isBookmarkLoading = _loadingBookmarks.contains(item.id);
 
                           return CaseCard(
                             caseItem: item,
                             isBookmarked: isBookmarked,
-                            onBookmark: () {
-                              context.read<UserDataBloc>().add(
-                                    ToggleBookmarkEvent(
-                                      refType: 'case',
-                                      refId: item.id,
-                                      title: item.title,
-                                      subtitle: item.citation ?? item.court,
-                                    ),
-                                  );
-                            },
+                            isBookmarkLoading: isBookmarkLoading,
+                            onBookmark: isBookmarkLoading
+                                ? null
+                                : () async {
+                                    setState(() => _loadingBookmarks.add(item.id));
+                                    final userDataBloc = context.read<UserDataBloc>();
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    try {
+                                      final repo = context.read<UserDataRepository>();
+                                      if (isBookmarked) {
+                                        await repo.removeBookmark(item.id);
+                                      } else {
+                                        await repo.addBookmark(
+                                          refType: 'case',
+                                          refId: item.id,
+                                          title: item.title,
+                                          subtitle: item.citation ?? item.court,
+                                        );
+                                      }
+                                      if (mounted) {
+                                        userDataBloc.add(LoadUserDataEvent());
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks'),
+                                            duration: const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      }
+                                    } finally {
+                                      if (mounted) setState(() => _loadingBookmarks.remove(item.id));
+                                    }
+                                  },
                             onTap: () {
                               context.read<UserDataBloc>().add(
                                     LogHistoryEvent(
