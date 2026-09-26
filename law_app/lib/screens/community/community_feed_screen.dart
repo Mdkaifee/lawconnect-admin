@@ -327,6 +327,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             onPressed: _fetchPosts,
           ),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: AppColors.borderLight),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreatePostDialog(context),
