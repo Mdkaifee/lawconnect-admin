@@ -1,4 +1,4 @@
-package com.example.law_app
+package com.rishikesh_law_hub
 
 import io.flutter.embedding.android.FlutterActivity
 
