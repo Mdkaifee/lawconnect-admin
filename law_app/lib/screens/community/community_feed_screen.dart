@@ -342,35 +342,57 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ),
       body: Column(
         children: [
-          // Category Pills
+          // Top Category Tabs with Equal Spacing
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: Colors.white,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1)),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: _categories.map((cat) {
                   final isSelected = _selectedCategory == cat;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(cat),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        if (_selectedCategory != cat) {
                           setState(() => _selectedCategory = cat);
                           _fetchPosts();
                         }
                       },
-                      selectedColor: AppColors.primaryNavy,
-                      showCheckmark: false,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.primaryNavy,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primaryNavy : Colors.transparent,
+                          borderRadius: BorderRadius.circular(9),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primaryNavy.withValues(alpha: 0.18),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            cat,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
                       ),
-                      backgroundColor: const Color(0xfff3f7fa),
-                      side: BorderSide(color: isSelected ? AppColors.primaryNavy : AppColors.borderLight),
                     ),
                   );
                 }).toList(),
