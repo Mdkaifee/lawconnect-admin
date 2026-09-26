@@ -24,14 +24,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.primaryNavy,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Reading History'),
+        title: const Text(
+          'Reading History',
+          style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800, fontSize: 18),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined),
+            icon: const Icon(Icons.delete_sweep_outlined, color: AppColors.primaryNavy),
             onPressed: () {
               CustomConfirmationDialog.show(
                 context,
@@ -45,6 +52,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             },
           ),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.borderLight),
+        ),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(
         builder: (context, state) {
