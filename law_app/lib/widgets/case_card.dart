@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
 import '../models/case_model.dart';
 
@@ -21,6 +22,7 @@ class CaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSupremeCourt = caseItem.courtType == 'Supreme Court' || caseItem.court.toLowerCase().contains('supreme');
+    final formattedDate = _formatDate(caseItem.dateOfJudgment);
 
     return Card(
       elevation: 0,
@@ -156,12 +158,12 @@ class CaseCard extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        if (caseItem.dateOfJudgment != null && caseItem.dateOfJudgment!.isNotEmpty) ...[
+                        if (formattedDate != null) ...[
                           const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMuted),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              caseItem.dateOfJudgment!,
+                              formattedDate,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
@@ -203,5 +205,12 @@ class CaseCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String? _formatDate(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return value;
+    return DateFormat('dd MMM yyyy').format(parsed);
   }
 }
