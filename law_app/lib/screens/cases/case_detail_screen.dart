@@ -186,6 +186,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
                   SliverAppBar(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primaryNavy,
+                    iconTheme: const IconThemeData(color: AppColors.primaryNavy),
                     title: const SizedBox.shrink(),
                     pinned: true,
                     expandedHeight: 0,
@@ -196,14 +199,14 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                           final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(c.id);
                           return IconButton(
                             icon: _bookmarkBusy
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, color: isBookmarked ? AppColors.goldAccent : Colors.white),
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryNavy))
+                                : Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, color: isBookmarked ? AppColors.goldAccent : AppColors.primaryNavy),
                             onPressed: _bookmarkBusy ? null : () => _toggleBookmark(c, isBookmarked),
                           );
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.share_outlined),
+                        icon: const Icon(Icons.share_outlined, color: AppColors.primaryNavy),
                         onPressed: () {
                           Share.share(
                             '${c.title}\n\nCitation: ${c.citation ?? "N/A"}\nCourt: ${c.court}\n\nRead on Rishikesh Law Hub',
