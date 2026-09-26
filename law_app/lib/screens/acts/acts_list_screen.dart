@@ -66,6 +66,10 @@ class _ActsListScreenState extends State<ActsListScreen> {
         surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'Bare Acts & Codes',
           style: TextStyle(

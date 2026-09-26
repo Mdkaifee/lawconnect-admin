@@ -29,13 +29,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        automaticallyImplyLeading: false,
-        leading: widget.showBackButton
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'Saved Bookmarks',
           style: TextStyle(

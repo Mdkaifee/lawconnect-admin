@@ -78,13 +78,10 @@ class _NotesScreenState extends State<NotesScreen> {
         surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        automaticallyImplyLeading: false,
-        leading: widget.showBackButton
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'Case Study Notes',
           style: TextStyle(
