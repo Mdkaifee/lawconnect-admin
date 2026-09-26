@@ -64,13 +64,28 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Legal Updates & News'),
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.primaryNavy,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Legal Updates & News',
+          style: TextStyle(
+            color: AppColors.primaryNavy,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: AppColors.primaryNavy),
             onPressed: _fetchUpdates,
           ),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.borderLight),
+        ),
       ),
       body: Column(
         children: [

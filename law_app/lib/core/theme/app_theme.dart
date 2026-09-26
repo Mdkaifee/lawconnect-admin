@@ -40,17 +40,19 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.primaryNavy,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.primaryNavy,
+        surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: AppColors.primaryNavy,
           letterSpacing: 0.3,
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: AppColors.primaryNavy),
+        actionsIconTheme: IconThemeData(color: AppColors.primaryNavy),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
