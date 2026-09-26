@@ -20,8 +20,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     CaseSearchScreen(),
-    CommunityFeedScreen(showBackButton: false),
-    BookmarksScreen(showBackButton: false),
+    CommunityFeedScreen(showBackButton: true),
+    BookmarksScreen(showBackButton: true),
     ProfileScreen(),
   ];
 
