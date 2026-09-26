@@ -9,6 +9,7 @@ class CaseCard extends StatelessWidget {
   final VoidCallback? onBookmark;
   final bool isBookmarked;
   final bool isBookmarkLoading;
+  final bool compact;
 
   const CaseCard({
     super.key,
@@ -17,10 +18,12 @@ class CaseCard extends StatelessWidget {
     this.onBookmark,
     this.isBookmarked = false,
     this.isBookmarkLoading = false,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (compact) return _buildCompactCard(context);
     final isSupremeCourt = caseItem.courtType == 'Supreme Court' || caseItem.court.toLowerCase().contains('supreme');
     final formattedDate = _formatDate(caseItem.dateOfJudgment);
 
@@ -202,6 +205,50 @@ class CaseCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactCard(BuildContext context) {
+    final tags = caseItem.tags.isNotEmpty
+        ? caseItem.tags.take(2).toList()
+        : <String>['Constitutional Law', caseItem.isFeatured ? 'Basic Structure' : 'Amendment'];
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: AppColors.borderLight)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(caseItem.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13.5, height: 1.18, fontWeight: FontWeight.w700, color: AppColors.primaryNavy)),
+                  const SizedBox(height: 4),
+                  Text(caseItem.citation ?? 'Citation unavailable', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                  const SizedBox(height: 2),
+                  Text(caseItem.court, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: tags.map((tag) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: const Color(0xFFEAF4FB), borderRadius: BorderRadius.circular(6)),
+                      child: Text(tag, style: const TextStyle(fontSize: 10, color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
+                    )).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const Padding(padding: EdgeInsets.only(top: 32, left: 8), child: Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary)),
+          ],
         ),
       ),
     );

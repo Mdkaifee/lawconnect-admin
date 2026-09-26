@@ -172,7 +172,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Center(
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                       ..._courtFilters.map((court) {
                         final isSelected = _selectedCourt == court;
@@ -182,6 +182,8 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                             label: Text(court),
                             labelPadding: const EdgeInsets.symmetric(horizontal: 8),
                             padding: EdgeInsets.zero,
+                            showCheckmark: true,
+                            checkmarkColor: Colors.white,
                             selected: isSelected,
                             onSelected: (selected) {
                               if (selected) {
@@ -332,6 +334,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
 
                           return CaseCard(
                             caseItem: item,
+                            compact: true,
                             isBookmarked: isBookmarked,
                             isBookmarkLoading: isBookmarkLoading,
                             onBookmark: isBookmarkLoading
