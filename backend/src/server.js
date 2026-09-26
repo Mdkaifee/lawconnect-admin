@@ -2,7 +2,9 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import bcrypt from "bcryptjs";
 import { connectDB } from "./config/db.js";
+import { Admin } from "./models/index.js";
 import authRoutes from "./routes/auth.js";
 import caseRoutes from "./routes/cases.js";
 import actRoutes from "./routes/acts.js";
@@ -73,9 +75,32 @@ app.use((err, req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || "Server error" });
 });
 
+async function ensureAdmin() {
+  try {
+    const username = process.env.ADMIN_USERNAME || "Rishikesh";
+    const password = process.env.ADMIN_PASSWORD || "Rishikesh@1";
+    let admin = await Admin.findOne({ username: new RegExp(`^${username}$`, "i") });
+    if (!admin) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      admin = await Admin.create({
+        username,
+        passwordHash,
+        name: "Rishikesh Yadav",
+        role: "owner",
+      });
+      console.log(`Admin account '${username}' created automatically.`);
+    }
+  } catch (e) {
+    console.error("Auto-seed admin error:", e.message);
+  }
+}
+
 const port = process.env.PORT || 4000;
 connectDB()
-  .then(() => app.listen(port, () => console.log(`API listening on :${port}`)))
+  .then(async () => {
+    await ensureAdmin();
+    app.listen(port, () => console.log(`API listening on :${port}`));
+  })
   .catch((e) => {
     console.error("Failed to start:", e.message);
     process.exit(1);
