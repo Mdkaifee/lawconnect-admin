@@ -327,10 +327,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             onPressed: _fetchPosts,
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: AppColors.borderLight),
-        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreatePostDialog(context),
@@ -342,45 +338,38 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ),
       body: Column(
         children: [
-          // Top Category Tabs with Equal Spacing
+          // Top Category Tabs with Equal Width
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1)),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: _categories.map((cat) {
-                  final isSelected = _selectedCategory == cat;
-                  return Expanded(
-                    child: GestureDetector(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            color: Colors.white,
+            child: Row(
+              children: _categories.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final cat = entry.value;
+                final isSelected = _selectedCategory == cat;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: idx == 0 ? 0 : 4,
+                      right: idx == _categories.length - 1 ? 0 : 4,
+                    ),
+                    child: InkWell(
                       onTap: () {
                         if (_selectedCategory != cat) {
                           setState(() => _selectedCategory = cat);
                           _fetchPosts();
                         }
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(vertical: 9),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primaryNavy : Colors.transparent,
-                          borderRadius: BorderRadius.circular(9),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.primaryNavy.withValues(alpha: 0.18),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
+                          color: isSelected ? AppColors.primaryNavy : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primaryNavy : const Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
                         ),
                         child: Center(
                           child: Text(
@@ -388,15 +377,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                              color: isSelected ? Colors.white : const Color(0xFF64748B),
+                              color: isSelected ? Colors.white : AppColors.primaryNavy,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
 
