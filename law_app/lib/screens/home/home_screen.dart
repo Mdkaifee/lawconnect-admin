@@ -226,8 +226,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        // Switch to acts tab or navigate
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ActsListScreen()),
+                        );
+                        if (mounted) context.read<ActBloc>().add(const LoadActsEvent());
                       },
                       child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
                     ),
@@ -286,6 +289,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
+                    );
+                  }
+                  if (state is ActInitial || state is ActLoading) {
+                    return const SizedBox(
+                      height: 105,
+                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy)),
+                    );
+                  }
+                  if (state is ActError) {
+                    return const SizedBox(
+                      height: 105,
+                      child: Center(child: Text('Unable to load bare acts', style: TextStyle(color: AppColors.textMuted))),
                     );
                   }
                   return const SizedBox.shrink();

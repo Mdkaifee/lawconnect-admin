@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
@@ -42,6 +43,19 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final uri = Uri(
+                scheme: 'mailto',
+                path: 'rishikesh4287@gmail.com',
+                queryParameters: const {'subject': 'Law Hub Help & Support'},
+              );
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.email_outlined),
+            label: const Text('Email Support'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
             style: ElevatedButton.styleFrom(
@@ -68,7 +82,7 @@ class ProfileScreen extends StatelessWidget {
             Text('Need assistance with Law Hub?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
             SizedBox(height: 8),
             Text(
-              '• For feedback & queries: support@rishikeshlawhub.in\n• Case judgments are fetched and cached for offline reading.\n• Use the Notes section to draft arguments and case briefs.',
+              '• For feedback & queries: rishikesh4287@gmail.com\n• Case judgments are fetched and cached for offline reading.\n• Use the Notes section to draft arguments and case briefs.',
               style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF475569)),
             ),
           ],

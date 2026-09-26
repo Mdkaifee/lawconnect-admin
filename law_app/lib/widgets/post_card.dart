@@ -168,7 +168,7 @@ class PostCard extends StatelessWidget {
             ],
             const SizedBox(height: 14),
 
-            // Action Buttons Row (Like, Comment, Share)
+            // Engagement actions match the compact legal-post layout.
             const Divider(height: 1, color: AppColors.borderLight),
             const SizedBox(height: 6),
             Row(
@@ -221,11 +221,9 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, size: 18, color: AppColors.textSecondary),
-                  onPressed: () {
-                    Share.share('${post.title}\n\n${post.content}\n\n- Shared from Rishikesh Law Hub');
-                  },
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Icon(Icons.bookmark_border_rounded, size: 20, color: AppColors.primaryNavy),
                 ),
               ],
             ),
@@ -235,4 +233,3 @@ class PostCard extends StatelessWidget {
     );
   }
 }
-
