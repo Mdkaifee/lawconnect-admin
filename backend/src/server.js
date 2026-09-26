@@ -13,8 +13,27 @@ import { sanitizeLogOutput } from "./utils/security.js";
 
 const app = express();
 
-app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*" }));
-app.use(express.json({ limit: "2mb" }));
+// Robust Cross-Origin Resource Sharing (CORS) Middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin || "*";
+  res.header("Access-Control-Allow-Origin", origin);
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+app.use(cors({ origin: true, credentials: true }));
+
+app.use(express.json({ limit: "10mb" }));
 app.use(morgan("tiny"));
 
 app.get("/", (_req, res) => res.json({ name: "Rishikesh Law Hub API", status: "ok" }));
