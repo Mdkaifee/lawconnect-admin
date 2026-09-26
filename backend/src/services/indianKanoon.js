@@ -1,6 +1,7 @@
 
 
-import { sanitizeHtmlText } from "../utils/security.js";
+import { sanitizeHtmlText, sanitizeLogOutput } from "../utils/security.js";
+import { LANDMARK_CASES } from "../config/landmarkCasesData.js";
 
 const IK_BASE_URL = "https://api.indiankanoon.org";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -24,13 +25,19 @@ function getCached(key) {
 }
 
 function setCache(key, data, ttl = CACHE_TTL_MS) {
-  // Cap cache size at 500 items to bound memory usage
   if (cache.size > 500) {
     const firstKey = cache.keys().next().value;
     if (firstKey) cache.delete(firstKey);
   }
   cache.set(key, { data, expiresAt: Date.now() + ttl });
 }
+
+const syncMetadata = {
+  lastSyncTime: null,
+  lastSyncCount: 0,
+  lastSyncError: null,
+  isSyncing: false,
+};
 
 export class IndianKanoonService {
   static getApiKey() {
