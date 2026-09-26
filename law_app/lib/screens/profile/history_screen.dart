@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/date_formatter.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../cases/case_detail_screen.dart';
 
@@ -79,7 +78,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: viewedAt.isNotEmpty
-                        ? Text(AppDateFormatter.formatDateTime(viewedAt), style: const TextStyle(fontSize: 11, color: AppColors.textMuted))
+                        ? Text(viewedAt.split('T').first, style: const TextStyle(fontSize: 11, color: AppColors.textMuted))
                         : null,
                     trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.textMuted),
                     onTap: () {

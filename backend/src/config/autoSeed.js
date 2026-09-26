@@ -27,56 +27,10 @@ export async function autoSeed() {
       await Category.findOneAndUpdate({ slug: c.slug }, { $set: c }, { upsert: true });
     }
 
-    /* ---- Sample landmark cases if none exist ---- */
-    if ((await Case.countDocuments()) === 0) {
-      await Case.insertMany([
-        {
-          title: "Kesavananda Bharati v. State of Kerala",
-          citation: "(1973) 4 SCC 225",
-          year: 1973,
-          court: "Supreme Court of India",
-          courtType: "Supreme Court",
-          bench: "Chief Justice S.M. Sikri & 12 other Judges",
-          petitioners: "Kesavananda Bharati Sripadagalvaru",
-          respondents: "State of Kerala and Another",
-          dateOfJudgment: new Date("1973-04-24"),
-          tags: ["Constitutional Law", "Basic Structure", "Article 368", "Amendment"],
-          categories: ["constitution"],
-          summary:
-            "Landmark judgment establishing the 'Basic Structure Doctrine' of the Indian Constitution, restricting Parliament's amending power.",
-          simpleExplanation:
-            "Parliament can amend the Constitution, but it cannot destroy its fundamental backbone — like democracy, rule of law, and judicial review.",
-          judgmentPdfUrl: "",
-        },
-        {
-          title: "Maneka Gandhi v. Union of India",
-          citation: "(1978) 1 SCC 248",
-          year: 1978,
-          court: "Supreme Court of India",
-          courtType: "Supreme Court",
-          bench: "Justice P.N. Bhagwati & Others",
-          petitioners: "Maneka Gandhi",
-          respondents: "Union of India",
-          dateOfJudgment: new Date("1978-01-25"),
-          tags: ["Article 21", "Right to Travel", "Due Process", "Personal Liberty"],
-          categories: ["constitution"],
-          summary: "Expanded the scope of Article 21 to include 'procedure established by law' must be just, fair and reasonable.",
-        },
-        {
-          title: "Justice K.S. Puttaswamy (Retd.) v. Union of India",
-          citation: "(2017) 10 SCC 1",
-          year: 2017,
-          court: "Supreme Court of India",
-          courtType: "Supreme Court",
-          bench: "9-Judge Constitutional Bench",
-          petitioners: "Justice K.S. Puttaswamy (Retd.)",
-          respondents: "Union of India",
-          dateOfJudgment: new Date("2017-08-24"),
-          tags: ["Privacy", "Article 21", "Fundamental Rights", "Aadhaar"],
-          categories: ["constitution"],
-          summary: "Held that the right to privacy is an intrinsic part of the right to life and personal liberty under Article 21.",
-        },
-      ]);
+    /* ---- Cases & Legal Updates (Synchronized via IndianKanoonService) ---- */
+    if ((await Case.countDocuments()) < 10) {
+      const { IndianKanoonService } = await import("../services/indianKanoon.js");
+      await IndianKanoonService.syncToDatabase();
     }
 
     /* ---- Sample acts & sections if none exist ---- */

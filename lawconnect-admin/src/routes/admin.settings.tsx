@@ -1,367 +1,348 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
 import { useAdminGuard } from "@/lib/useAdmin";
-import { api, getApiBase, setApiBase } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Server,
   ShieldCheck,
-  Lock,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  ExternalLink,
-  Activity,
+  KeyRound,
   Database,
+  CloudDownload,
+  RefreshCw,
+  Server,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/settings")({
-  head: () => ({ meta: [{ title: "Settings & Connectivity — Admin" }] }),
+  head: () => ({
+    meta: [
+      { title: "Settings — Law Hub Admin" },
+      { name: "description", content: "Manage admin security, Indian Kanoon data synchronization, and system configuration." },
+    ],
+  }),
   component: SettingsAdmin,
 });
 
+interface IntegrationStatus {
+  configured: boolean;
+  status: string;
+  message: string;
+  totalCases?: number;
+  totalUpdates?: number;
+}
+
+interface AdminProfile {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+}
+
 function SettingsAdmin() {
   const ready = useAdminGuard();
-  const [apiUrl, setApiUrl] = useState(getApiBase());
-  const [apiSaved, setApiSaved] = useState(false);
 
-  // Health state
-  const [healthChecking, setHealthChecking] = useState(false);
-  const [healthResult, setHealthResult] = useState<{ ok: boolean; status?: string; uptime?: number; latency?: number } | null>(null);
-
-  // Kanoon status state
-  const [kanoonChecking, setKanoonChecking] = useState(false);
-  const [kanoonResult, setKanoonResult] = useState<{
-    status: string;
-    message: string;
-    configured?: boolean;
-    sampleCount?: number;
-  } | null>(null);
-
-  // Password change state
+  // Profile & Password State
+  const [admin, setAdmin] = useState<AdminProfile | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [passError, setPassError] = useState<string | null>(null);
+  const [passSuccess, setPassSuccess] = useState<string | null>(null);
+  const [passSaving, setPassSaving] = useState(false);
+
+  // Kanoon Integration State
+  const [integration, setIntegration] = useState<IntegrationStatus | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  function loadData() {
+    if (!ready) return;
+    setLoadingStatus(true);
+    Promise.allSettled([
+      api<{ admin: AdminProfile }>("/api/auth/admin/me"),
+      api<IntegrationStatus>("/api/cases/integration-status"),
+    ]).then(([admRes, intRes]) => {
+      if (admRes.status === "fulfilled") setAdmin(admRes.value.admin);
+      if (intRes.status === "fulfilled") setIntegration(intRes.value);
+      setLoadingStatus(false);
+    });
+  }
 
   useEffect(() => {
-    if (ready) {
-      testHealth();
-      testKanoon();
-    }
+    loadData();
   }, [ready]);
 
-  const saveApiAddress = () => {
-    const cleaned = apiUrl.trim().replace(/\/$/, "");
-    setApiBase(cleaned);
-    setApiUrl(cleaned);
-    setApiSaved(true);
-    setTimeout(() => setApiSaved(false), 2500);
-    testHealth();
-  };
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    setPassError(null);
+    setPassSuccess(null);
 
-  const resetDefaultApi = () => {
-    const liveUrl = "https://lawconnect-admin.onrender.com";
-    setApiBase(liveUrl);
-    setApiUrl(liveUrl);
-    setApiSaved(true);
-    setTimeout(() => setApiSaved(false), 2500);
-    testHealth();
-  };
-
-  const testHealth = async () => {
-    setHealthChecking(true);
-    const start = Date.now();
-    try {
-      const res = await api<{ ok: boolean; status?: string; uptime?: number }>("/health", { auth: false });
-      const latency = Date.now() - start;
-      setHealthResult({ ok: Boolean(res?.ok), status: res?.status || "healthy", uptime: res?.uptime, latency });
-    } catch {
-      setHealthResult({ ok: false, status: "unreachable" });
-    } finally {
-      setHealthChecking(false);
-    }
-  };
-
-  const testKanoon = async () => {
-    setKanoonChecking(true);
-    try {
-      const res = await api<any>("/api/cases/kanoon/search?q=constitution&pagenum=0", { auth: true });
-      if (res && Array.isArray(res.docs)) {
-        setKanoonResult({
-          status: "connected",
-          message: `Successfully connected to Indian Kanoon Search API. Received ${res.docs.length} judgments.`,
-          configured: true,
-          sampleCount: res.docs.length,
-        });
-      } else {
-        setKanoonResult({
-          status: "connected",
-          message: "API endpoint reachable and responding.",
-          configured: true,
-        });
-      }
-    } catch (e: any) {
-      setKanoonResult({
-        status: "ready",
-        message: "Proxy endpoint active. Live requests are routed with backend token authentication.",
-        configured: true,
-      });
-    } finally {
-      setKanoonChecking(false);
-    }
-  };
-
-  const changePassword = async () => {
-    setPasswordMsg(null);
-    if (!currentPassword || !newPassword) {
-      setPasswordMsg({ type: "error", text: "Please fill in all password fields." });
+    if (!currentPassword) {
+      setPassError("Please enter your current password");
       return;
     }
     if (newPassword.length < 6) {
-      setPasswordMsg({ type: "error", text: "New password must be at least 6 characters long." });
+      setPassError("New password must be at least 6 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: "error", text: "New passwords do not match." });
+      setPassError("New passwords do not match");
       return;
     }
 
-    setChangingPassword(true);
+    setPassSaving(true);
     try {
       await api("/api/auth/admin/change-password", {
         method: "POST",
         body: { currentPassword, newPassword },
       });
-      setPasswordMsg({ type: "success", text: "Admin password updated successfully!" });
+      setPassSuccess("Password updated successfully!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (e: any) {
-      setPasswordMsg({ type: "error", text: e.message || "Failed to update password." });
+    } catch (err) {
+      setPassError(err instanceof Error ? err.message : "Failed to change password");
     } finally {
-      setChangingPassword(false);
+      setPassSaving(false);
     }
-  };
+  }
+
+  async function handleSyncKanoon() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await api<{ ok: boolean; message: string; totalCasesInDb: number; totalUpdatesInDb: number }>(
+        "/api/cases/sync-kanoon",
+        { method: "POST" }
+      );
+      setSyncResult({
+        type: "success",
+        text: res.message || "Database successfully synchronized from Indian Kanoon!",
+      });
+      // Refresh integration metrics
+      const updatedStatus = await api<IntegrationStatus>("/api/cases/integration-status");
+      setIntegration(updatedStatus);
+    } catch (err) {
+      setSyncResult({
+        type: "error",
+        text: err instanceof Error ? err.message : "Synchronization failed. Please check server logs.",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <AdminShell
-      title="Settings & System Status"
-      subtitle="Configure server connectivity, external legal APIs, and administrative credentials"
+      title="System Settings"
+      subtitle="Security credentials, Indian Kanoon synchronization, and server infrastructure"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Backend API Configuration */}
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Server className="size-5 text-primary" />
-              <h2 className="font-display text-lg font-semibold">Backend API Endpoint</h2>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={testHealth}
-              disabled={healthChecking}
-              className="gap-1.5 text-xs h-8"
-            >
-              <RefreshCw className={`size-3.5 ${healthChecking ? "animate-spin" : ""}`} />
-              {healthChecking ? "Pinging..." : "Test Ping"}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            The target server URL used by this admin dashboard and mobile client requests.
-          </p>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Active Server URL</label>
-              <Input
-                value={apiUrl}
-                onChange={(e) => setApiUrl(e.target.value)}
-                placeholder="https://lawconnect-admin.onrender.com"
-                className="mt-1 font-mono text-xs"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pt-1">
-              <Button size="sm" variant="outline" onClick={resetDefaultApi} className="text-xs">
-                Reset to Default Live URL
-              </Button>
-              <Button size="sm" onClick={saveApiAddress} className="text-xs bg-primary">
-                {apiSaved ? "Saved!" : "Save Server Address"}
-              </Button>
-            </div>
-
-            <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3.5 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground flex items-center gap-1.5">
-                  <Activity className="size-3.5" /> Backend Health:
-                </span>
-                <span className={`font-semibold flex items-center gap-1 ${healthResult?.ok ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                  {healthResult?.ok ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
-                  {healthResult?.ok ? `Online & Healthy (${healthResult.latency}ms)` : "Offline / Cold-Starting"}
-                </span>
-              </div>
-              {healthResult?.uptime !== undefined && (
-                <div className="flex items-center justify-between text-muted-foreground pt-1 border-t border-border/40">
-                  <span>Server Uptime:</span>
-                  <span className="font-mono">{Math.floor(healthResult.uptime)}s</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Indian Kanoon API Status */}
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-secondary-foreground" />
-              <h2 className="font-display text-lg font-semibold">Indian Kanoon API Integration</h2>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={testKanoon}
-              disabled={kanoonChecking}
-              className="gap-1.5 text-xs h-8"
-            >
-              <RefreshCw className={`size-3.5 ${kanoonChecking ? "animate-spin" : ""}`} />
-              {kanoonChecking ? "Testing..." : "Test Connection"}
-            </Button>
-          </div>
-
-          <p className="text-xs text-muted-foreground mb-4">
-            Backend-only integration with <code className="bg-muted px-1 py-0.5 rounded font-mono">api.indiankanoon.org</code> for Indian court judgments and legal research.
-          </p>
-
-          <div className="space-y-3">
-            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Security Mode:</span>
-                <span className="font-semibold text-foreground">Backend-Only Token Proxy (Protected)</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Proxy Status:</span>
-                <span className="font-semibold flex items-center gap-1 text-green-600 dark:text-green-400">
-                  <CheckCircle2 className="size-3.5" />
-                  {kanoonResult?.status ? kanoonResult.status.toUpperCase() : "READY & CONFIGURED"}
-                </span>
-              </div>
-
-              {kanoonResult?.message && (
-                <div className="mt-2 text-muted-foreground border-t border-border/60 pt-2 leading-relaxed">
-                  {kanoonResult.message}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <a
-                href="https://api.indiankanoon.org/documentation/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-              >
-                Official Kanoon API Docs <ExternalLink className="size-3" />
-              </a>
-              <span className="text-[11px] text-muted-foreground">Token stored safely in backend environment</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Admin Password Change */}
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Lock className="size-5 text-primary" />
-            <h2 className="font-display text-lg font-semibold">Change Admin Password</h2>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Update your administrative dashboard credentials.
-          </p>
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Current Password</label>
-              <Input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-                className="mt-1 text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold uppercase text-muted-foreground">New Password</label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Min 6 characters"
-                  className="mt-1 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold uppercase text-muted-foreground">Confirm New Password</label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter new password"
-                  className="mt-1 text-sm"
-                />
-              </div>
-            </div>
-
-            {passwordMsg && (
-              <p className={`text-xs font-medium ${passwordMsg.type === "success" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                {passwordMsg.text}
-              </p>
-            )}
-
-            <Button
-              onClick={changePassword}
-              disabled={changingPassword || !currentPassword || !newPassword}
-              className="mt-2 text-xs bg-primary"
-            >
-              {changingPassword ? "Updating Password..." : "Update Password"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Database & AutoSeed Info */}
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Database className="size-5 text-primary" />
-            <h2 className="font-display text-lg font-semibold">Database Auto-Seed Status</h2>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Automatic synchronization of starter categories, landmark judgments, and bare acts on backend startup.
-          </p>
-
-          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Admin Account:</span>
-              <span className="font-mono font-medium">Rishikesh (Owner)</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Auto-Seed:</span>
-              <span className="text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
-                <CheckCircle2 className="size-3.5" /> Enabled on MongoDB connect
+      <div className="max-w-4xl space-y-8">
+        {/* Kanoon & Database Synchronization Panel */}
+        <Panel className="p-6">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Database className="size-5" />
               </span>
+              <div>
+                <h2 className="font-display text-lg font-semibold">Indian Kanoon & Database Synchronization</h2>
+                <p className="text-xs text-muted-foreground">
+                  Synchronize judgments and legal updates into MongoDB for high-speed offline serving
+                </p>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Data Collections:</span>
-              <span>Cases, Acts, Updates, Posts, Categories</span>
+            <Button
+              onClick={handleSyncKanoon}
+              disabled={syncing}
+              className="gap-2 shadow-sm font-medium"
+            >
+              {syncing ? (
+                <>
+                  <RefreshCw className="size-4 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <CloudDownload className="size-4" />
+                  Sync Kanoon to DB Now
+                </>
+              )}
+            </Button>
+          </div>
+
+          {syncResult && (
+            <div
+              className={`mt-4 flex items-start gap-3 rounded-lg border p-4 text-sm ${
+                syncResult.type === "success"
+                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200"
+                  : "border-destructive/20 bg-destructive/10 text-destructive"
+              }`}
+            >
+              {syncResult.type === "success" ? (
+                <CheckCircle2 className="size-5 shrink-0 text-emerald-600 mt-0.5" />
+              ) : (
+                <AlertCircle className="size-5 shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1">
+                <p className="font-semibold">{syncResult.type === "success" ? "Sync Succeeded" : "Sync Error"}</p>
+                <p className="mt-0.5 text-xs opacity-90">{syncResult.text}</p>
+              </div>
+              <button
+                onClick={() => setSyncResult(null)}
+                className="text-xs opacity-60 hover:opacity-100 font-semibold"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-border bg-card/50 p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">API Connection Status</p>
+              <div className="mt-2 flex items-center gap-2">
+                {integration?.configured ? (
+                  <span className="flex items-center gap-1.5 font-medium text-emerald-600 text-sm">
+                    <span className="size-2 rounded-full bg-emerald-500" /> Active & Configured
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 font-medium text-amber-600 text-sm">
+                    <span className="size-2 rounded-full bg-amber-500" /> Curated Database Fallback Mode
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                {integration?.message || "Checking status..."}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card/50 p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Automated Sync Schedule</p>
+              <div className="mt-2 flex items-center gap-2">
+                <Clock className="size-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">Every 12 Hours (6:00 AM & 6:00 PM IST)</span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                The backend scheduler automatically fetches new judgments and updates twice daily, upserting them into MongoDB.
+              </p>
             </div>
           </div>
-        </div>
+        </Panel>
+
+        {/* Admin Account & Security Panel */}
+        <Panel className="p-6">
+          <div className="flex items-center gap-3 border-b border-border pb-4">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ShieldCheck className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-semibold">Admin Account & Security</h2>
+              <p className="text-xs text-muted-foreground">Manage your owner login credentials and password</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Owner Profile Details</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Username</p>
+                  <p className="font-mono text-sm font-semibold mt-0.5">{admin?.username || "Admin"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Full Name</p>
+                  <p className="text-sm font-medium mt-0.5">{admin?.name || "Rishikesh Yadav"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Role</p>
+                  <p className="inline-block rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary uppercase mt-0.5">
+                    {admin?.role || "Owner"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <KeyRound className="size-4 text-primary" /> Change Password
+              </h3>
+              <form onSubmit={handlePasswordChange} className="space-y-3">
+                <Field label="Current Password">
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Current password"
+                  />
+                </Field>
+                <Field label="New Password">
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="New password (min 6 chars)"
+                  />
+                </Field>
+                <Field label="Confirm New Password">
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                  />
+                </Field>
+
+                {passError && <p className="text-xs text-destructive">{passError}</p>}
+                {passSuccess && <p className="text-xs text-emerald-600 font-medium">{passSuccess}</p>}
+
+                <Button type="submit" disabled={passSaving} className="w-full mt-2">
+                  {passSaving ? "Updating Password..." : "Update Password"}
+                </Button>
+              </form>
+            </div>
+          </div>
+        </Panel>
+
+        {/* Server & Deployment Info Panel */}
+        <Panel className="p-6">
+          <div className="flex items-center gap-3 border-b border-border pb-4">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Server className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-semibold">Deployment & Environment</h2>
+              <p className="text-xs text-muted-foreground">System architecture and live cloud endpoints</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Application Name</p>
+              <p className="font-medium text-foreground mt-0.5">Law Hub Admin Panel</p>
+            </div>
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Backend API</p>
+              <p className="font-mono text-xs text-muted-foreground mt-0.5 truncate">
+                https://lawconnect-admin.onrender.com
+              </p>
+            </div>
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Database Storage</p>
+              <p className="font-medium text-foreground mt-0.5">MongoDB Atlas (Persistent Collection)</p>
+            </div>
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">External Legal Provider</p>
+              <p className="font-medium text-foreground mt-0.5">Indian Kanoon API (api.indiankanoon.org)</p>
+            </div>
+          </div>
+        </Panel>
       </div>
     </AdminShell>
   );

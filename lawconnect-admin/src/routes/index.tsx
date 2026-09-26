@@ -9,10 +9,10 @@ import { api, getToken, setToken } from "@/lib/api";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Rishikesh Law Hub" },
-      { name: "description", content: "Owner login for the Rishikesh Law Hub admin panel: manage cases, acts, legal updates and posts." },
-      { property: "og:title", content: "Admin Login — Rishikesh Law Hub" },
-      { property: "og:description", content: "Owner login for the Rishikesh Law Hub admin panel." },
+      { title: "Law Hub" },
+      { name: "description", content: "Owner login for the Law Hub admin panel: manage cases, acts, legal updates and posts." },
+      { property: "og:title", content: "Admin Login — Law Hub" },
+      { property: "og:description", content: "Owner login for the Law Hub admin panel." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 
 function Login() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("Rishikesh");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

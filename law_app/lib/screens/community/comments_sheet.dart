@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/date_formatter.dart';
 import '../../models/comment_model.dart';
 import '../../repositories/post_repository.dart';
 
@@ -163,18 +162,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              c.authorName,
-                                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.primaryNavy),
-                                            ),
-                                            Text(
-                                              AppDateFormatter.formatRelative(c.createdAt),
-                                              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                                            ),
-                                          ],
+                                        Text(
+                                          c.authorName,
+                                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.primaryNavy),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(

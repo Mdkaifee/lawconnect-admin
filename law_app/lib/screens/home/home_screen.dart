@@ -6,12 +6,9 @@ import '../../blocs/act/act_bloc.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/date_formatter.dart';
 import '../cases/case_search_screen.dart';
 import '../cases/case_detail_screen.dart';
-import '../acts/acts_list_screen.dart';
 import '../acts/act_detail_screen.dart';
-import '../updates/updates_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/case_card.dart';
 
@@ -23,17 +20,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _quickSearchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-  }
-
-  void _loadInitialData() {
     context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
     context.read<ActBloc>().add(const LoadActsEvent());
     context.read<UpdateBloc>().add(const LoadUpdatesEvent());
     context.read<PostBloc>().add(const LoadPostsEvent());
+  }
+
+  @override
+  void dispose() {
+    _quickSearchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 10),
             const Text(
-              'Law Hub',
+              'Rishikesh Law Hub',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
             ),
           ],
@@ -71,7 +72,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          _loadInitialData();
+          context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
+          context.read<ActBloc>().add(const LoadActsEvent());
+          context.read<UpdateBloc>().add(const LoadUpdatesEvent());
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -170,9 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ActsListScreen()),
-                        );
+                        // Switch to acts tab or navigate
                       },
                       child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
                     ),
@@ -181,12 +182,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               BlocBuilder<ActBloc, ActState>(
                 builder: (context, state) {
-                  if (state is ActLoading) {
-                    return const SizedBox(
-                      height: 100,
-                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy)),
-                    );
-                  }
                   if (state is ActListLoaded && state.acts.isNotEmpty) {
                     return SizedBox(
                       height: 105,
@@ -246,28 +241,15 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // Landmark Judgments Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Landmark Judgments',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryNavy,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const CaseSearchScreen()),
-                        );
-                      },
-                      child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
-                    ),
-                  ],
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Landmark Judgments',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryNavy,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -296,19 +278,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       }).toList(),
                     );
                   }
-                  return Center(
+                  return const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        children: [
-                          const Text('No landmark judgments loaded.'),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () => context.read<CaseBloc>().add(LoadCuratedLandmarksEvent()),
-                            child: const Text('Reload Judgments'),
-                          ),
-                        ],
-                      ),
+                      padding: EdgeInsets.all(24),
+                      child: Text('No landmark judgments available right now.'),
                     ),
                   );
                 },
@@ -320,29 +293,16 @@ class _HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Verified Legal Updates',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primaryNavy,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const UpdatesScreen()),
-                        );
-                      },
-                      child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
+                    const Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Verified Legal Updates',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryNavy,
+                      ),
                     ),
                   ],
                 ),
@@ -353,8 +313,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (state is UpdateLoaded && state.updates.isNotEmpty) {
                     return Column(
                       children: state.updates.take(3).map((u) {
-                        final formattedTime = AppDateFormatter.formatRelative(u.publishedAt);
-
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           elevation: 0,
@@ -362,35 +320,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                             side: const BorderSide(color: AppColors.borderLight),
                           ),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const UpdatesScreen()),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(Icons.article_outlined, color: AppColors.primaryNavy, size: 22),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              title: Text(
-                                u.title,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  '${u.source} • ${u.category}${formattedTime.isNotEmpty ? " • $formattedTime" : ""}',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                                ),
+                              child: const Icon(Icons.article_outlined, color: AppColors.primaryNavy, size: 22),
+                            ),
+                            title: Text(
+                              u.title,
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${u.source} • ${u.category}',
+                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                               ),
                             ),
                           ),
@@ -408,3 +358,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

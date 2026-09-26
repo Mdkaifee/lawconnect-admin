@@ -51,9 +51,9 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Law Hub',
+                'Rishikesh Law Hub',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: 0.5,

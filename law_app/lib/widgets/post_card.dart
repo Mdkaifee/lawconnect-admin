@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/theme/app_theme.dart';
-import '../core/utils/date_formatter.dart';
 import '../models/post_model.dart';
 
 class PostCard extends StatelessWidget {
@@ -83,18 +82,9 @@ class PostCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                      Row(
-                        children: [
-                          Text(
-                            post.category,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                          ),
-                          const Text(' • ', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                          Text(
-                            AppDateFormatter.formatRelative(post.createdAt),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                          ),
-                        ],
+                      Text(
+                        post.category,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -106,7 +96,7 @@ class PostCard extends StatelessWidget {
                   onSelected: (val) {
                     if (val == 'report') onReport();
                     if (val == 'share') {
-                      Share.share('${post.title}\n\n${post.content}\n\n- Shared from Law Hub');
+                      Share.share('${post.title}\n\n${post.content}\n\n- Shared from Rishikesh Law Hub');
                     }
                   },
                   itemBuilder: (ctx) => [
