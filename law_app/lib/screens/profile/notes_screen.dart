@@ -97,9 +97,9 @@ class _NotesScreenState extends State<NotesScreen> {
         onPressed: () => _showEditNoteDialog(context),
         backgroundColor: AppColors.primaryNavy,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(999),
         ),
-        child: const Icon(Icons.add, color: AppColors.goldAccent),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(
         builder: (context, state) {
