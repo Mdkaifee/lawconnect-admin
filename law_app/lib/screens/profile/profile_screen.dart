@@ -2,145 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/auth/auth_bloc.dart';
-import '../../core/theme/app_theme.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../auth/login_screen.dart';
 import '../community/community_feed_screen.dart';
+import 'about_us_screen.dart';
 import 'bookmarks_screen.dart';
 import 'history_screen.dart';
 import 'notes_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.gavel_rounded, color: Color(0xFF0F1E36)),
-            SizedBox(width: 10),
-            Text('About Rishikesh Law Hub', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Rishikesh Law Hub',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF0F1E36)),
-            ),
-            SizedBox(height: 4),
-            Text('Version 1.0.0 (Build 2026)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-            SizedBox(height: 12),
-            Text(
-              'A modern legal research and study hub for law students, advocates, and legal professionals. Sourced from official court repositories with verified legal updates, acts, and personal briefs.',
-              style: TextStyle(fontSize: 13.5, height: 1.45, color: Color(0xFF334155)),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final uri = Uri(
-                scheme: 'mailto',
-                path: 'rishikesh4287@gmail.com',
-                queryParameters: const {'subject': 'Law Hub Help & Support'},
-              );
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.email_outlined),
-            label: const Text('Email Support'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F1E36),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+  Future<void> _openGmailSupport(BuildContext context) async {
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: 'rishikesh4287@gmail.com',
     );
+
+    try {
+      final launched = await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        await launchUrl(emailUri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contact support: rishikesh4287@gmail.com'),
+            backgroundColor: Color(0xFF0F1E36),
+          ),
+        );
+      }
+    }
   }
 
-  void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Help & Support', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Need assistance with Law Hub?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-            SizedBox(height: 8),
-            Text(
-              '• For feedback & queries: rishikesh4287@gmail.com\n• Case judgments are fetched and cached for offline reading.\n• Use the Notes section to draft arguments and case briefs.',
-              style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF475569)),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F1E36),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Got It'),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _showSettingsDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Settings',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F1E36)),
-            ),
-            const SizedBox(height: 14),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.notifications_outlined, color: Color(0xFF0F1E36)),
-              title: const Text('Push Notifications', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              trailing: Switch(value: true, activeColor: const Color(0xFF0F1E36), onChanged: (val) {}),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.dark_mode_outlined, color: Color(0xFF0F1E36)),
-              title: const Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              trailing: Switch(value: false, activeColor: const Color(0xFF0F1E36), onChanged: (val) {}),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.language_outlined, color: Color(0xFF0F1E36)),
-              title: const Text('Language: English / Hindi', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,19 +179,23 @@ class ProfileScreen extends StatelessWidget {
                     context,
                     icon: Icons.settings_outlined,
                     title: 'Settings',
-                    onTap: () => _showSettingsDialog(context),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    ),
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.help_outline_rounded,
                     title: 'Help & Support',
-                    onTap: () => _showHelpDialog(context),
+                    onTap: () => _openGmailSupport(context),
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.info_outline_rounded,
                     title: 'About Us',
-                    onTap: () => _showAboutDialog(context),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AboutUsScreen()),
+                    ),
                   ),
                   _buildMenuItem(
                     context,
