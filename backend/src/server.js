@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import { connectDB } from "./config/db.js";
+import { autoSeed } from "./config/autoSeed.js";
 import authRoutes from "./routes/auth.js";
 import caseRoutes from "./routes/cases.js";
 import actRoutes from "./routes/acts.js";
@@ -13,12 +14,23 @@ import { sanitizeLogOutput } from "./utils/security.js";
 
 const app = express();
 
-app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*" }));
-app.use(express.json({ limit: "2mb" }));
+// Universal CORS configuration to support Admin panel on any domain + localhost + mobile
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-api-key");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+app.use(cors({ origin: "*" }));
+app.use(express.json({ limit: "5mb" }));
 app.use(morgan("tiny"));
 
 app.get("/", (_req, res) => res.json({ name: "Rishikesh Law Hub API", status: "ok" }));
-app.get("/health", (_req, res) => res.json({ ok: true, uptime: process.uptime() }));
+app.get("/health", (_req, res) => res.json({ ok: true, status: "healthy", uptime: process.uptime(), timestamp: new Date().toISOString() }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cases", caseRoutes);
@@ -41,7 +53,10 @@ app.use((err, _req, res, _next) => {
 
 const port = process.env.PORT || 4000;
 connectDB()
-  .then(() => app.listen(port, () => console.log(`API listening on :${port}`)))
+  .then(async () => {
+    await autoSeed();
+    app.listen(port, () => console.log(`API listening on :${port}`));
+  })
   .catch((e) => {
     console.error("Failed to start:", e.message);
     process.exit(1);

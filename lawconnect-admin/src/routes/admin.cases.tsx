@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Panel, StateBlock, Field } from "@/components/admin/DataPanel";
+import { Panel, StateBlock } from "@/components/admin/DataPanel";
 import { useAdminGuard } from "@/lib/useAdmin";
 import { api } from "@/lib/api";
 import type { LawCase } from "@/lib/types";
@@ -156,8 +156,6 @@ function CasesAdmin() {
       alert(e instanceof Error ? e.message : "Failed to delete case");
     }
   }
-
-  const courts = ["all", "Supreme Court of India", "Delhi High Court", "Bombay High Court", "Allahabad High Court", "Calcutta High Court", "Madras High Court", "Karnataka High Court"];
 
   return (
     <AdminShell

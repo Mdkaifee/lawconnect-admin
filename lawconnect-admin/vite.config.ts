@@ -7,7 +7,11 @@ import { nitro } from "nitro/vite";
 
 export default defineConfig({
   plugins: [
-    tanstackStart(),
+    tanstackStart({
+      router: {
+        autoCodeSplitting: false,
+      },
+    }),
     react(),
     tailwindcss(),
     tsconfigPaths(),
