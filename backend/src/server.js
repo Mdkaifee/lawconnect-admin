@@ -12,7 +12,28 @@ import { categories, notes, bookmarks, history, users, stats } from "./routes/mi
 
 const app = express();
 
-app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*" }));
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow all origins (browsers, mobile apps, dev environments)
+    if (!origin) return callback(null, true);
+    const raw = process.env.CORS_ORIGIN;
+    if (!raw || raw.trim() === "*" || raw.trim() === "") {
+      return callback(null, true);
+    }
+    const allowed = raw.split(",").map((s) => s.trim());
+    if (allowed.includes("*") || allowed.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 app.use(express.json({ limit: "2mb" }));
 app.use(morgan("tiny"));
 
