@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import 'home/home_screen.dart';
 import 'cases/case_search_screen.dart';
-import 'acts/acts_list_screen.dart';
-import 'updates/updates_screen.dart';
 import 'community/community_feed_screen.dart';
 import 'profile/bookmarks_screen.dart';
 import 'profile/profile_screen.dart';
@@ -22,8 +20,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     CaseSearchScreen(),
-    CommunityFeedScreen(),
-    BookmarksScreen(),
+    CommunityFeedScreen(showBackButton: false),
+    BookmarksScreen(showBackButton: false),
     ProfileScreen(),
   ];
 
@@ -57,9 +55,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           selectedItemColor: AppColors.primaryNavy,
           unselectedItemColor: AppColors.textMuted,
           elevation: 0,
-          iconSize: 21,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
+          iconSize: 22,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10.5),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10.5),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
@@ -92,4 +90,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
-

@@ -563,25 +563,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildInfoCard(String label, String value) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
