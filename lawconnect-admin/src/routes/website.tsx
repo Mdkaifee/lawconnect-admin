@@ -102,7 +102,7 @@ function WebsitePage() {
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl">
-              <div className="aspect-[4/3] bg-[url('/lawicon.jpeg')] bg-cover bg-center" />
+              <div className="aspect-[4/3] bg-[url('/lawicon.png')] bg-cover bg-center" />
               <div className="grid grid-cols-3 gap-px bg-slate-800 text-center text-xs font-semibold text-white">
                 <div className="bg-slate-900 px-3 py-4">
                   <p className="text-lg font-extrabold text-amber-300">Cases</p>
