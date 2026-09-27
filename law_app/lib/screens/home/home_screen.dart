@@ -406,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Reference-style quote and court banner.
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                height: 128,
+                height: 150,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
