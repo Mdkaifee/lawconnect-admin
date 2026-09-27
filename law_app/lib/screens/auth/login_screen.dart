@@ -154,136 +154,143 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
                   // Tab Views
                   SizedBox(
-                    height: 380,
+                    height: 410,
                     child: TabBarView(
                       controller: _tabController,
+                      clipBehavior: Clip.none,
                       children: [
                         // --- Sign In Tab ---
-                        Form(
-                          key: _loginFormKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              TextFormField(
-                                controller: _loginEmailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email Address',
-                                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
-                                ),
-                                validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _loginPasswordController,
-                                obscureText: _obscureLoginPassword,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscureLoginPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                      color: AppColors.textMuted,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscureLoginPassword = !_obscureLoginPassword;
-                                      });
-                                    },
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Form(
+                            key: _loginFormKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                TextFormField(
+                                  controller: _loginEmailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email Address',
+                                    prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
                                   ),
+                                  validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
                                 ),
-                                validator: (val) => val == null || val.length < 6 ? 'Password must be at least 6 characters' : null,
-                              ),
-                              const SizedBox(height: 24),
-                              BlocBuilder<AuthBloc, AuthState>(
-                                builder: (context, state) {
-                                  final isLoading = state is AuthLoading;
-                                  return ElevatedButton(
-                                    onPressed: isLoading ? null : _submitLogin,
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                const SizedBox(height: 18),
+                                TextFormField(
+                                  controller: _loginPasswordController,
+                                  obscureText: _obscureLoginPassword,
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureLoginPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        color: AppColors.textMuted,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscureLoginPassword = !_obscureLoginPassword;
+                                        });
+                                      },
                                     ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                          )
-                                        : const Text('Sign In to Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                                  );
-                                },
-                              ),
-                            ],
+                                  ),
+                                  validator: (val) => val == null || val.length < 6 ? 'Password must be at least 6 characters' : null,
+                                ),
+                                const SizedBox(height: 24),
+                                BlocBuilder<AuthBloc, AuthState>(
+                                  builder: (context, state) {
+                                    final isLoading = state is AuthLoading;
+                                    return ElevatedButton(
+                                      onPressed: isLoading ? null : _submitLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                      ),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                            )
+                                          : const Text('Sign In to Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 
                         // --- Register Tab ---
-                        Form(
-                          key: _registerFormKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              TextFormField(
-                                controller: _registerNameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Full Name',
-                                  prefixIcon: Icon(Icons.person_outline, color: AppColors.textMuted),
-                                ),
-                                validator: (val) => val == null || val.trim().isEmpty ? 'Enter your name' : null,
-                              ),
-                              const SizedBox(height: 14),
-                              TextFormField(
-                                controller: _registerEmailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email Address',
-                                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
-                                ),
-                                validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
-                              ),
-                              const SizedBox(height: 14),
-                              TextFormField(
-                                controller: _registerPasswordController,
-                                obscureText: _obscureRegisterPassword,
-                                decoration: InputDecoration(
-                                  labelText: 'Create Password',
-                                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscureRegisterPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                      color: AppColors.textMuted,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscureRegisterPassword = !_obscureRegisterPassword;
-                                      });
-                                    },
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Form(
+                            key: _registerFormKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                TextFormField(
+                                  controller: _registerNameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Full Name',
+                                    prefixIcon: Icon(Icons.person_outline, color: AppColors.textMuted),
                                   ),
+                                  validator: (val) => val == null || val.trim().isEmpty ? 'Enter your name' : null,
                                 ),
-                                validator: (val) => val == null || val.length < 6 ? 'Password must be at least 6 characters' : null,
-                              ),
-                              const SizedBox(height: 20),
-                              BlocBuilder<AuthBloc, AuthState>(
-                                builder: (context, state) {
-                                  final isLoading = state is AuthLoading;
-                                  return ElevatedButton(
-                                    onPressed: isLoading ? null : _submitRegister,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.goldAccent,
-                                      foregroundColor: AppColors.primaryNavy,
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _registerEmailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email Address',
+                                    prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+                                  ),
+                                  validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _registerPasswordController,
+                                  obscureText: _obscureRegisterPassword,
+                                  decoration: InputDecoration(
+                                    labelText: 'Create Password',
+                                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureRegisterPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        color: AppColors.textMuted,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscureRegisterPassword = !_obscureRegisterPassword;
+                                        });
+                                      },
                                     ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2),
-                                          )
-                                        : const Text('Create Free Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                                  );
-                                },
-                              ),
-                            ],
+                                  ),
+                                  validator: (val) => val == null || val.length < 6 ? 'Password must be at least 6 characters' : null,
+                                ),
+                                const SizedBox(height: 22),
+                                BlocBuilder<AuthBloc, AuthState>(
+                                  builder: (context, state) {
+                                    final isLoading = state is AuthLoading;
+                                    return ElevatedButton(
+                                      onPressed: isLoading ? null : _submitRegister,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.goldAccent,
+                                        foregroundColor: AppColors.primaryNavy,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                      ),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2),
+                                            )
+                                          : const Text('Create Free Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],

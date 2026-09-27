@@ -87,7 +87,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.borderLight),
@@ -105,6 +105,8 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.danger),
         ),
         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        floatingLabelStyle: const TextStyle(color: AppColors.primaryNavy, fontSize: 13, fontWeight: FontWeight.w600),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceCard,
