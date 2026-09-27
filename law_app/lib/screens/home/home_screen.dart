@@ -405,29 +405,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Reference-style quote and court banner.
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                height: 150,
+                margin: EdgeInsets.zero,
+                height: 138,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
                   image: const DecorationImage(
                     image: AssetImage('assets/sci.png'),
                     fit: BoxFit.cover,
                     opacity: 1,
                   ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '“The Constitution is not a mere lawyers’ document, it is a vehicle of life, and its spirit is always the spirit of the age.”\n\n— Dr. B.R. Ambedkar',
-                          style: TextStyle(color: AppColors.primaryNavy, fontSize: 12, height: 1.35, fontWeight: FontWeight.w600),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.84),
+                            Colors.white.withValues(alpha: 0.48),
+                            Colors.white.withValues(alpha: 0),
+                          ],
+                          stops: const [0, 0.45, 0.72],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 18, top: 14, right: 150, bottom: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '“The Constitution is\nnot a mere lawyers’ document,\nit is a vehicle of life, and its spirit\nis always the spirit of the age.”\n\n— Dr. B.R. Ambedkar',
+                              maxLines: 6,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: const Color(0xFF061328),
+                                fontSize: 12,
+                                height: 1.18,
+                                fontWeight: FontWeight.w800,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 18),
