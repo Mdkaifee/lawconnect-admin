@@ -8,11 +8,14 @@ import '../../blocs/update/update_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/url_helper.dart';
+import '../../models/category_model.dart';
+import '../../repositories/category_repository.dart';
 import '../cases/case_search_screen.dart';
 import '../cases/case_detail_screen.dart';
 import '../acts/act_detail_screen.dart';
 import '../acts/acts_list_screen.dart';
 import '../community/community_feed_screen.dart';
+import 'legal_category_screen.dart';
 import '../profile/about_us_screen.dart';
 import '../profile/bookmarks_screen.dart';
 import '../profile/history_screen.dart';
@@ -20,6 +23,7 @@ import '../profile/notes_screen.dart';
 import '../profile/settings_screen.dart';
 import '../../widgets/case_card.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
+import '../../widgets/legal_category_grid.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +34,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _quickSearchController = TextEditingController();
+  final CategoryRepository _categoryRepository = CategoryRepository();
+  late Future<List<CategoryModel>> _categoriesFuture;
 
   @override
   void initState() {
@@ -38,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<ActBloc>().add(const LoadActsEvent());
     context.read<UpdateBloc>().add(const LoadUpdatesEvent());
     context.read<PostBloc>().add(const LoadPostsEvent());
+    _categoriesFuture = _loadCategories();
   }
 
   @override
@@ -70,6 +77,77 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
+  }
+
+  Future<List<CategoryModel>> _loadCategories() async {
+    try {
+      final categories = await _categoryRepository.getCategories();
+      if (categories.isNotEmpty) return categories;
+    } catch (_) {}
+    return _fallbackCategories;
+  }
+
+  void _openCategory(CategoryModel category) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => LegalCategoryScreen(category: category)),
+    );
+  }
+
+  void _openMoreCategories(List<CategoryModel> categories) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 4, bottom: 12),
+                child: Text(
+                  'All Legal Categories',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryNavy,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: category.color.withValues(alpha: 0.14),
+                        child: Icon(category.iconData, color: category.color),
+                      ),
+                      title: Text(
+                        category.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _openCategory(category);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildDrawerMenuItem(
@@ -463,27 +541,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 18),
 
-              // Reference-style legal category grid
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 1.1,
-                  children: const [
-                    _HomeCategory(icon: Icons.menu_book_rounded, label: 'Constitution', color: Colors.blue),
-                    _HomeCategory(icon: Icons.gavel_rounded, label: 'Criminal Law', color: Colors.orange),
-                    _HomeCategory(icon: Icons.handshake_rounded, label: 'Contract', color: Colors.green),
-                    _HomeCategory(icon: Icons.account_balance_rounded, label: 'Torts', color: Colors.indigo),
-                    _HomeCategory(icon: Icons.family_restroom_rounded, label: 'Family Law', color: Colors.deepPurple),
-                    _HomeCategory(icon: Icons.work_outline_rounded, label: 'Labour Law', color: Colors.redAccent),
-                    _HomeCategory(icon: Icons.eco_outlined, label: 'Environment', color: Colors.teal),
-                    _HomeCategory(icon: Icons.more_horiz_rounded, label: 'More', color: Colors.pinkAccent),
-                  ],
-                ),
+              // Dynamic legal category grid
+              FutureBuilder<List<CategoryModel>>(
+                future: _categoriesFuture,
+                builder: (context, snapshot) {
+                  final categories = snapshot.data ?? _fallbackCategories;
+                  return LegalCategoryGrid(
+                    categories: categories,
+                    onCategoryTap: _openCategory,
+                    onMoreTap: () => _openMoreCategories(categories),
+                  );
+                },
               ),
               const SizedBox(height: 20),
 
@@ -704,26 +772,61 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _HomeCategory extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _HomeCategory({required this.icon, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(9),
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
-          child: Icon(icon, size: 20, color: color),
-        ),
-        const SizedBox(height: 5),
-        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryNavy)),
-      ],
-    );
-  }
-}
+const List<CategoryModel> _fallbackCategories = [
+  CategoryModel(
+    id: 'constitution',
+    name: 'Constitution',
+    slug: 'constitution',
+    icon: 'book',
+    color: Color(0xFF2196F3),
+    order: 1,
+  ),
+  CategoryModel(
+    id: 'criminal-law',
+    name: 'Criminal Law',
+    slug: 'criminal-law',
+    icon: 'gavel',
+    color: Color(0xFFFF9800),
+    order: 2,
+  ),
+  CategoryModel(
+    id: 'contract',
+    name: 'Contract',
+    slug: 'contract',
+    icon: 'handshake',
+    color: Color(0xFF22C55E),
+    order: 3,
+  ),
+  CategoryModel(
+    id: 'torts',
+    name: 'Torts',
+    slug: 'torts',
+    icon: 'landmark',
+    color: Color(0xFF4F46E5),
+    order: 4,
+  ),
+  CategoryModel(
+    id: 'family-law',
+    name: 'Family Law',
+    slug: 'family-law',
+    icon: 'users',
+    color: Color(0xFF7C3AED),
+    order: 5,
+  ),
+  CategoryModel(
+    id: 'labour-law',
+    name: 'Labour Law',
+    slug: 'labour-law',
+    icon: 'briefcase',
+    color: Color(0xFFEF4444),
+    order: 6,
+  ),
+  CategoryModel(
+    id: 'environment',
+    name: 'Environment',
+    slug: 'environment',
+    icon: 'leaf',
+    color: Color(0xFF14B8A6),
+    order: 7,
+  ),
+];

@@ -1,0 +1,97 @@
+import 'package:flutter/material.dart';
+import '../models/category_model.dart';
+
+class LegalCategoryGrid extends StatelessWidget {
+  final List<CategoryModel> categories;
+  final ValueChanged<CategoryModel> onCategoryTap;
+  final VoidCallback? onMoreTap;
+
+  const LegalCategoryGrid({
+    super.key,
+    required this.categories,
+    required this.onCategoryTap,
+    this.onMoreTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleCategories = categories.take(7).toList();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.count(
+        crossAxisCount: 4,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.1,
+        children: [
+          ...visibleCategories.map(
+            (category) => LegalCategoryTile(
+              category: category,
+              onTap: () => onCategoryTap(category),
+            ),
+          ),
+          LegalCategoryTile.more(onTap: onMoreTap),
+        ],
+      ),
+    );
+  }
+}
+
+class LegalCategoryTile extends StatelessWidget {
+  final CategoryModel? category;
+  final VoidCallback? onTap;
+  final bool isMore;
+
+  const LegalCategoryTile({
+    super.key,
+    required this.category,
+    required this.onTap,
+  }) : isMore = false;
+
+  const LegalCategoryTile.more({
+    super.key,
+    required this.onTap,
+  })  : category = null,
+        isMore = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final tileColor = isMore ? const Color(0xFFEC4899) : category!.color;
+    final label = isMore ? 'More' : category!.name;
+    final icon = isMore ? Icons.more_horiz_rounded : category!.iconData;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: tileColor.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 25, color: tileColor),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF17233A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

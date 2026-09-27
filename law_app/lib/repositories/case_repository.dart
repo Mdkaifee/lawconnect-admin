@@ -67,6 +67,33 @@ class CaseRepository {
     return [];
   }
 
+  Future<CaseSearchResult> getCasesByCategory({
+    required String categorySlug,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final uri = Uri.parse(ApiConstants.cases).replace(queryParameters: {
+      'category': categorySlug,
+      'page': page.toString(),
+      'limit': limit.toString(),
+    });
+    final response = await _client.get(uri);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+      final rawItems = (data['items'] as List<dynamic>?) ?? [];
+      final items = rawItems.map((e) => CaseModel.fromJson(e as Map<String, dynamic>)).toList();
+      return CaseSearchResult(
+        items: items,
+        total: (data['total'] as num?)?.toInt() ?? items.length,
+        page: (data['page'] as num?)?.toInt() ?? page,
+        provider: 'curated',
+      );
+    }
+
+    throw Exception('Failed to load category cases: ${response.statusCode}');
+  }
+
   Future<CaseModel> getCaseDetails(String id) async {
     final uri = Uri.parse('${ApiConstants.cases}/$id');
     final response = await _client.get(uri);
@@ -80,4 +107,3 @@ class CaseRepository {
     }
   }
 }
-
