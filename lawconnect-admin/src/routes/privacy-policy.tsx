@@ -191,7 +191,7 @@ function PrivacyPolicyPage() {
               </p>
               <ul className="text-xs text-slate-700 list-disc pl-4 space-y-1">
                 <li><strong>Within the App:</strong> Go to <em>Profile &gt; Settings &gt; Delete Account</em> (or clear private notes/bookmarks).</li>
-                <li><strong>Via Direct Email:</strong> Send an email from your registered email address to <a href="mailto:kaifee.law@gmail.com" className="font-semibold text-rose-700 underline">kaifee.law@gmail.com</a> with subject &quot;Account Deletion Request&quot;.</li>
+                <li><strong>Via Direct Email:</strong> Send an email from your registered email address to <a href="mailto:rishikesh4287@gmail.com" className="font-semibold text-rose-700 underline">rishikesh4287@gmail.com</a> with subject &quot;Account Deletion Request&quot;.</li>
               </ul>
               <p className="text-xs text-slate-600 mt-2">
                 Upon verification, all personal identifiers, posts, and saved records will be permanently purged from our active databases within 7 business days.
@@ -246,18 +246,18 @@ function PrivacyPolicyPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
-                <p className="text-slate-400 mb-1 font-medium">Developer & Platform Owner:</p>
-                <p className="font-semibold text-white text-sm">Rishikesh Yadav / Kaifee Legal Tech</p>
-                <p className="text-slate-300 mt-1">LawConnect — Rishikesh Law Hub</p>
+                <p className="text-slate-400 mb-1 font-medium">Platform Owner & Publisher:</p>
+                <p className="font-semibold text-white text-sm">Rishikesh Yadav</p>
+                <p className="text-slate-300 mt-1">Rishikesh Law Hub</p>
               </div>
 
               <div>
                 <p className="text-slate-400 mb-1 font-medium">Official Contact Email:</p>
                 <a
-                  href="mailto:kaifee.law@gmail.com"
+                  href="mailto:rishikesh4287@gmail.com"
                   className="font-semibold text-amber-400 hover:text-amber-300 underline text-sm block"
                 >
-                  kaifee.law@gmail.com
+                  rishikesh4287@gmail.com
                 </a>
                 <p className="text-slate-400 mt-1">Response time: within 24–48 business hours</p>
               </div>
