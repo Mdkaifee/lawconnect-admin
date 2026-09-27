@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/url_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -219,12 +220,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 ListTile(
-                  leading: Icon(Icons.shield_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
+                  leading: const Icon(Icons.shield_outlined, color: Color(0xFF0F1E36), size: 22),
+                  title: const Text(
                     'Privacy Policy',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  trailing: Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                  onTap: () => UrlHelper.openInAppUrl(context, 'https://rishikesh-law-hub-admin.onrender.com/privacy-policy'),
                 ),
                 Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 ListTile(

@@ -31,6 +31,7 @@ app.use(morgan("tiny"));
 
 app.get("/", (_req, res) => res.json({ name: "Rishikesh Law Hub API", status: "ok" }));
 app.get("/health", (_req, res) => res.json({ ok: true, status: "healthy", uptime: process.uptime(), timestamp: new Date().toISOString() }));
+app.get("/privacy-policy", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/privacy-policy"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cases", caseRoutes);
