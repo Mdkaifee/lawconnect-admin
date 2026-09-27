@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Scale, ShieldCheck, Lock, Eye, Database, Trash2, Mail, ExternalLink, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Scale, ShieldCheck, Lock, Eye, Database, Trash2, Mail, ExternalLink, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/privacy-policy")({
   head: () => ({
@@ -33,13 +33,6 @@ function PrivacyPolicyPage() {
               <span className="text-xs font-medium text-slate-500">Legal Platform & Research Hub</span>
             </div>
           </div>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
-          >
-            <ArrowLeft className="size-3.5" />
-            <span>Admin Portal</span>
-          </Link>
         </div>
       </header>
 
