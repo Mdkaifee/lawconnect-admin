@@ -28,6 +28,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/splash.jpeg
-    - assets/sci.jpeg
+    - assets/sci.png
     - assets/upper.png
     - assets/belowpillar.png

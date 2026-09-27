@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   image: const DecorationImage(
-                    image: AssetImage('assets/sci.jpeg'),
+                    image: AssetImage('assets/sci.png'),
                     fit: BoxFit.cover,
                     opacity: 1,
                   ),
