@@ -94,5 +94,32 @@ class AuthRepository {
     await prefs.remove('auth_token');
     await prefs.remove('current_user');
   }
+
+  Future<void> deleteAccount({String? reason}) async {
+    if (_token != null) {
+      try {
+        final response = await http.post(
+          Uri.parse(ApiConstants.deleteAccount),
+          headers: authHeaders,
+          body: jsonEncode({'reason': reason ?? 'User requested in-app account deletion'}),
+        );
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          await logout();
+          return;
+        } else {
+          final data = jsonDecode(response.body);
+          throw Exception(data['error'] ?? 'Failed to delete account.');
+        }
+      } catch (e) {
+        // Still perform local logout if session invalid
+        if (e.toString().contains('Invalid') || e.toString().contains('401')) {
+          await logout();
+        }
+        rethrow;
+      }
+    } else {
+      await logout();
+    }
+  }
 }
 

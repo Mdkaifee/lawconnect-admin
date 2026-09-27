@@ -31,6 +31,13 @@ class RegisterEvent extends AuthEvent {
 
 class LogoutEvent extends AuthEvent {}
 
+class DeleteAccountEvent extends AuthEvent {
+  final String? reason;
+  const DeleteAccountEvent({this.reason});
+  @override
+  List<Object?> get props => [reason];
+}
+
 // States
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -69,6 +76,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
     on<RegisterEvent>(_onRegister);
     on<LogoutEvent>(_onLogout);
+    on<DeleteAccountEvent>(_onDeleteAccount);
   }
 
   Future<void> _onCheckAuth(CheckAuthEvent event, Emitter<AuthState> emit) async {
@@ -112,6 +120,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     await _authRepository.logout();
     emit(Unauthenticated());
+  }
+
+  Future<void> _onDeleteAccount(DeleteAccountEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.deleteAccount(reason: event.reason);
+      emit(Unauthenticated());
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+      emit(Unauthenticated());
+    }
   }
 }
 

@@ -24,6 +24,10 @@ const userSchema = new Schema(
     college: { type: String, default: "Galgotias University" },
     blocked: { type: Boolean, default: false },
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    deletionRequested: { type: Boolean, default: false, index: true },
+    deletionRequestedAt: { type: Date },
+    deletionDueAt: { type: Date, index: true },
+    deletionReason: String,
   },
   { timestamps: true },
 );
@@ -208,6 +212,21 @@ const historySchema = new Schema(
   { timestamps: true },
 );
 
+/* ---------------- 10. Deletion Requests (Google Play / User Data) --- */
+const deletionRequestSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
+    reason: { type: String, trim: true },
+    source: { type: String, enum: ["in_app", "web_portal"], default: "in_app" },
+    status: { type: String, enum: ["pending", "completed", "cancelled"], default: "pending", index: true },
+    requestedAt: { type: Date, default: Date.now },
+    scheduledDeletionAt: { type: Date, required: true },
+    completedAt: Date,
+  },
+  { timestamps: true },
+);
+
 export const Admin = model("Admin", adminSchema);
 export const User = model("User", userSchema);
 export const Category = model("Category", categorySchema);
@@ -220,3 +239,4 @@ export const Report = model("Report", reportSchema);
 export const Note = model("Note", noteSchema);
 export const Bookmark = model("Bookmark", bookmarkSchema);
 export const History = model("History", historySchema);
+export const DeletionRequest = model("DeletionRequest", deletionRequestSchema);

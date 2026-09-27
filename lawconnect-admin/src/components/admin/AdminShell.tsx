@@ -9,6 +9,7 @@ import {
   Scale,
   Settings,
   ShieldCheck,
+  Trash2,
   Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -23,6 +24,7 @@ const NAV = [
   { to: "/admin/users", label: "App Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
   { to: "/privacy-policy", label: "Privacy Policy", icon: ShieldCheck },
+  { to: "/delete-account", label: "Delete Account", icon: Trash2 },
 ] as const;
 
 export function AdminShell({ title, subtitle, actions, children }: {

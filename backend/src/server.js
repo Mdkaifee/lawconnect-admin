@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { connectDB } from "./config/db.js";
 import { autoSeed } from "./config/autoSeed.js";
+import { initScheduler } from "./services/scheduler.js";
 import authRoutes from "./routes/auth.js";
 import caseRoutes from "./routes/cases.js";
 import actRoutes from "./routes/acts.js";
@@ -32,6 +33,7 @@ app.use(morgan("tiny"));
 app.get("/", (_req, res) => res.json({ name: "Rishikesh Law Hub API", status: "ok" }));
 app.get("/health", (_req, res) => res.json({ ok: true, status: "healthy", uptime: process.uptime(), timestamp: new Date().toISOString() }));
 app.get("/privacy-policy", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/privacy-policy"));
+app.get("/delete-account", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/delete-account"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cases", caseRoutes);
@@ -56,6 +58,7 @@ const port = process.env.PORT || 4000;
 connectDB()
   .then(async () => {
     await autoSeed();
+    initScheduler();
     app.listen(port, () => console.log(`API listening on :${port}`));
   })
   .catch((e) => {

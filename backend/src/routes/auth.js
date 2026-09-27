@@ -1,9 +1,60 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { Admin, User } from "../models/index.js";
+import { Admin, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report } from "../models/index.js";
 import { signToken, auth, asyncHandler } from "../middleware/auth.js";
 
 const router = Router();
+
+/**
+ * Permanently purges all user data from the database.
+ * Invoked when the 7-day grace period has expired.
+ */
+export async function purgeUserData(userId) {
+  if (!userId) return;
+
+  const user = await User.findById(userId);
+  const userEmail = user?.email;
+
+  // 1. Delete user-authored comments
+  await Comment.deleteMany({ authorId: userId });
+
+  // 2. Delete user-authored posts
+  await Post.deleteMany({ authorId: userId });
+
+  // 3. Remove user likes from all posts
+  await Post.updateMany({ likedBy: userId }, { $pull: { likedBy: userId } });
+
+  // 4. Delete user personal notes
+  await Note.deleteMany({ userId });
+
+  // 5. Delete bookmarks
+  await Bookmark.deleteMany({ userId });
+
+  // 6. Delete reading history
+  await History.deleteMany({ userId });
+
+  // 7. Delete reports filed by user
+  await Report.deleteMany({ reporterId: userId });
+
+  // 8. Remove userId from other users' following lists
+  await User.updateMany({ following: userId }, { $pull: { following: userId } });
+
+  // 9. Mark all pending DeletionRequests as completed
+  if (userEmail) {
+    await DeletionRequest.updateMany(
+      { $or: [{ userId }, { email: userEmail.toLowerCase() }], status: "pending" },
+      { status: "completed", completedAt: new Date() }
+    );
+  } else {
+    await DeletionRequest.updateMany(
+      { userId, status: "pending" },
+      { status: "completed", completedAt: new Date() }
+    );
+  }
+
+  // 10. Permanently remove the user document
+  await User.findByIdAndDelete(userId);
+}
 
 /* ---- Admin (owner) login ---- */
 router.post(
@@ -73,8 +124,47 @@ router.post(
       return res.status(401).json({ error: "Invalid credentials" });
     }
     if (user.blocked) return res.status(403).json({ error: "Account blocked" });
+
+    // Handle 7-day grace period account deletion
+    let restored = false;
+    if (user.deletionRequested) {
+      const now = new Date();
+      if (user.deletionDueAt && now > user.deletionDueAt) {
+        // Grace period expired! Purge immediately
+        await purgeUserData(user._id);
+        return res.status(401).json({ error: "Account has been permanently deleted as the 7-day restore window expired." });
+      } else {
+        // User logged back in within 7 days -> Auto-cancel deletion & restore account!
+        user.deletionRequested = false;
+        user.deletionRequestedAt = undefined;
+        user.deletionDueAt = undefined;
+        user.deletionReason = undefined;
+        await user.save();
+
+        await DeletionRequest.updateMany(
+          { userId: user._id, status: "pending" },
+          { status: "cancelled" }
+        );
+        restored = true;
+      }
+    }
+
     const token = signToken({ type: "user", id: user._id.toString() });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, photoUrl: user.photoUrl } });
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        photoUrl: user.photoUrl,
+        headline: user.headline,
+        college: user.college,
+      },
+      restored,
+      message: restored
+        ? "Welcome back! Your scheduled account deletion was automatically cancelled, and your account has been restored."
+        : undefined,
+    });
   }),
 );
 
@@ -160,6 +250,160 @@ router.get(
     const followingIds = (user.following || []).map((id) => id.toString());
     res.json({
       following: followingIds,
+    });
+  }),
+);
+
+/* ---------------- 11. Account Deletion APIs ---------------- */
+
+/**
+ * In-app account deletion request (Authenticated).
+ * Schedules account deletion in 7 days.
+ */
+router.post(
+  "/delete-account",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const user = await User.findById(req.auth.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const { reason } = req.body || {};
+    const now = new Date();
+    const scheduledDueAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    user.deletionRequested = true;
+    user.deletionRequestedAt = now;
+    user.deletionDueAt = scheduledDueAt;
+    user.deletionReason = reason || "User requested account deletion via mobile app";
+    await user.save();
+
+    await DeletionRequest.create({
+      userId: user._id,
+      email: user.email,
+      reason: reason || "User requested account deletion via mobile app",
+      source: "in_app",
+      status: "pending",
+      requestedAt: now,
+      scheduledDeletionAt: scheduledDueAt,
+    });
+
+    res.json({
+      ok: true,
+      message: "Your account is scheduled for deletion. You have 7 days to log back in if you wish to cancel this request and restore your account. After 7 days, all your data will be permanently wiped.",
+      scheduledDeletionAt: scheduledDueAt,
+      gracePeriodDays: 7,
+    });
+  }),
+);
+
+/**
+ * Public Web Portal Account Deletion Request.
+ * Allows users to request deletion from https://rishikesh-law-hub-admin.onrender.com/delete-account
+ */
+router.post(
+  "/request-web-deletion",
+  asyncHandler(async (req, res) => {
+    const { email, reason, password } = req.body || {};
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ error: "A valid email address is required." });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    const now = new Date();
+    const scheduledDueAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    if (user) {
+      if (password) {
+        const ok = await bcrypt.compare(password, user.passwordHash);
+        if (!ok) {
+          return res.status(401).json({ error: "Incorrect password for this account." });
+        }
+      }
+
+      user.deletionRequested = true;
+      user.deletionRequestedAt = now;
+      user.deletionDueAt = scheduledDueAt;
+      user.deletionReason = reason || "Web deletion portal request";
+      await user.save();
+
+      await DeletionRequest.create({
+        userId: user._id,
+        email: normalizedEmail,
+        reason: reason || "Web deletion portal request",
+        source: "web_portal",
+        status: "pending",
+        requestedAt: now,
+        scheduledDeletionAt: scheduledDueAt,
+      });
+    } else {
+      // Record request for compliance even if email not registered yet
+      await DeletionRequest.create({
+        email: normalizedEmail,
+        reason: reason || "Web deletion portal request (unregistered/external)",
+        source: "web_portal",
+        status: "pending",
+        requestedAt: now,
+        scheduledDeletionAt: scheduledDueAt,
+      });
+    }
+
+    res.json({
+      ok: true,
+      message: "Account deletion request received successfully. Your account and all associated data will be permanently wiped after a 7-day grace period.",
+      scheduledDeletionAt: scheduledDueAt,
+      gracePeriodDays: 7,
+    });
+  }),
+);
+
+/**
+ * Cancel Account Deletion (Authenticated).
+ */
+router.post(
+  "/cancel-deletion",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const user = await User.findById(req.auth.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.deletionRequested = false;
+    user.deletionRequestedAt = undefined;
+    user.deletionDueAt = undefined;
+    user.deletionReason = undefined;
+    await user.save();
+
+    await DeletionRequest.updateMany(
+      { userId: user._id, status: "pending" },
+      { status: "cancelled" }
+    );
+
+    res.json({
+      ok: true,
+      message: "Account deletion request has been cancelled. Your account is active.",
+    });
+  }),
+);
+
+/**
+ * Check current user deletion status.
+ */
+router.get(
+  "/deletion-status",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const user = await User.findById(req.auth.id).select("deletionRequested deletionRequestedAt deletionDueAt deletionReason");
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({
+      deletionRequested: user.deletionRequested || false,
+      deletionRequestedAt: user.deletionRequestedAt,
+      deletionDueAt: user.deletionDueAt,
+      deletionReason: user.deletionReason,
     });
   }),
 );

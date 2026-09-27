@@ -271,8 +271,8 @@ function PrivacyPolicyPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© {new Date().getFullYear()} Rishikesh Law Hub. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link to="/" className="hover:text-slate-900 transition">Admin Portal</Link>
             <Link to="/privacy-policy" className="hover:text-slate-900 font-semibold text-slate-800">Privacy Policy</Link>
+            <Link to="/delete-account" className="hover:text-slate-900 font-medium">Delete Account</Link>
           </div>
         </div>
       </footer>

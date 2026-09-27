@@ -8,6 +8,9 @@ class ApiConstants {
   static const String me = '$baseUrl/auth/me';
   static const String follow = '$baseUrl/auth/follow';
   static const String following = '$baseUrl/auth/following';
+  static const String deleteAccount = '$baseUrl/auth/delete-account';
+  static const String privacyPolicyUrl = 'https://rishikesh-law-hub-admin.onrender.com/privacy-policy';
+  static const String deleteAccountUrl = 'https://rishikesh-law-hub-admin.onrender.com/delete-account';
 
   // Cases endpoints
   static const String cases = '$baseUrl/cases';
