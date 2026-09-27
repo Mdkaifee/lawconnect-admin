@@ -185,6 +185,15 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
+                    icon: Icons.shield_outlined,
+                    title: 'Privacy Policy',
+                    onTap: () => UrlHelper.openInAppUrl(
+                      context,
+                      'https://rishikesh-law-hub-admin.onrender.com/privacy-policy',
+                    ),
+                  ),
+                  _buildMenuItem(
+                    context,
                     icon: Icons.help_outline_rounded,
                     title: 'Help & Support',
                     onTap: () => _openGmailSupport(context),

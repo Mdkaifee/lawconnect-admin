@@ -205,7 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: const Column(
+            child: Column(
               children: [
                 ListTile(
                   leading: Icon(Icons.verified_outlined, color: Color(0xFF0F1E36), size: 22),

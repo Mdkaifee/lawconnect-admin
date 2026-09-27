@@ -8,6 +8,7 @@ import {
   Newspaper,
   Scale,
   Settings,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -21,6 +22,7 @@ const NAV = [
   { to: "/admin/posts", label: "Law Posts", icon: FileText },
   { to: "/admin/users", label: "App Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/privacy-policy", label: "Privacy Policy", icon: ShieldCheck },
 ] as const;
 
 export function AdminShell({ title, subtitle, actions, children }: {

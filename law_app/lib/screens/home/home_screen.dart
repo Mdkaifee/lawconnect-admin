@@ -242,6 +242,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     _buildDrawerMenuItem(
                       context,
+                      icon: Icons.shield_outlined,
+                      title: 'Privacy Policy',
+                      onTap: () {
+                        Navigator.pop(context);
+                        UrlHelper.openInAppUrl(
+                          context,
+                          'https://rishikesh-law-hub-admin.onrender.com/privacy-policy',
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
                       icon: Icons.help_outline_rounded,
                       title: 'Help & Support',
                       onTap: () {
