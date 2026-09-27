@@ -1,6 +1,6 @@
 class ApiConstants {
   // Default base URL pointing to the live Render backend or local dev
-  static const String baseUrl = 'https://rishikesh-law-hub-api.onrender.com/api';
+  static const String baseUrl = 'https://lawconnect-admin.onrender.com/api';
   
   // Auth endpoints
   static const String login = '$baseUrl/auth/login';
