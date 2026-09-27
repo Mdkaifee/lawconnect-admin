@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'core/services/connectivity_service.dart';
 import 'core/theme/app_theme.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/case_repository.dart';
@@ -14,9 +15,13 @@ import 'blocs/update/update_bloc.dart';
 import 'blocs/post/post_bloc.dart';
 import 'blocs/user_data/user_data_bloc.dart';
 import 'screens/splash_screen.dart';
+import 'widgets/no_internet_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize connectivity monitoring service
+  ConnectivityService.instance.initialize();
 
   final authRepository = AuthRepository();
   await authRepository.init();
@@ -81,6 +86,9 @@ class LawHubApp extends StatelessWidget {
           title: 'Rishikesh Law Hub',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
+          builder: (context, child) {
+            return NoInternetOverlay(child: child ?? const SizedBox.shrink());
+          },
           home: const SplashScreen(),
         ),
       ),
