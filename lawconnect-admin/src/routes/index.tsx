@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,15 @@ function Login() {
             {busy ? "Signing in…" : "Sign in"}
           </Button>
         </form>
+
+        <div className="mt-6 text-center border-t border-border pt-4">
+          <Link
+            to="/privacy-policy"
+            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition"
+          >
+            Public Privacy Policy (Play Console)
+          </Link>
+        </div>
       </div>
     </div>
   );
