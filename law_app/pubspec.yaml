@@ -27,5 +27,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/
+    - assets/upper.png
+    - assets/belowpillar.png
     - assets/splash.jpeg
     - assets/sci.jpeg

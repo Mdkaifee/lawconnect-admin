@@ -48,46 +48,88 @@ class _SplashScreenState extends State<SplashScreen> {
         _continueAfterSplash(state);
       },
       child: Scaffold(
-        backgroundColor: AppColors.primaryNavy,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                width: 150,
-                height: 150,
-                child: Image(image: AssetImage('assets/splash.jpeg'), fit: BoxFit.contain),
-              ),
-              const SizedBox(height: 28),
-              const Text(
-                'Rishikesh Law Hub',
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
+        backgroundColor: const Color(0xFF071426),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(height: 12),
+                // Upper Section: Logo & Titles
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/upper.png',
+                      width: 140,
+                      height: 140,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Rishikesh Law Hub',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 27,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Learn Law • Find Cases •\nUnderstand Justice',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: Color(0xFFCBD5E1),
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Learn Law • Find Cases • Understand Justice',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.goldAccentLight, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 64),
-              const Text('“Justice delayed is justice denied.”', style: TextStyle(color: Colors.white70, fontSize: 13, fontStyle: FontStyle.italic)),
-              const SizedBox(height: 8),
-              const Text('— Lord Acton', style: TextStyle(color: AppColors.goldAccentLight, fontSize: 12)),
-              const SizedBox(height: 48),
-              SizedBox(
-                height: 105,
-                child: Icon(
-                  Icons.account_balance_outlined,
-                  size: 96,
-                  color: AppColors.goldAccent.withValues(alpha: 0.9),
+
+                // Middle Section: Lord Acton Quote
+                const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '“Justice delayed is justice denied.”',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFE2E8F0),
+                        fontSize: 13.5,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '— Lord Acton',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFC5A059),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+
+                // Lower Section: Pillar Building Graphic
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Image.asset(
+                    'assets/belowpillar.png',
+                    width: 160,
+                    height: 110,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
