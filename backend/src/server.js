@@ -35,6 +35,7 @@ app.get("/health", (_req, res) => res.json({ ok: true, status: "healthy", uptime
 app.get("/privacy-policy", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/privacy-policy"));
 app.get("/terms-of-service", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/terms-of-service"));
 app.get("/delete-account", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/delete-account"));
+app.get("/website", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/website"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cases", caseRoutes);

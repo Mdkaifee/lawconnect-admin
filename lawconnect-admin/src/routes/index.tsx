@@ -87,6 +87,12 @@ function Login() {
 
         <div className="mt-6 text-center border-t border-border pt-4">
           <Link
+            to="/website"
+            className="mb-2 block text-xs font-semibold text-foreground hover:text-primary underline underline-offset-4 transition"
+          >
+            Public Website
+          </Link>
+          <Link
             to="/privacy-policy"
             className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition"
           >
