@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import '../../core/utils/url_helper.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../auth/login_screen.dart';
 import '../community/community_feed_screen.dart';
