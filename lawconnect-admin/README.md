@@ -1,6 +1,6 @@
 # LawConnect Admin
 
-i will be having frontend admin panel(for only lawyer Rishikesh password will be Rishikesh@1 which will be seeded ) and backend in node and monog db(mongodb+srv://mdkaifee8298_db_user:Q5agoZ5Dcy9QiCPQ@cluster0.jqexyje.mongodb.net/law_app?appName=Cluster0) databse
+i will be having frontend admin panel(for only lawyer Rishikesh password will be Rishikesh@1 which will be seeded ) and backend in node and mongo db. Use MONGO_URI from environment variables; never commit real database credentials.
 flutter app for user i will build
 
 these are the attacehd designed for mob app i will make admin panel as well for owner 

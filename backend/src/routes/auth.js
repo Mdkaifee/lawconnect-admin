@@ -297,64 +297,11 @@ router.post(
   }),
 );
 
-/**
- * Public Web Portal Account Deletion Request.
- * Allows users to request deletion from https://rishikesh-law-hub-admin.onrender.com/delete-account
- */
 router.post(
   "/request-web-deletion",
   asyncHandler(async (req, res) => {
-    const { email, reason, password } = req.body || {};
-    if (!email || !email.includes("@")) {
-      return res.status(400).json({ error: "A valid email address is required." });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail });
-
-    const now = new Date();
-    const scheduledDueAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    if (user) {
-      if (password) {
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) {
-          return res.status(401).json({ error: "Incorrect password for this account." });
-        }
-      }
-
-      user.deletionRequested = true;
-      user.deletionRequestedAt = now;
-      user.deletionDueAt = scheduledDueAt;
-      user.deletionReason = reason || "Web deletion portal request";
-      await user.save();
-
-      await DeletionRequest.create({
-        userId: user._id,
-        email: normalizedEmail,
-        reason: reason || "Web deletion portal request",
-        source: "web_portal",
-        status: "pending",
-        requestedAt: now,
-        scheduledDeletionAt: scheduledDueAt,
-      });
-    } else {
-      // Record request for compliance even if email not registered yet
-      await DeletionRequest.create({
-        email: normalizedEmail,
-        reason: reason || "Web deletion portal request (unregistered/external)",
-        source: "web_portal",
-        status: "pending",
-        requestedAt: now,
-        scheduledDeletionAt: scheduledDueAt,
-      });
-    }
-
-    res.json({
-      ok: true,
-      message: "Account deletion request received successfully. Your account and all associated data will be permanently wiped after a 7-day grace period.",
-      scheduledDeletionAt: scheduledDueAt,
-      gracePeriodDays: 7,
+    res.status(403).json({
+      error: "Account deletion requests are only accepted from inside the signed-in mobile app.",
     });
   }),
 );

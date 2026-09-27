@@ -190,11 +190,11 @@ function PrivacyPolicyPage() {
                 You have the full right to delete your account, posts, personal notes, bookmarks, and all associated personal data at any time.
               </p>
               <ul className="text-xs text-slate-700 list-disc pl-4 space-y-1">
-                <li><strong>Within the App:</strong> Go to <em>Profile &gt; Settings &gt; Delete Account</em> (or clear private notes/bookmarks).</li>
-                <li><strong>Via Direct Email:</strong> Send an email from your registered email address to <a href="mailto:rishikesh4287@gmail.com" className="font-semibold text-rose-700 underline">rishikesh4287@gmail.com</a> with subject &quot;Account Deletion Request&quot;.</li>
+                <li><strong>Within the App:</strong> Go to <em>Profile &gt; Settings &gt; Delete Account</em> while signed in.</li>
+                <li><strong>Web Requests Disabled:</strong> For account safety, deletion requests are not accepted from the website or by public email form.</li>
               </ul>
               <p className="text-xs text-slate-600 mt-2">
-                Upon verification, all personal identifiers, posts, and saved records will be permanently purged from our active databases within 7 business days.
+                After confirmation, your account enters a 7-day grace period. If you do not log back in within 7 days, all personal identifiers, posts, and saved records will be permanently purged from our active databases.
               </p>
             </div>
           </section>
@@ -272,6 +272,7 @@ function PrivacyPolicyPage() {
           <p>© {new Date().getFullYear()} Rishikesh Law Hub. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link to="/privacy-policy" className="hover:text-slate-900 font-semibold text-slate-800">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-slate-900 font-medium">Terms of Service</Link>
             <Link to="/delete-account" className="hover:text-slate-900 font-medium">Delete Account</Link>
           </div>
         </div>

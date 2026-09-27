@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminActsRouteImport } from './routes/admin.acts'
 import { Route as AdminCasesRouteImport } from './routes/admin.cases'
@@ -39,6 +40,11 @@ const DeleteAccountRoute = DeleteAccountRouteImport.update({
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
+  id: '/terms-of-service',
+  path: '/terms-of-service',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/admin/acts': typeof AdminActsRoute
   '/admin/cases': typeof AdminCasesRoute
   '/admin/posts': typeof AdminPostsRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/delete-account': typeof DeleteAccountRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/admin/acts': typeof AdminActsRoute
   '/admin/cases': typeof AdminCasesRoute
   '/admin/posts': typeof AdminPostsRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/admin/acts': typeof AdminActsRoute
   '/admin/cases': typeof AdminCasesRoute
   '/admin/posts': typeof AdminPostsRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/delete-account'
     | '/privacy-policy'
+    | '/terms-of-service'
     | '/admin/acts'
     | '/admin/cases'
     | '/admin/posts'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/'
     | '/delete-account'
     | '/privacy-policy'
+    | '/terms-of-service'
     | '/admin/acts'
     | '/admin/cases'
     | '/admin/posts'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/delete-account'
     | '/privacy-policy'
+    | '/terms-of-service'
     | '/admin/acts'
     | '/admin/cases'
     | '/admin/posts'
@@ -162,6 +174,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   DeleteAccountRoute: typeof DeleteAccountRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  TermsOfServiceRoute: typeof TermsOfServiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy-policy'
       fullPath: '/privacy-policy'
       preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-of-service': {
+      id: '/terms-of-service'
+      path: '/terms-of-service'
+      fullPath: '/terms-of-service'
+      preLoaderRoute: typeof TermsOfServiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -273,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   DeleteAccountRoute: DeleteAccountRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  TermsOfServiceRoute: TermsOfServiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

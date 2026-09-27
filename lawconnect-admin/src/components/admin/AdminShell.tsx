@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Newspaper,
+  ScrollText,
   Scale,
   Settings,
   ShieldCheck,
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/admin/users", label: "App Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
   { to: "/privacy-policy", label: "Privacy Policy", icon: ShieldCheck },
+  { to: "/terms-of-service", label: "Terms of Service", icon: ScrollText },
   { to: "/delete-account", label: "Delete Account", icon: Trash2 },
 ] as const;
 

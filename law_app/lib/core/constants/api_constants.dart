@@ -1,6 +1,6 @@
 class ApiConstants {
   // Default base URL pointing to the live Render backend or local dev
-  static const String baseUrl = 'https://lawconnect-admin.onrender.com/api';
+  static const String baseUrl = 'https://rishikesh-law-hub-api.onrender.com/api';
   
   // Auth endpoints
   static const String login = '$baseUrl/auth/login';
@@ -10,6 +10,7 @@ class ApiConstants {
   static const String following = '$baseUrl/auth/following';
   static const String deleteAccount = '$baseUrl/auth/delete-account';
   static const String privacyPolicyUrl = 'https://rishikesh-law-hub-admin.onrender.com/privacy-policy';
+  static const String termsOfServiceUrl = 'https://rishikesh-law-hub-admin.onrender.com/terms-of-service';
   static const String deleteAccountUrl = 'https://rishikesh-law-hub-admin.onrender.com/delete-account';
 
   // Cases endpoints

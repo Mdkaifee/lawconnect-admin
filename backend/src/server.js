@@ -33,6 +33,7 @@ app.use(morgan("tiny"));
 app.get("/", (_req, res) => res.json({ name: "Rishikesh Law Hub API", status: "ok" }));
 app.get("/health", (_req, res) => res.json({ ok: true, status: "healthy", uptime: process.uptime(), timestamp: new Date().toISOString() }));
 app.get("/privacy-policy", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/privacy-policy"));
+app.get("/terms-of-service", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/terms-of-service"));
 app.get("/delete-account", (_req, res) => res.redirect("https://rishikesh-law-hub-admin.onrender.com/delete-account"));
 
 app.use("/api/auth", authRoutes);
