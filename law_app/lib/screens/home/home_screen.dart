@@ -76,9 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(Translation.t('contact_support_email')),
-            backgroundColor: Color(0xFF0F1E36),
+            backgroundColor: const Color(0xFF0F1E36),
           ),
         );
       }
@@ -743,9 +743,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       }).toList(),
                     );
                   }
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Text(Translation.t('no_landmark_judgments')),
                     ),
                   );
