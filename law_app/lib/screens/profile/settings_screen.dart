@@ -106,11 +106,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _confirmDeleteAccount() {
     CustomConfirmationDialog.show(
       context,
-      title: 'Delete Account?',
-      message:
-          'Your account will be scheduled for deletion. If you do not log in again within 7 days, your account and all associated data will be permanently deleted.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
+      title: Translation.t('delete_account_title'),
+      message: Translation.t('delete_account_confirm_message'),
+      confirmText: Translation.t('delete'),
+      cancelText: Translation.t('cancel'),
       icon: Icons.delete_forever_rounded,
       iconColor: const Color(0xFFDC2626),
       onConfirm: () {
