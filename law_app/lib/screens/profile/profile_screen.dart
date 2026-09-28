@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_manager.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
@@ -14,6 +16,7 @@ import 'history_screen.dart';
 import 'notes_screen.dart';
 import 'settings_screen.dart';
 import 'users_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -44,230 +47,257 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Translation.instance,
+      listenable: Listenable.merge([Translation.instance, ThemeManager.instance]),
       builder: (context, _) {
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is Unauthenticated) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
-          }
-        },
-        builder: (context, state) {
-          final user = state is Authenticated ? state.user : null;
-          final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
-          final college = user?.college ?? 'Galgotias University';
-          final headline = user?.headline ?? 'Law Student | Future Advocate';
-          final photoUrl = user?.photoUrl;
+        final isDark = ThemeManager.instance.isDarkMode;
+        final bgColor = isDark ? const Color(0xFF090E17) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF23354E) : const Color(0xFFE2E8F0);
+        final textColor = isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F1E36);
+        final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        final iconColor = isDark ? AppColors.goldAccentLight : const Color(0xFF0F1E36);
+        final dividerColor = isDark ? const Color(0xFF1E2F4D) : const Color(0xFFF1F5F9);
 
-          return SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  // Top Profile Header Row (Avatar + Name + Subtitle)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Circular Profile Avatar
-                        Container(
-                          width: 58,
-                          height: 58,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF0F1E36),
-                            border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-                            image: photoUrl != null && photoUrl.isNotEmpty
-                                ? DecorationImage(image: NetworkImage(photoUrl), fit: BoxFit.cover)
-                                : null,
-                          ),
-                          child: photoUrl == null || photoUrl.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        // Name & Subtitle
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+        return Scaffold(
+          backgroundColor: bgColor,
+          body: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is Unauthenticated) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            builder: (context, state) {
+              final user = state is Authenticated ? state.user : null;
+              final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
+              final college = user?.college ?? 'Galgotias University';
+              final headline = user?.headline ?? 'Law Student | Future Advocate';
+              final photoUrl = user?.photoUrl;
+
+              return SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      // Top Profile Header Row (Avatar + Name + Subtitle)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Circular Profile Avatar
+                            Container(
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark ? const Color(0xFF1B283D) : const Color(0xFF0F1E36),
+                                border: Border.all(color: borderColor, width: 2),
+                                image: photoUrl != null && photoUrl.isNotEmpty
+                                    ? DecorationImage(image: NetworkImage(photoUrl), fit: BoxFit.cover)
+                                    : null,
+                              ),
+                              child: photoUrl == null || photoUrl.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
+                                        style: TextStyle(
+                                          color: isDark ? AppColors.goldAccentLight : Colors.white,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 16),
+                            // Name & Subtitle
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      userName,
-                                      style: const TextStyle(
-                                        fontSize: 17.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF0F1E36),
-                                        letterSpacing: -0.2,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          userName,
+                                          style: TextStyle(
+                                            fontSize: 17.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: textColor,
+                                            letterSpacing: -0.2,
+                                          ),
+                                        ),
                                       ),
+                                      if (user != null)
+                                        IconButton(
+                                          icon: Icon(Icons.edit_outlined, size: 20, color: iconColor),
+                                          onPressed: () => Navigator.of(context).push(
+                                            MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  Text(
+                                    headline,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: textMuted,
                                     ),
                                   ),
-                                  if (user != null)
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF0F1E36)),
-                                      onPressed: () => Navigator.of(context).push(
-                                        MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
-                                      ),
+                                  Text(
+                                    college,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                                     ),
+                                  ),
                                 ],
                               ),
-                              Text(
-                                headline,
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                              Text(
-                                college,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF94A3B8),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
 
-                  const SizedBox(height: 8),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      const SizedBox(height: 8),
+                      Divider(height: 1, color: dividerColor),
 
-                  // Menu Items List (matching exact mockup)
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.bookmark_border_rounded,
-                    title: Translation.t('my_posts'),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const CommunityFeedScreen(showBackButton: true)),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.assignment_outlined,
-                    title: Translation.t('my_notes'),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const NotesScreen(showBackButton: true)),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.bookmark_outline_rounded,
-                    title: Translation.t('bookmarks'),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const BookmarksScreen(showBackButton: true)),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.history_rounded,
-                    title: Translation.t('reading_history'),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const HistoryScreen()),
-                      );
-                    },
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.people_outline_rounded,
-                    title: Translation.t('users'),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const UsersScreen()),
-                    ),
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.settings_outlined,
-                    title: Translation.t('settings'),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.shield_outlined,
-                    title: Translation.t('privacy_policy'),
-                    onTap: () => UrlHelper.openInAppUrl(
-                      context,
-                      'https://rishikesh-law-hub-admin.onrender.com/privacy-policy',
-                    ),
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.help_outline_rounded,
-                    title: Translation.t('help_support'),
-                    onTap: () => _openGmailSupport(context),
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.info_outline_rounded,
-                    title: Translation.t('about_us'),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AboutUsScreen()),
-                    ),
-                  ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.logout_rounded,
-                    title: Translation.t('log_out'),
-                    onTap: () {
-                      CustomConfirmationDialog.show(
+                      // Menu Items List
+                      _buildMenuItem(
                         context,
-                        title: Translation.t('confirm_sign_out'),
-                        message: Translation.t('confirm_sign_out_message'),
-                        confirmText: Translation.t('log_out'),
-                        cancelText: Translation.t('cancel'),
-                        icon: Icons.logout_rounded,
-                        iconColor: const Color(0xFFEF4444),
-                        onConfirm: () {
-                          context.read<AuthBloc>().add(LogoutEvent());
+                        icon: Icons.bookmark_border_rounded,
+                        title: Translation.t('my_posts'),
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const CommunityFeedScreen(showBackButton: true)),
+                          );
                         },
-                      );
-                    },
-                  ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.assignment_outlined,
+                        title: Translation.t('my_notes'),
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const NotesScreen(showBackButton: true)),
+                          );
+                        },
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.bookmark_outline_rounded,
+                        title: Translation.t('bookmarks'),
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const BookmarksScreen(showBackButton: true)),
+                          );
+                        },
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.history_rounded,
+                        title: Translation.t('reading_history'),
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                          );
+                        },
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.people_outline_rounded,
+                        title: Translation.t('users'),
+                        isDark: isDark,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const UsersScreen()),
+                        ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.notifications_none_rounded,
+                        title: Translation.t('notifications'),
+                        isDark: isDark,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                        ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.settings_outlined,
+                        title: Translation.t('settings'),
+                        isDark: isDark,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.shield_outlined,
+                        title: Translation.t('privacy_policy'),
+                        isDark: isDark,
+                        onTap: () => UrlHelper.openInAppUrl(
+                          context,
+                          'https://rishikesh-law-hub-admin.onrender.com/privacy-policy',
+                        ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.help_outline_rounded,
+                        title: Translation.t('help_support'),
+                        isDark: isDark,
+                        onTap: () => _openGmailSupport(context),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.info_outline_rounded,
+                        title: Translation.t('about_us'),
+                        isDark: isDark,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AboutUsScreen()),
+                        ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.logout_rounded,
+                        title: Translation.t('log_out'),
+                        isDark: isDark,
+                        textColor: const Color(0xFFEF4444),
+                        iconColor: const Color(0xFFEF4444),
+                        onTap: () {
+                          CustomConfirmationDialog.show(
+                            context,
+                            title: Translation.t('confirm_sign_out'),
+                            message: Translation.t('confirm_sign_out_message'),
+                            confirmText: Translation.t('log_out'),
+                            cancelText: Translation.t('cancel'),
+                            icon: Icons.logout_rounded,
+                            iconColor: const Color(0xFFEF4444),
+                            onConfirm: () {
+                              context.read<AuthBloc>().add(LogoutEvent());
+                            },
+                          );
+                        },
+                      ),
 
-                  const SizedBox(height: 30),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
       },
     );
   }
@@ -277,24 +307,31 @@ class ProfileScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    required bool isDark,
+    Color? iconColor,
+    Color? textColor,
   }) {
+    final defaultIconColor = iconColor ?? (isDark ? AppColors.goldAccentLight : const Color(0xFF0F1E36));
+    final defaultTextColor = textColor ?? (isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F1E36));
+    final dividerColor = isDark ? const Color(0xFF1E2F4D) : const Color(0xFFF1F5F9);
+
     return Column(
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-          leading: Icon(icon, color: const Color(0xFF0F1E36), size: 22),
+          leading: Icon(icon, color: defaultIconColor, size: 22),
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14.5,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F1E36),
+              color: defaultTextColor,
             ),
           ),
-          trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+          trailing: Icon(Icons.chevron_right, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8), size: 20),
           onTap: onTap,
         ),
-        const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 20, endIndent: 20),
+        Divider(height: 1, color: dividerColor, indent: 20, endIndent: 20),
       ],
     );
   }

@@ -882,16 +882,6 @@ class _KeyBareActsList extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 
