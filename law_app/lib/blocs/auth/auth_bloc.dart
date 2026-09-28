@@ -31,6 +31,23 @@ class RegisterEvent extends AuthEvent {
 
 class LogoutEvent extends AuthEvent {}
 
+class UpdateProfileEvent extends AuthEvent {
+  final String name;
+  final String? photoUrl;
+  final String? headline;
+  final String? college;
+
+  const UpdateProfileEvent({
+    required this.name,
+    this.photoUrl,
+    this.headline,
+    this.college,
+  });
+
+  @override
+  List<Object?> get props => [name, photoUrl, headline, college];
+}
+
 class DeleteAccountEvent extends AuthEvent {
   final String? reason;
   const DeleteAccountEvent({this.reason});
@@ -76,6 +93,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
     on<RegisterEvent>(_onRegister);
     on<LogoutEvent>(_onLogout);
+    on<UpdateProfileEvent>(_onUpdateProfile);
     on<DeleteAccountEvent>(_onDeleteAccount);
   }
 
@@ -120,6 +138,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     await _authRepository.logout();
     emit(Unauthenticated());
+  }
+
+  Future<void> _onUpdateProfile(UpdateProfileEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authRepository.updateProfile(
+        name: event.name,
+        photoUrl: event.photoUrl,
+        headline: event.headline,
+        college: event.college,
+      );
+      emit(Authenticated(user));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+      final currentUser = _authRepository.currentUser;
+      if (currentUser != null) emit(Authenticated(currentUser));
+    }
   }
 
   Future<void> _onDeleteAccount(DeleteAccountEvent event, Emitter<AuthState> emit) async {

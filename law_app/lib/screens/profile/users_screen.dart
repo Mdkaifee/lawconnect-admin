@@ -28,7 +28,7 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Future<void> _updateConnection(AppUserConnection item) async {
-    if (_busyUserIds.contains(item.user.id) || item.connectionStatus == 'friend' || item.connectionStatus == 'requested') return;
+    if (_busyUserIds.contains(item.user.id)) return;
     setState(() => _busyUserIds.add(item.user.id));
     try {
       if (item.connectionStatus == 'incoming') {
@@ -51,9 +51,9 @@ class _UsersScreenState extends State<UsersScreen> {
   String _buttonText(String status) {
     switch (status) {
       case 'friend':
-        return 'Friend';
+        return 'Unfriend';
       case 'requested':
-        return 'Follow Requested';
+        return 'Cancel Request';
       case 'incoming':
         return 'Accept Request';
       default:
@@ -64,7 +64,7 @@ class _UsersScreenState extends State<UsersScreen> {
   Color _buttonColor(String status) {
     switch (status) {
       case 'friend':
-        return AppColors.success;
+        return AppColors.danger;
       case 'requested':
         return AppColors.textMuted;
       case 'incoming':
@@ -117,7 +117,7 @@ class _UsersScreenState extends State<UsersScreen> {
                 final user = item.user;
                 final color = _buttonColor(item.connectionStatus);
                 final isBusy = _busyUserIds.contains(user.id);
-                final canTap = item.connectionStatus == 'none' || item.connectionStatus == 'incoming';
+                const canTap = true;
 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

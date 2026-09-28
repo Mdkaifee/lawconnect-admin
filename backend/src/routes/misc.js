@@ -261,7 +261,11 @@ users.post(
     const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
 
     if (currentFollowing.includes(targetUserId)) {
-      return res.json({ ok: true, status: "friend", message: "Already connected" });
+      await Promise.all([
+        User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUserId } }),
+        User.findByIdAndUpdate(targetUserId, { $pull: { following: currentUserId } }),
+      ]);
+      return res.json({ ok: true, status: "none", message: "Connection removed" });
     }
 
     if (incoming.includes(targetUserId)) {
@@ -273,6 +277,11 @@ users.post(
         User.findByIdAndUpdate(targetUserId, { $addToSet: { following: currentUserId } }),
       ]);
       return res.json({ ok: true, status: "friend", message: "Connection request accepted" });
+    }
+
+    if (targetRequests.includes(currentUserId)) {
+      await User.findByIdAndUpdate(targetUserId, { $pull: { followRequests: currentUserId } });
+      return res.json({ ok: true, status: "none", message: "Connection request cancelled" });
     }
 
     if (!targetRequests.includes(currentUserId)) {

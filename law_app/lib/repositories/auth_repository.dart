@@ -87,6 +87,34 @@ class AuthRepository {
     return _currentUser;
   }
 
+  Future<UserModel> updateProfile({
+    required String name,
+    String? photoUrl,
+    String? headline,
+    String? college,
+  }) async {
+    final response = await http.put(
+      Uri.parse(ApiConstants.me),
+      headers: authHeaders,
+      body: jsonEncode({
+        'name': name.trim(),
+        'photoUrl': photoUrl?.trim(),
+        'headline': headline?.trim(),
+        'college': college?.trim(),
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      _currentUser = UserModel.fromJson(data['user']);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_user', jsonEncode(_currentUser!.toJson()));
+      return _currentUser!;
+    }
+
+    throw Exception(data['error'] ?? 'Failed to update profile.');
+  }
+
   Future<void> logout() async {
     _token = null;
     _currentUser = null;

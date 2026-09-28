@@ -184,9 +184,14 @@ router.put(
   asyncHandler(async (req, res) => {
     if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
     const { name, photoUrl, headline, college } = req.body || {};
+    const patch = {};
+    if (name) patch.name = name;
+    if (photoUrl !== undefined) patch.photoUrl = photoUrl;
+    if (headline !== undefined) patch.headline = headline;
+    if (college !== undefined) patch.college = college;
     const user = await User.findByIdAndUpdate(
       req.auth.id,
-      { $set: { ...(name && { name }), photoUrl, headline, college } },
+      { $set: patch },
       { new: true },
     ).select("-passwordHash");
     res.json({ user });
@@ -245,6 +250,18 @@ router.post(
         status: "friend",
         isFollowing: true,
         message: "Connection request accepted",
+        following: (fresh?.following || []).map((id) => id.toString()),
+      });
+    }
+
+    if (targetRequests.includes(currentUserId)) {
+      await User.findByIdAndUpdate(authorId, { $pull: { followRequests: currentUserId } });
+      const fresh = await User.findById(currentUserId);
+      return res.json({
+        ok: true,
+        status: "none",
+        isFollowing: false,
+        message: "Connection request cancelled",
         following: (fresh?.following || []).map((id) => id.toString()),
       });
     }

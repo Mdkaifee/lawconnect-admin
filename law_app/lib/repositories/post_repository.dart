@@ -50,7 +50,7 @@ class PostRepository {
     int limit = 25,
   }) async {
     final queryParams = <String, String>{
-      if (category != null && category != 'All' && category != 'Feed' && category != 'Following') 'category': category,
+      if (category != null && category != 'All' && category != 'Feed' && category != 'Following' && category != 'Friends') 'category': category,
       if (query != null && query.isNotEmpty) 'q': query.trim(),
       if (mine && _authRepo.currentUser != null) ...{
         'scope': 'mine',

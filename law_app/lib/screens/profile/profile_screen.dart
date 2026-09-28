@@ -8,6 +8,7 @@ import '../auth/login_screen.dart';
 import '../community/community_feed_screen.dart';
 import 'about_us_screen.dart';
 import 'bookmarks_screen.dart';
+import 'edit_profile_screen.dart';
 import 'history_screen.dart';
 import 'notes_screen.dart';
 import 'settings_screen.dart';
@@ -61,6 +62,8 @@ class ProfileScreen extends StatelessWidget {
           final user = state is Authenticated ? state.user : null;
           final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
           final college = user?.college ?? 'Galgotias University';
+          final headline = user?.headline ?? 'Law Student | Future Advocate';
+          final photoUrl = user?.photoUrl;
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -82,17 +85,22 @@ class ProfileScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             color: const Color(0xFF0F1E36),
                             border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                            image: photoUrl != null && photoUrl.isNotEmpty
+                                ? DecorationImage(image: NetworkImage(photoUrl), fit: BoxFit.cover)
+                                : null,
                           ),
-                          child: Center(
-                            child: Text(
-                              userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+                          child: photoUrl == null || photoUrl.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 16),
                         // Name & Subtitle
@@ -100,19 +108,31 @@ class ProfileScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                userName,
-                                style: const TextStyle(
-                                  fontSize: 17.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F1E36),
-                                  letterSpacing: -0.2,
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      userName,
+                                      style: const TextStyle(
+                                        fontSize: 17.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0F1E36),
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                  ),
+                                  if (user != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF0F1E36)),
+                                      onPressed: () => Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              const SizedBox(height: 3),
-                              const Text(
-                                'Law Student | Future Advocate',
-                                style: TextStyle(
+                              Text(
+                                headline,
+                                style: const TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w500,
                                   color: Color(0xFF64748B),
