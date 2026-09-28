@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Post, Comment, Report, User } from "../models/index.js";
+import { AppNotification, Post, Comment, Report, User } from "../models/index.js";
 import { auth, requireAdmin, requireUser, asyncHandler } from "../middleware/auth.js";
 import { notifyAllUsers, notifyUsers } from "../services/notifications.js";
 import mongoose from "mongoose";
@@ -14,7 +14,7 @@ router.get(
     const { scope, authorId, category, tag, q, page = 1, limit = 20, all } = req.query;
     const filter = {};
     if (!all) filter.status = "published";
-    if (scope === "mine" && authorId) filter.authorId = authorId;
+    if ((scope === "mine" || scope === "author") && authorId) filter.authorId = authorId;
     if (scope === "following") {
       let visibleAuthorIds = [];
       if (req.auth && req.auth.id) {
@@ -117,6 +117,18 @@ router.post(
       body: item.title,
       data: { type: "friend_post", postId: item._id.toString(), authorId: user._id.toString() },
     });
+    if (Array.isArray(user.following) && user.following.length > 0) {
+      await AppNotification.insertMany(
+        user.following.map((userId) => ({
+          userId,
+          title: `${user.name} posted`,
+          body: item.title,
+          type: "community",
+          refType: "post",
+          refId: item._id.toString(),
+        })),
+      );
+    }
 
     res.status(201).json({ item });
   }),
@@ -153,6 +165,24 @@ router.post(
         },
         { new: true },
       );
+
+      const actor = await User.findById(req.auth.id).select("name");
+      const postAuthorId = post.authorId?.toString();
+      if (postAuthorId && postAuthorId !== req.auth.id && post.authorModel === "User") {
+        await AppNotification.create({
+          userId: postAuthorId,
+          title: "New like on your post",
+          body: `${actor?.name || "Someone"} liked your post: ${post.title}`,
+          type: "community",
+          refType: "post",
+          refId: post._id.toString(),
+        });
+        await notifyUsers([postAuthorId], {
+          title: "New like on your post",
+          body: `${actor?.name || "Someone"} liked your post.`,
+          data: { type: "post_like", postId: post._id.toString() },
+        });
+      }
     }
 
     const likesCount = updatedPost.likedBy ? updatedPost.likedBy.length : updatedPost.likes || 0;
@@ -247,6 +277,14 @@ router.post(
     const postAuthorId = post.authorId?.toString();
     const commenterId = req.auth.id?.toString();
     if (postAuthorId && postAuthorId !== commenterId && post.authorModel === "User") {
+      await AppNotification.create({
+        userId: postAuthorId,
+        title: "New comment on your post",
+        body: `${authorName} commented: ${content.trim().slice(0, 80)}`,
+        type: "community",
+        refType: "post",
+        refId: post._id.toString(),
+      });
       await notifyUsers([postAuthorId], {
         title: "New comment on your post",
         body: `${authorName} commented: ${content.trim().slice(0, 80)}`,

@@ -48,6 +48,15 @@ class UserRepository {
     throw Exception('Failed to load users');
   }
 
+  Future<UserModel> getPublicProfile(String userId) async {
+    final response = await _client.get(Uri.parse('${ApiConstants.users}/$userId/profile'), headers: _authRepo.authHeaders);
+    final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+    }
+    throw Exception(data['error'] ?? 'Failed to load profile');
+  }
+
   Future<String> connect(String userId) async {
     final response = await _client.post(Uri.parse('${ApiConstants.users}/$userId/connect'), headers: _authRepo.authHeaders);
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};

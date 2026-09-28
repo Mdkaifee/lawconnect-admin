@@ -46,6 +46,7 @@ class PostRepository {
     String? query,
     bool mine = false,
     bool following = false,
+    String? authorId,
     int page = 1,
     int limit = 25,
   }) async {
@@ -57,6 +58,10 @@ class PostRepository {
         'authorId': _authRepo.currentUser!.id,
       },
       if (following && _authRepo.currentUser != null) 'scope': 'following',
+      if (authorId != null && authorId.isNotEmpty) ...{
+        'scope': 'author',
+        'authorId': authorId,
+      },
       'page': page.toString(),
       'limit': limit.toString(),
     };
@@ -81,6 +86,11 @@ class PostRepository {
     } else {
       throw Exception('Failed to load posts: ${response.statusCode}');
     }
+  }
+
+  Future<List<PostModel>> getPostsByAuthor(String authorId) async {
+    final result = await getPosts(authorId: authorId, limit: 50);
+    return result.items;
   }
 
   Future<Map<String, dynamic>> toggleFollowAuthor(String authorId) async {

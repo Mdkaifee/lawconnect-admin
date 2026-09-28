@@ -10,6 +10,7 @@ class UserModel extends Equatable {
   final int postsCount;
   final int followersCount;
   final int followingCount;
+  final bool isFriend;
 
   const UserModel({
     required this.id,
@@ -21,6 +22,7 @@ class UserModel extends Equatable {
     this.postsCount = 0,
     this.followersCount = 0,
     this.followingCount = 0,
+    this.isFriend = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class UserModel extends Equatable {
       postsCount: (json['postsCount'] as num?)?.toInt() ?? 0,
       followersCount: (json['followersCount'] as num?)?.toInt() ?? 0,
       followingCount: (json['followingCount'] as num?)?.toInt() ?? 0,
+      isFriend: json['isFriend'] == true,
     );
   }
 
@@ -49,6 +52,6 @@ class UserModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, email, photoUrl, headline, college, postsCount, followersCount, followingCount];
+  List<Object?> get props => [id, name, email, photoUrl, headline, college, postsCount, followersCount, followingCount, isFriend];
 }
 

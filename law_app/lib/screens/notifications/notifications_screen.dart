@@ -11,6 +11,7 @@ import 'package:law_app/screens/cases/case_search_screen.dart';
 import 'package:law_app/screens/acts/acts_list_screen.dart';
 import 'package:law_app/screens/updates/updates_screen.dart';
 import 'package:law_app/screens/community/community_feed_screen.dart';
+import 'package:law_app/screens/profile/public_user_profile_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -69,6 +70,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const CommunityFeedScreen(showBackButton: true)),
         );
+        break;
+
+      case 'user':
+        if (notif.refId != null && notif.refId!.isNotEmpty && notif.refId != 'general') {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => PublicUserProfileScreen(userId: notif.refId!)),
+          );
+        } else {
+          _showAnnouncementSheet(notif);
+        }
         break;
 
       case 'general':

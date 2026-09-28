@@ -4,6 +4,7 @@ import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/comment_model.dart';
 import '../../repositories/post_repository.dart';
+import '../profile/public_user_profile_screen.dart';
 
 class CommentsSheet extends StatefulWidget {
   final String postId;
@@ -189,17 +190,30 @@ class _CommentsSheetState extends State<CommentsSheet> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: c.authorType == 'admin'
-                                      ? AppColors.goldAccent
-                                      : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
-                                  child: Text(
-                                    c.authorName.isNotEmpty ? c.authorName[0].toUpperCase() : 'A',
-                                    style: TextStyle(
-                                      color: isDark && c.authorType != 'admin' ? AppColors.goldAccentLight : Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: c.authorType == 'admin' || c.authorId.isEmpty
+                                      ? null
+                                      : () => Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => PublicUserProfileScreen(userId: c.authorId, fallbackName: c.authorName),
+                                            ),
+                                          ),
+                                  child: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: c.authorType == 'admin'
+                                        ? AppColors.goldAccent
+                                        : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
+                                    backgroundImage: c.authorPhotoUrl?.trim().isNotEmpty == true ? NetworkImage(c.authorPhotoUrl!.trim()) : null,
+                                    child: c.authorPhotoUrl?.trim().isNotEmpty == true
+                                        ? null
+                                        : Text(
+                                            c.authorName.isNotEmpty ? c.authorName[0].toUpperCase() : 'A',
+                                            style: TextStyle(
+                                              color: isDark && c.authorType != 'admin' ? AppColors.goldAccentLight : Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                     ),
                                   ),
                                 ),

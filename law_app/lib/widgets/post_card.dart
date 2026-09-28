@@ -11,6 +11,7 @@ class PostCard extends StatelessWidget {
   final VoidCallback onReport;
   final VoidCallback onBookmark;
   final VoidCallback? onFollow;
+  final VoidCallback? onAuthorTap;
   final bool isBookmarked;
   final bool bookmarkBusy;
   final bool isFollowing;
@@ -25,6 +26,7 @@ class PostCard extends StatelessWidget {
     required this.onReport,
     required this.onBookmark,
     this.onFollow,
+    this.onAuthorTap,
     this.isBookmarked = false,
     this.bookmarkBusy = false,
     this.isFollowing = false,
@@ -71,30 +73,33 @@ class PostCard extends StatelessWidget {
             // Author header
             Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: isAdminAuthor
-                      ? AppColors.goldAccent
-                      : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
-                  backgroundImage: (effectivePhotoUrl != null && effectivePhotoUrl.isNotEmpty)
-                      ? NetworkImage(effectivePhotoUrl)
-                      : null,
-                  child: (effectivePhotoUrl != null && effectivePhotoUrl.isNotEmpty)
-                      ? null
-                      : (isSelf
-                          ? Icon(
-                              Icons.person_rounded,
-                              size: 20,
-                              color: isDark ? AppColors.goldAccentLight : Colors.white,
-                            )
-                          : Text(
-                              post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'A',
-                              style: TextStyle(
-                                color: isDark && !isAdminAuthor ? AppColors.goldAccentLight : Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            )),
+                GestureDetector(
+                  onTap: isAdminAuthor ? null : onAuthorTap,
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: isAdminAuthor
+                        ? AppColors.goldAccent
+                        : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
+                    backgroundImage: (effectivePhotoUrl != null && effectivePhotoUrl.isNotEmpty)
+                        ? NetworkImage(effectivePhotoUrl)
+                        : null,
+                    child: (effectivePhotoUrl != null && effectivePhotoUrl.isNotEmpty)
+                        ? null
+                        : (isSelf
+                            ? Icon(
+                                Icons.person_rounded,
+                                size: 20,
+                                color: isDark ? AppColors.goldAccentLight : Colors.white,
+                              )
+                            : Text(
+                                post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'A',
+                                style: TextStyle(
+                                  color: isDark && !isAdminAuthor ? AppColors.goldAccentLight : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              )),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(

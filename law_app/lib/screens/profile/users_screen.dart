@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../repositories/user_repository.dart';
+import 'public_user_profile_screen.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
@@ -65,6 +66,14 @@ class _UsersScreenState extends State<UsersScreen> {
     } finally {
       if (mounted) setState(() => _busyUserIds.remove(item.user.id));
     }
+  }
+
+  void _openProfile(AppUserConnection item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PublicUserProfileScreen(userId: item.user.id, fallbackName: item.user.name),
+      ),
+    );
   }
 
   String _buttonText(String status) {
@@ -211,18 +220,21 @@ class _UsersScreenState extends State<UsersScreen> {
                       children: [
                         ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
-                            backgroundImage: user.photoUrl?.trim().isNotEmpty == true ? NetworkImage(user.photoUrl!.trim()) : null,
-                            child: user.photoUrl?.trim().isNotEmpty == true
-                                ? null
-                                : Text(
-                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                                    style: TextStyle(
-                                      color: isDark ? AppColors.goldAccentLight : Colors.white,
-                                      fontWeight: FontWeight.w700,
+                          leading: GestureDetector(
+                            onTap: () => _openProfile(item),
+                            child: CircleAvatar(
+                              backgroundColor: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
+                              backgroundImage: user.photoUrl?.trim().isNotEmpty == true ? NetworkImage(user.photoUrl!.trim()) : null,
+                              child: user.photoUrl?.trim().isNotEmpty == true
+                                  ? null
+                                  : Text(
+                                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                      style: TextStyle(
+                                        color: isDark ? AppColors.goldAccentLight : Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
-                                  ),
+                            ),
                           ),
                           title: Text(
                             user.name,
@@ -272,6 +284,7 @@ class _UsersScreenState extends State<UsersScreen> {
                               ),
                             ],
                           ),
+                          onTap: () => _openProfile(item),
                         ),
                         Divider(height: 1, color: AppTheme.dividerColor(context), indent: 20, endIndent: 20),
                       ],

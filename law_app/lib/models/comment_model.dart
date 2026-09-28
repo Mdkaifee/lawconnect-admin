@@ -6,6 +6,7 @@ class CommentModel extends Equatable {
   final String authorId;
   final String authorName;
   final String authorType;
+  final String? authorPhotoUrl;
   final String content;
   final String createdAt;
 
@@ -15,6 +16,7 @@ class CommentModel extends Equatable {
     required this.authorId,
     required this.authorName,
     this.authorType = 'user',
+    this.authorPhotoUrl,
     required this.content,
     required this.createdAt,
   });
@@ -26,6 +28,7 @@ class CommentModel extends Equatable {
       authorId: json['authorId']?.toString() ?? '',
       authorName: json['authorName']?.toString() ?? 'Advocate',
       authorType: json['authorType']?.toString() ?? 'user',
+      authorPhotoUrl: json['authorPhotoUrl']?.toString(),
       content: json['content']?.toString() ?? '',
       createdAt: json['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
     );

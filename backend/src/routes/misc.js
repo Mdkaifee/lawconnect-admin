@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { Category, Note, Bookmark, History, User, Case, Act, Post, LegalUpdate, Report, Comment } from "../models/index.js";
+import { AppNotification, Category, Note, Bookmark, History, User, Case, Act, Post, LegalUpdate, Report, Comment } from "../models/index.js";
 import { auth, requireAdmin, requireUser, asyncHandler } from "../middleware/auth.js";
 import mongoose from "mongoose";
 import { notifyUsers } from "../services/notifications.js";
@@ -279,6 +279,7 @@ users.post(
         body: `${currentUser.name} unfollowed you.`,
         data: { type: "unfollowed", userId: currentUserId },
       });
+      await AppNotification.create({ userId: targetUserId, title: "Unfollowed", body: `${currentUser.name} unfollowed you.`, type: "community", refType: "user", refId: currentUserId });
       return res.json({ ok: true, status: incoming.includes(targetUserId) ? "follower" : "none", message: "Unfollowed" });
     }
 
@@ -295,6 +296,7 @@ users.post(
         body: `${currentUser.name} accepted your follow request.`,
         data: { type: "connection_accepted", userId: currentUserId },
       });
+      await AppNotification.create({ userId: targetUserId, title: "Connection accepted", body: `${currentUser.name} accepted your follow request.`, type: "community", refType: "user", refId: currentUserId });
       return res.json({ ok: true, status: "friend", message: "Connection request accepted" });
     }
 
@@ -305,6 +307,7 @@ users.post(
         body: `${currentUser.name} followed you back.`,
         data: { type: "follow_back", userId: currentUserId },
       });
+      await AppNotification.create({ userId: targetUserId, title: "Followed back", body: `${currentUser.name} followed you back.`, type: "community", refType: "user", refId: currentUserId });
       return res.json({ ok: true, status: "friend", message: "Followed back" });
     }
 
@@ -315,6 +318,7 @@ users.post(
         body: `${currentUser.name} cancelled a follow request.`,
         data: { type: "connection_cancelled", userId: currentUserId },
       });
+      await AppNotification.create({ userId: targetUserId, title: "Request cancelled", body: `${currentUser.name} cancelled a follow request.`, type: "community", refType: "user", refId: currentUserId });
       return res.json({ ok: true, status: "none", message: "Connection request cancelled" });
     }
 
@@ -325,6 +329,7 @@ users.post(
         body: `${currentUser.name} wants to connect with you.`,
         data: { type: "connection_request", userId: currentUserId },
       });
+      await AppNotification.create({ userId: targetUserId, title: "New follow request", body: `${currentUser.name} wants to connect with you.`, type: "community", refType: "user", refId: currentUserId });
     }
     res.json({ ok: true, status: "requested", message: "Connection request sent" });
   }),
@@ -351,6 +356,7 @@ users.post(
       body: `${currentUser.name} removed you as a follower.`,
       data: { type: "follower_removed", userId: currentUserId },
     });
+    await AppNotification.create({ userId: followerId, title: "Follower removed", body: `${currentUser.name} removed you as a follower.`, type: "community", refType: "user", refId: currentUserId });
 
     const stillFollowing = (currentUser.following || []).map((id) => id.toString()).includes(followerId);
     res.json({ ok: true, status: stillFollowing ? "following" : "none", message: "Follower removed" });
@@ -385,6 +391,7 @@ users.post(
       body: "Your follow request was accepted.",
       data: { type: "connection_accepted", userId: currentUserId },
     });
+    await AppNotification.create({ userId: requesterId, title: "Connection accepted", body: "Your follow request was accepted.", type: "community", refType: "user", refId: currentUserId });
 
     res.json({ ok: true, status: "friend", message: "Connection request accepted" });
   }),
@@ -444,9 +451,18 @@ users.post(
 // Public advocate profile
 users.get(
   "/:id/profile",
+  auth(false),
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id).select("-passwordHash").lean();
     if (!user) return res.status(404).json({ error: "User not found" });
+    const viewer = req.auth?.type === "user" ? await User.findById(req.auth.id).select("following").lean() : null;
+    const userFollowing = (user.following || []).map((id) => id.toString());
+    const viewerFollowing = (viewer?.following || []).map((id) => id.toString());
+    const isFriend = Boolean(
+      req.auth?.id &&
+        userFollowing.includes(req.auth.id.toString()) &&
+        viewerFollowing.includes(user._id.toString()),
+    );
 
     const [postsCount, followersCount] = await Promise.all([
       Post.countDocuments({ authorId: user._id, status: "published" }),
@@ -459,6 +475,7 @@ users.get(
         postsCount,
         followersCount,
         followingCount: user.following ? user.following.length : 0,
+        isFriend,
       },
     });
   }),

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { Admin, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report } from "../models/index.js";
+import { Admin, AppNotification, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report } from "../models/index.js";
 import { signToken, auth, asyncHandler } from "../middleware/auth.js";
 import { notifyUsers } from "../services/notifications.js";
 
@@ -308,6 +308,14 @@ router.post(
         body: `${currentUser.name} unfollowed you.`,
         data: { type: "unfollowed", userId: currentUserId },
       });
+      await AppNotification.create({
+        userId: authorId,
+        title: "Unfollowed",
+        body: `${currentUser.name} unfollowed you.`,
+        type: "community",
+        refType: "user",
+        refId: currentUserId,
+      });
       const fresh = await User.findById(currentUserId);
       return res.json({
         ok: true,
@@ -330,6 +338,14 @@ router.post(
         body: `${currentUser.name} accepted your follow request.`,
         data: { type: "connection_accepted", userId: currentUserId },
       });
+      await AppNotification.create({
+        userId: authorId,
+        title: "Connection accepted",
+        body: `${currentUser.name} accepted your follow request.`,
+        type: "community",
+        refType: "user",
+        refId: currentUserId,
+      });
       const fresh = await User.findById(currentUserId);
       return res.json({
         ok: true,
@@ -346,6 +362,14 @@ router.post(
         title: "Followed back",
         body: `${currentUser.name} followed you back.`,
         data: { type: "follow_back", userId: currentUserId },
+      });
+      await AppNotification.create({
+        userId: authorId,
+        title: "Followed back",
+        body: `${currentUser.name} followed you back.`,
+        type: "community",
+        refType: "user",
+        refId: currentUserId,
       });
       const fresh = await User.findById(currentUserId);
       return res.json({
@@ -364,6 +388,14 @@ router.post(
         body: `${currentUser.name} cancelled a follow request.`,
         data: { type: "connection_cancelled", userId: currentUserId },
       });
+      await AppNotification.create({
+        userId: authorId,
+        title: "Request cancelled",
+        body: `${currentUser.name} cancelled a follow request.`,
+        type: "community",
+        refType: "user",
+        refId: currentUserId,
+      });
       const fresh = await User.findById(currentUserId);
       return res.json({
         ok: true,
@@ -380,6 +412,14 @@ router.post(
         title: "New follow request",
         body: `${currentUser.name} wants to connect with you.`,
         data: { type: "connection_request", userId: currentUserId },
+      });
+      await AppNotification.create({
+        userId: authorId,
+        title: "New follow request",
+        body: `${currentUser.name} wants to connect with you.`,
+        type: "community",
+        refType: "user",
+        refId: currentUserId,
       });
     }
 

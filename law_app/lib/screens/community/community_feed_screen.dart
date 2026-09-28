@@ -9,6 +9,7 @@ import '../../repositories/post_repository.dart';
 import '../../repositories/user_data_repository.dart';
 import '../../widgets/post_card.dart';
 import 'comments_sheet.dart';
+import '../profile/public_user_profile_screen.dart';
 
 class CommunityFeedScreen extends StatefulWidget {
   final bool showBackButton;
@@ -282,6 +283,15 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     );
   }
 
+  void _openAuthorProfile(PostModel post) {
+    if (post.authorId.isEmpty || post.authorType == 'admin') return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PublicUserProfileScreen(userId: post.authorId, fallbackName: post.authorName),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = context.read<AuthRepository>().currentUser;
@@ -483,6 +493,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               isBookmarked: isBookmarked,
                               bookmarkBusy: _bookmarkBusyPostIds.contains(post.id),
                               onFollow: () => _toggleFollow(post),
+                              onAuthorTap: () => _openAuthorProfile(post),
                               onBookmark: () => _togglePostBookmark(post, isBookmarked),
                               onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(post.id)),
                               onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
