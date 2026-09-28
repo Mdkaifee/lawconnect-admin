@@ -79,6 +79,8 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
     final isDark = AppTheme.isDark(context);
     final cardBg = isDark ? const Color(0xFF131D2D) : Colors.white;
     final cardBorder = isDark ? const Color(0xFF23354E) : const Color(0xFFE2E8F0);
