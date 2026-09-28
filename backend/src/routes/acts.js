@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Act } from "../models/index.js";
 import { auth, requireAdmin, asyncHandler } from "../middleware/auth.js";
 import { validateSafeUrl } from "../utils/security.js";
+import { notifyAllUsers } from "../services/notifications.js";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const { q, type, year, all, page = 1, limit = 20 } = req.query;
     const filter = {};
-    if (!all) filter.published = true;
+    if (!all) filter.published = { $ne: false };
     if (type && type !== "All" && type !== "All Acts") {
       filter.type = type.replace(" Acts", "");
     }
@@ -47,7 +48,7 @@ router.get(
     if (!q) return res.json({ items: [] });
     const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
     const acts = await Act.find({
-      published: true,
+      published: { $ne: false },
       $or: [{ "sections.number": rx }, { "sections.title": rx }, { "sections.text": rx }],
     }).lean();
 
@@ -331,6 +332,14 @@ router.post(
       }
     }
 
+    if (createdCount > 0 || updatedCount > 0) {
+      await notifyAllUsers({
+        title: "Bare acts updated",
+        body: `Imported ${createdCount} new acts and updated ${updatedCount} acts.`,
+        data: { type: "acts_import", createdCount, updatedCount },
+      });
+    }
+
     res.json({
       ok: true,
       message: `Successfully imported ${createdCount} new acts and updated ${updatedCount} existing acts.`,
@@ -347,6 +356,11 @@ router.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const item = await Act.create(req.body);
+    await notifyAllUsers({
+      title: "New bare act",
+      body: item.name,
+      data: { type: "act", actId: item._id.toString() },
+    });
     res.status(201).json({ item });
   }),
 );
@@ -358,6 +372,11 @@ router.put(
   asyncHandler(async (req, res) => {
     const item = await Act.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!item) return res.status(404).json({ error: "Act not found" });
+    await notifyAllUsers({
+      title: "Bare act updated",
+      body: item.name,
+      data: { type: "act_update", actId: item._id.toString() },
+    });
     res.json({ item });
   }),
 );
@@ -381,6 +400,11 @@ router.post(
     if (!act) return res.status(404).json({ error: "Act not found" });
     act.sections.push({ ...req.body, lastVerifiedDate: new Date() });
     await act.save();
+    await notifyAllUsers({
+      title: "Bare act section added",
+      body: act.name,
+      data: { type: "act_section", actId: act._id.toString() },
+    });
     res.status(201).json({ item: act });
   }),
 );

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/utils/url_helper.dart';
+import '../../repositories/auth_repository.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
+import '../../widgets/app_version_text.dart';
 import '../auth/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,6 +20,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
   String _selectedLanguage = 'English';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    final enabled = await NotificationService.instance.isEnabled();
+    if (!mounted) return;
+    setState(() => _notificationsEnabled = enabled);
+  }
+
+  Future<void> _setNotificationsEnabled(bool value) async {
+    setState(() => _notificationsEnabled = value);
+    await NotificationService.instance.setEnabled(value, context.read<AuthRepository>());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(value ? 'Push notifications enabled' : 'Push notifications disabled'),
+        backgroundColor: const Color(0xFF0F1E36),
+      ),
+    );
+  }
 
   void _showLanguageDialog() {
     showModalBottomSheet(
@@ -167,9 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   value: _notificationsEnabled,
                   activeColor: const Color(0xFF0F1E36),
-                  onChanged: (value) {
-                    setState(() => _notificationsEnabled = value);
-                  },
+                  onChanged: _setNotificationsEnabled,
                 ),
                 const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 SwitchListTile(
@@ -272,14 +297,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Column(
               children: [
-                ListTile(
+                const ListTile(
                   leading: Icon(Icons.verified_outlined, color: Color(0xFF0F1E36), size: 22),
                   title: Text(
                     'App Version',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  trailing: Text(
-                    'v1.0.0 (Build 2026)',
+                  trailing: AppVersionText(
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF64748B)),
                   ),
                 ),

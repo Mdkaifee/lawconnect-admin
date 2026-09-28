@@ -3,6 +3,7 @@ import { Case } from "../models/index.js";
 import { IndianKanoonService } from "../services/indianKanoon.js";
 import { auth, requireAdmin, asyncHandler } from "../middleware/auth.js";
 import { sanitizeLogOutput } from "../utils/security.js";
+import { notifyAllUsers } from "../services/notifications.js";
 import mongoose from "mongoose";
 
 const router = Router();
@@ -301,6 +302,11 @@ router.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const item = await Case.create(req.body);
+    await notifyAllUsers({
+      title: "New landmark case",
+      body: item.title,
+      data: { type: "case", caseId: item._id.toString() },
+    });
     res.status(201).json({ item });
   }),
 );
@@ -312,6 +318,11 @@ router.put(
   asyncHandler(async (req, res) => {
     const item = await Case.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!item) return res.status(404).json({ error: "Case not found" });
+    await notifyAllUsers({
+      title: "Landmark case updated",
+      body: item.title,
+      data: { type: "case_update", caseId: item._id.toString() },
+    });
     res.json({ item });
   }),
 );

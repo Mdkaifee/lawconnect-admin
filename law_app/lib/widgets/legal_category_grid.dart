@@ -23,9 +23,9 @@ class LegalCategoryGrid extends StatelessWidget {
         crossAxisCount: 4,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.82,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.72,
         children: [
           ...visibleCategories.map(
             (category) => LegalCategoryTile(
@@ -79,17 +79,18 @@ class LegalCategoryTile extends StatelessWidget {
             ),
             child: Icon(icon, size: 24, color: tileColor),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
           Flexible(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 1),
               child: Text(
                 label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                overflow: TextOverflow.visible,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 10.6,
+                  height: 1.12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF17233A),
                 ),

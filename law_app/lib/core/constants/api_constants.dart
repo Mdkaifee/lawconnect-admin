@@ -9,6 +9,8 @@ class ApiConstants {
   static const String follow = '$baseUrl/auth/follow';
   static const String following = '$baseUrl/auth/following';
   static const String deleteAccount = '$baseUrl/auth/delete-account';
+  static const String fcmToken = '$baseUrl/auth/fcm-token';
+  static const String fcmTokenRemove = '$baseUrl/auth/fcm-token/remove';
   static const String privacyPolicyUrl = 'https://rishikesh-law-hub-admin.onrender.com/privacy-policy';
   static const String termsOfServiceUrl = 'https://rishikesh-law-hub-admin.onrender.com/terms-of-service';
   static const String deleteAccountUrl = 'https://rishikesh-law-hub-admin.onrender.com/delete-account';

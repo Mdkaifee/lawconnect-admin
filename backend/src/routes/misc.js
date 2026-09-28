@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { Category, Note, Bookmark, History, User, Case, Act, Post, LegalUpdate, Report, Comment } from "../models/index.js";
 import { auth, requireAdmin, requireUser, asyncHandler } from "../middleware/auth.js";
 import mongoose from "mongoose";
+import { notifyUsers } from "../services/notifications.js";
 
 /* ---------------- 1. Categories ---------------- */
 export const categories = Router();
@@ -265,6 +266,11 @@ users.post(
         User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUserId } }),
         User.findByIdAndUpdate(targetUserId, { $pull: { following: currentUserId } }),
       ]);
+      await notifyUsers([targetUserId], {
+        title: "Connection removed",
+        body: `${currentUser.name} removed the connection.`,
+        data: { type: "connection_removed", userId: currentUserId },
+      });
       return res.json({ ok: true, status: "none", message: "Connection removed" });
     }
 
@@ -276,16 +282,31 @@ users.post(
         }),
         User.findByIdAndUpdate(targetUserId, { $addToSet: { following: currentUserId } }),
       ]);
+      await notifyUsers([targetUserId], {
+        title: "Connection accepted",
+        body: `${currentUser.name} accepted your follow request.`,
+        data: { type: "connection_accepted", userId: currentUserId },
+      });
       return res.json({ ok: true, status: "friend", message: "Connection request accepted" });
     }
 
     if (targetRequests.includes(currentUserId)) {
       await User.findByIdAndUpdate(targetUserId, { $pull: { followRequests: currentUserId } });
+      await notifyUsers([targetUserId], {
+        title: "Request cancelled",
+        body: `${currentUser.name} cancelled a follow request.`,
+        data: { type: "connection_cancelled", userId: currentUserId },
+      });
       return res.json({ ok: true, status: "none", message: "Connection request cancelled" });
     }
 
     if (!targetRequests.includes(currentUserId)) {
       await User.findByIdAndUpdate(targetUserId, { $addToSet: { followRequests: currentUserId } });
+      await notifyUsers([targetUserId], {
+        title: "New follow request",
+        body: `${currentUser.name} wants to connect with you.`,
+        data: { type: "connection_request", userId: currentUserId },
+      });
     }
     res.json({ ok: true, status: "requested", message: "Connection request sent" });
   }),
@@ -314,6 +335,11 @@ users.post(
       }),
       User.findByIdAndUpdate(requesterId, { $addToSet: { following: currentUserId } }),
     ]);
+    await notifyUsers([requesterId], {
+      title: "Connection accepted",
+      body: "Your follow request was accepted.",
+      data: { type: "connection_accepted", userId: currentUserId },
+    });
 
     res.json({ ok: true, status: "friend", message: "Connection request accepted" });
   }),

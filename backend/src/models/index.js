@@ -27,6 +27,7 @@ const userSchema = new Schema(
     blocked: { type: Boolean, default: false },
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
     followRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    fcmTokens: [{ type: String }],
     deletionRequested: { type: Boolean, default: false, index: true },
     deletionRequestedAt: { type: Date },
     deletionDueAt: { type: Date, index: true },

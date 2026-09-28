@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/services/connectivity_service.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/case_repository.dart';
@@ -26,6 +27,7 @@ void main() async {
 
   final authRepository = AuthRepository();
   await authRepository.init();
+  await NotificationService.instance.initialize(authRepository);
 
   final caseRepository = CaseRepository();
   final actRepository = ActRepository();

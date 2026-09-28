@@ -492,12 +492,12 @@ class _HomeScreenState extends State<HomeScreen> {
               // Reference-style quote and court banner.
               Container(
                 margin: EdgeInsets.zero,
-                height: 138,
+                height: 156,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   image: const DecorationImage(
                     image: AssetImage('assets/sci.png'),
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fill,
                     opacity: 1,
                   ),
                 ),
@@ -519,18 +519,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(left: 18, top: 14, right: 150, bottom: 12),
+                      padding: const EdgeInsets.only(left: 18, top: 14, right: 118, bottom: 10),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
-                              '“The Constitution is\nnot a mere lawyers’ document,\nit is a vehicle of life, and its spirit\nis always the spirit of the age.”\n\n— Dr. B.R. Ambedkar',
-                              maxLines: 6,
-                              overflow: TextOverflow.ellipsis,
+                              '"The Constitution is\nnot a mere lawyers\' document,\nit is a vehicle of life, and its spirit\nis always the spirit of the age."\n\n- Dr. B.R. Ambedkar',
+                              maxLines: 7,
+                              overflow: TextOverflow.visible,
                               style: TextStyle(
                                 color: const Color(0xFF061328),
-                                fontSize: 12,
-                                height: 1.18,
+                                fontSize: 10.8,
+                                height: 1.16,
                                 fontWeight: FontWeight.w800,
                                 shadows: [
                                   Shadow(
@@ -547,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               // Dynamic legal category grid
               FutureBuilder<List<CategoryModel>>(

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { LegalUpdate } from "../models/index.js";
 import { auth, requireAdmin, asyncHandler } from "../middleware/auth.js";
 import { validateSafeUrl } from "../utils/security.js";
+import { notifyAllUsers } from "../services/notifications.js";
 
 const router = Router();
 
@@ -54,6 +55,11 @@ router.post(
       ...req.body,
       verifiedAt: req.body.verificationStatus === "verified" ? new Date() : undefined,
     });
+    await notifyAllUsers({
+      title: "New legal update",
+      body: item.title,
+      data: { type: "legal_update", updateId: item._id.toString() },
+    });
     res.status(201).json({ item });
   }),
 );
@@ -75,6 +81,11 @@ router.put(
     }
     const item = await LegalUpdate.findByIdAndUpdate(req.params.id, patch, { new: true });
     if (!item) return res.status(404).json({ error: "Update not found" });
+    await notifyAllUsers({
+      title: "Legal update changed",
+      body: item.title,
+      data: { type: "legal_update_changed", updateId: item._id.toString() },
+    });
     res.json({ item });
   }),
 );

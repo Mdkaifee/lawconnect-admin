@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/app_version_text.dart';
 
 class AboutUsScreen extends StatelessWidget {
   const AboutUsScreen({super.key});
@@ -126,8 +127,8 @@ class AboutUsScreen extends StatelessWidget {
                     color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Version 1.0.0 (Build 2026)',
+                  child: const AppVersionText(
+                    includePrefix: true,
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,

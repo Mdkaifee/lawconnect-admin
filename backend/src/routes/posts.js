@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Post, Comment, Report, User } from "../models/index.js";
 import { auth, requireAdmin, requireUser, asyncHandler } from "../middleware/auth.js";
+import { notifyAllUsers, notifyUsers } from "../services/notifications.js";
 import mongoose from "mongoose";
 
 const router = Router();
@@ -91,6 +92,12 @@ router.post(
       likes: 0,
       commentsCount: 0,
       status: "published",
+    });
+
+    await notifyUsers(user.following || [], {
+      title: `${user.name} posted`,
+      body: item.title,
+      data: { type: "friend_post", postId: item._id.toString(), authorId: user._id.toString() },
     });
 
     res.status(201).json({ item });
@@ -252,6 +259,11 @@ router.post(
       likedBy: [],
       likes: 0,
       commentsCount: 0,
+    });
+    await notifyAllUsers({
+      title: "New post from admin",
+      body: item.title,
+      data: { type: "admin_post", postId: item._id.toString() },
     });
     res.status(201).json({ item });
   }),

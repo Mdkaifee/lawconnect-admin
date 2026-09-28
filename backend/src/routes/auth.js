@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { Admin, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report } from "../models/index.js";
 import { signToken, auth, asyncHandler } from "../middleware/auth.js";
+import { notifyUsers } from "../services/notifications.js";
 
 const router = Router();
 
@@ -199,6 +200,30 @@ router.put(
 );
 
 router.post(
+  "/fcm-token",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const { token } = req.body || {};
+    if (!token) return res.status(400).json({ error: "token is required" });
+    await User.findByIdAndUpdate(req.auth.id, { $addToSet: { fcmTokens: token } });
+    res.json({ ok: true });
+  }),
+);
+
+router.post(
+  "/fcm-token/remove",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const { token } = req.body || {};
+    if (!token) return res.status(400).json({ error: "token is required" });
+    await User.findByIdAndUpdate(req.auth.id, { $pull: { fcmTokens: token } });
+    res.json({ ok: true });
+  }),
+);
+
+router.post(
   "/me/photo",
   auth(),
   asyncHandler(async (req, res) => {
@@ -270,6 +295,11 @@ router.post(
         User.findByIdAndUpdate(currentUserId, { $pull: { following: authorId } }),
         User.findByIdAndUpdate(authorId, { $pull: { following: currentUserId } }),
       ]);
+      await notifyUsers([authorId], {
+        title: "Connection removed",
+        body: `${currentUser.name} removed the connection.`,
+        data: { type: "connection_removed", userId: currentUserId },
+      });
       const fresh = await User.findById(currentUserId);
       return res.json({
         ok: true,
@@ -287,6 +317,11 @@ router.post(
         }),
         User.findByIdAndUpdate(authorId, { $addToSet: { following: currentUserId } }),
       ]);
+      await notifyUsers([authorId], {
+        title: "Connection accepted",
+        body: `${currentUser.name} accepted your follow request.`,
+        data: { type: "connection_accepted", userId: currentUserId },
+      });
       const fresh = await User.findById(currentUserId);
       return res.json({
         ok: true,
@@ -299,6 +334,11 @@ router.post(
 
     if (targetRequests.includes(currentUserId)) {
       await User.findByIdAndUpdate(authorId, { $pull: { followRequests: currentUserId } });
+      await notifyUsers([authorId], {
+        title: "Request cancelled",
+        body: `${currentUser.name} cancelled a follow request.`,
+        data: { type: "connection_cancelled", userId: currentUserId },
+      });
       const fresh = await User.findById(currentUserId);
       return res.json({
         ok: true,
@@ -311,6 +351,11 @@ router.post(
 
     if (!targetRequests.includes(currentUserId)) {
       await User.findByIdAndUpdate(authorId, { $addToSet: { followRequests: currentUserId } });
+      await notifyUsers([authorId], {
+        title: "New follow request",
+        body: `${currentUser.name} wants to connect with you.`,
+        data: { type: "connection_request", userId: currentUserId },
+      });
     }
 
     const updatedUser = await User.findById(currentUserId);

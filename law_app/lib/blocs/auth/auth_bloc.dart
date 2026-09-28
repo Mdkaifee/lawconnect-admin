@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/services/notification_service.dart';
 import '../../models/user_model.dart';
 import '../../repositories/auth_repository.dart';
 
@@ -113,6 +114,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (_authRepository.isAuthenticated && _authRepository.currentUser != null) {
       if (emit.isDone) return;
       emit(Authenticated(_authRepository.currentUser!));
+      await NotificationService.instance.refreshToken(_authRepository);
       final refreshedUser = await _authRepository.fetchProfile();
       if (refreshedUser != null && !emit.isDone) {
         emit(Authenticated(refreshedUser));
@@ -127,6 +129,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final user = await _authRepository.login(event.email, event.password);
+      await NotificationService.instance.refreshToken(_authRepository);
       emit(Authenticated(user));
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
@@ -138,6 +141,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final user = await _authRepository.register(event.name, event.email, event.password);
+      await NotificationService.instance.refreshToken(_authRepository);
       emit(Authenticated(user));
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));

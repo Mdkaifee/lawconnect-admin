@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../core/services/notification_service.dart';
 import '../core/theme/app_theme.dart';
+import '../repositories/auth_repository.dart';
 import 'home/home_screen.dart';
 import 'cases/case_search_screen.dart';
 import 'community/community_feed_screen.dart';
@@ -29,6 +32,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      NotificationService.instance.requestPermissionAndRegister(context.read<AuthRepository>());
+    });
   }
 
   @override
