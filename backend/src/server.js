@@ -10,6 +10,7 @@ import caseRoutes from "./routes/cases.js";
 import actRoutes from "./routes/acts.js";
 import updateRoutes from "./routes/updates.js";
 import postRoutes from "./routes/posts.js";
+import notificationRoutes from "./routes/notifications.js";
 import { categories, notes, bookmarks, history, users, stats, reports } from "./routes/misc.js";
 import { sanitizeLogOutput } from "./utils/security.js";
 
@@ -42,6 +43,7 @@ app.use("/api/cases", caseRoutes);
 app.use("/api/acts", actRoutes);
 app.use("/api/updates", updateRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/categories", categories);
 app.use("/api/notes", notes);
 app.use("/api/bookmarks", bookmarks);
