@@ -47,9 +47,12 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: BlocConsumer<AuthBloc, AuthState>(
+    return ListenableBuilder(
+      listenable: Translation.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Unauthenticated) {
             Navigator.of(context).pushAndRemoveUntil(
@@ -263,6 +266,8 @@ class ProfileScreen extends StatelessWidget {
           );
         },
       ),
+    );
+      },
     );
   }
 

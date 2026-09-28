@@ -189,12 +189,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      drawer: Drawer(
-        backgroundColor: Colors.white,
-        child: SafeArea(
-          child: BlocBuilder<AuthBloc, AuthState>(
+    return ListenableBuilder(
+      listenable: Translation.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          drawer: Drawer(
+            backgroundColor: Colors.white,
+            child: SafeArea(
+              child: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               final user = state is Authenticated ? state.user : null;
               final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
@@ -727,6 +730,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }

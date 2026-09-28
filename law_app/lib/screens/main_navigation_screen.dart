@@ -41,60 +41,65 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (idx) {
-            setState(() {
-              _currentIndex = idx;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primaryNavy,
-          unselectedItemColor: AppColors.textMuted,
-          elevation: 0,
-          iconSize: 22,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10.5),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10.5),
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home_rounded),
-              label: Translation.t('home'),
+    return ListenableBuilder(
+      listenable: Translation.instance,
+      builder: (context, _) {
+        return Scaffold(
+          body: IndexedStack(
+            index: _currentIndex,
+            children: _screens,
+          ),
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.search_rounded),
-              activeIcon: const Icon(Icons.search_rounded),
-              label: Translation.t('search'),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (idx) {
+                setState(() {
+                  _currentIndex = idx;
+                });
+              },
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.white,
+              selectedItemColor: AppColors.primaryNavy,
+              unselectedItemColor: AppColors.textMuted,
+              elevation: 0,
+              iconSize: 22,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10.5),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10.5),
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_outlined),
+                  activeIcon: const Icon(Icons.home_rounded),
+                  label: Translation.t('home'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.search_rounded),
+                  activeIcon: const Icon(Icons.search_rounded),
+                  label: Translation.t('search'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.forum_outlined),
+                  activeIcon: const Icon(Icons.forum_rounded),
+                  label: Translation.t('posts'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.bookmark_border_rounded),
+                  activeIcon: const Icon(Icons.bookmark_rounded),
+                  label: Translation.t('bookmarks'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.person_outline_rounded),
+                  activeIcon: const Icon(Icons.person_rounded),
+                  label: Translation.t('profile'),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.forum_outlined),
-              activeIcon: const Icon(Icons.forum_rounded),
-              label: Translation.t('posts'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.bookmark_border_rounded),
-              activeIcon: const Icon(Icons.bookmark_rounded),
-              label: Translation.t('bookmarks'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline_rounded),
-              activeIcon: const Icon(Icons.person_rounded),
-              label: Translation.t('profile'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

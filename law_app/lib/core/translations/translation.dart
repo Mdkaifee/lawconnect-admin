@@ -92,16 +92,6 @@ const Map<String, Map<String, String>> _translations = {
   'reading_history': {'en': 'Reading History', 'hi': 'रीडिंग हिस्ट्री'},
   'help_support': {'en': 'Help & Support', 'hi': 'मदद और सपोर्ट'},
   'about_us': {'en': 'About Us', 'hi': 'हमारे बारे में'},
-  'all_categories': {'en': 'All Categories', 'hi': 'सभी श्रेणियां'},
-  'quick_access': {'en': 'Quick Access', 'hi': 'त्वरित पहुंच'},
-  'edit_profile': {'en': 'Edit Profile', 'hi': 'प्रोफाइल संपादित करें'},
-  'users': {'en': 'Users', 'hi': 'उपयोगकर्ता'},
-  'confirm_sign_out': {'en': 'Confirm Sign Out', 'hi': 'लॉग आउट की पुष्टि करें'},
-  'confirm_sign_out_message': {
-    'en': 'Are you sure you want to log out of Rishikesh Law Hub?',
-    'hi': 'क्या आप वाकई ऋषिकेश लॉ हब से लॉग आउट करना चाहते हैं?',
-  },
   'log_out': {'en': 'Log Out', 'hi': 'लॉग आउट'},
-  'cancel': {'en': 'Cancel', 'hi': 'रद्द करें'},
   'tap_to_explore': {'en': 'Tap to explore', 'hi': 'देखने के लिए टैप करें'},
 };
