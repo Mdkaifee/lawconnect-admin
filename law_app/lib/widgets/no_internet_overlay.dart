@@ -79,8 +79,13 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = isDark ? const Color(0xFF131D2D) : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF23354E) : const Color(0xFFE2E8F0);
+    final textPrimary = isDark ? const Color(0xFFF1F5F9) : AppColors.primaryNavy;
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary;
+    final statusBg = isDark ? const Color(0xFF1B283D) : const Color(0xFFF8FAFC);
+
     return ValueListenableBuilder<bool>(
       valueListenable: ConnectivityService.instance.isConnectedNotifier,
       builder: (context, isConnected, _) {
@@ -88,23 +93,23 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
           children: [
             widget.child,
 
-            // Restored Green Banner
+            // Restored Green Banner / Toast at bottom
             if (_showRestoredBanner && isConnected)
               Positioned(
-                top: MediaQuery.of(context).padding.top + 8,
+                bottom: MediaQuery.of(context).padding.bottom + 24,
                 left: 20,
                 right: 20,
                 child: Material(
                   color: Colors.transparent,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 10,
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -141,7 +146,7 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                           child: Container(
-                            color: Colors.black.withValues(alpha: 0.45),
+                            color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.45),
                           ),
                         ),
                       ),
@@ -154,11 +159,12 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                             margin: const EdgeInsets.symmetric(horizontal: 28),
                             padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardBg,
                               borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: cardBorder),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.2),
                                   blurRadius: 30,
                                   offset: const Offset(0, 10),
                                 ),
@@ -172,9 +178,12 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                   width: 68,
                                   height: 68,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFEE2E2),
+                                    color: const Color(0xFFFEE2E2).withValues(alpha: isDark ? 0.15 : 1.0),
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: const Color(0xFFFECACA), width: 2),
+                                    border: Border.all(
+                                      color: const Color(0xFFFECACA).withValues(alpha: isDark ? 0.3 : 1.0),
+                                      width: 2,
+                                    ),
                                   ),
                                   child: const Center(
                                     child: Icon(
@@ -187,12 +196,12 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                 const SizedBox(height: 20),
 
                                 // Title
-                                const Text(
+                                Text(
                                   'No Internet Connection',
                                   style: TextStyle(
                                     fontSize: 19,
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.primaryNavy,
+                                    color: textPrimary,
                                     letterSpacing: -0.2,
                                   ),
                                   textAlign: TextAlign.center,
@@ -200,11 +209,11 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                 const SizedBox(height: 10),
 
                                 // Subtitle
-                                const Text(
+                                Text(
                                   'Please check your Wi-Fi or mobile data settings. We will automatically reconnect as soon as your network is back.',
                                   style: TextStyle(
                                     fontSize: 13.5,
-                                    color: AppColors.textSecondary,
+                                    color: textSecondary,
                                     height: 1.45,
                                   ),
                                   textAlign: TextAlign.center,
@@ -215,9 +224,9 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
+                                    color: statusBg,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(color: cardBorder),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -228,17 +237,19 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.2,
                                           valueColor: AlwaysStoppedAnimation<Color>(
-                                            _isRetrying ? const Color(0xFFDC2626) : AppColors.primaryNavy,
+                                            _isRetrying
+                                                ? const Color(0xFFDC2626)
+                                                : (isDark ? AppColors.goldAccentLight : AppColors.primaryNavy),
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 10),
                                       Text(
                                         _isRetrying ? 'Checking connection...' : 'Waiting for connection...',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w600,
-                                          color: AppColors.primaryNavy,
+                                          color: textPrimary,
                                         ),
                                       ),
                                     ],
@@ -252,8 +263,8 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                   child: ElevatedButton(
                                     onPressed: _isRetrying ? null : _manualRetry,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryNavy,
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+                                      foregroundColor: isDark ? AppColors.primaryNavyDark : Colors.white,
                                       elevation: 0,
                                       padding: const EdgeInsets.symmetric(vertical: 13),
                                       shape: RoundedRectangleBorder(
@@ -261,12 +272,12 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
                                       ),
                                     ),
                                     child: _isRetrying
-                                        ? const SizedBox(
+                                        ? SizedBox(
                                             height: 18,
                                             width: 18,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              color: Colors.white,
+                                              color: isDark ? AppColors.primaryNavyDark : Colors.white,
                                             ),
                                           )
                                         : const Text(
