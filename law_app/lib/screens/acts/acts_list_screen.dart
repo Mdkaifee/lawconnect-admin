@@ -58,41 +58,45 @@ class _ActsListScreenState extends State<ActsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: AppTheme.textPrimaryColor(context),
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Bare Acts & Codes',
           style: TextStyle(
-            color: AppColors.primaryNavy,
+            color: AppTheme.textPrimaryColor(context),
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryNavy),
+            icon: Icon(Icons.refresh, color: primaryOrGold),
             onPressed: _fetchActs,
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.borderLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            color: Colors.white,
+            color: cardBg,
             child: Column(
               children: [
                 TextField(
@@ -100,7 +104,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                   onChanged: (_) => _fetchActs(),
                   decoration: InputDecoration(
                     hintText: 'Search Bare Acts (e.g. BNS, Contract, Constitution)...',
-                    prefixIcon: const Icon(Icons.search, color: AppColors.primaryNavy),
+                    prefixIcon: Icon(Icons.search, color: primaryOrGold),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear, size: 18),
@@ -119,27 +123,40 @@ class _ActsListScreenState extends State<ActsListScreen> {
                     final isSelected = _selectedType == type;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(type == 'All' ? 'All Acts' : '$type Acts'),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() => _selectedType = type);
-                            _fetchActs();
-                          }
-                        },
-                        selectedColor: AppColors.primaryNavy,
-                        checkmarkColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.primaryNavy,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                        backgroundColor: Colors.white,
-                        side: BorderSide(color: isSelected ? AppColors.primaryNavy : AppColors.borderLight),
-                      ),
                     );
-                  }).toList(),
+                  }).toList()
+                    ..clear()
+                    ..addAll(_typeFilters.map((type) {
+                      final isSelected = _selectedType == type;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(type == 'All' ? 'All Acts' : '$type Acts'),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() => _selectedType = type);
+                              _fetchActs();
+                            }
+                          },
+                          selectedColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+                          checkmarkColor: isDark ? AppColors.primaryNavyDark : Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? (isDark ? AppColors.primaryNavyDark : Colors.white)
+                                : AppTheme.textPrimaryColor(context),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                          backgroundColor: cardBg,
+                          side: BorderSide(
+                            color: isSelected
+                                ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                                : AppTheme.borderColor(context),
+                          ),
+                        ),
+                      );
+                    })),
                 ),
               ],
             ),
@@ -148,7 +165,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
             child: BlocBuilder<ActBloc, ActState>(
               builder: (context, state) {
                 if (state is ActLoading) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+                  return Center(child: CircularProgressIndicator(color: primaryOrGold));
                 }
 
                 if (state is ActError) {
@@ -158,7 +175,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                       children: [
                         const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
                         const SizedBox(height: 12),
-                        Text(state.message),
+                        Text(state.message, style: TextStyle(color: AppTheme.textPrimaryColor(context))),
                         const SizedBox(height: 16),
                         ElevatedButton(onPressed: _fetchActs, child: const Text('Retry')),
                       ],
@@ -168,12 +185,16 @@ class _ActsListScreenState extends State<ActsListScreen> {
 
                 if (state is ActListLoaded) {
                   if (state.acts.isEmpty) {
-                    return const Center(
-                      child: Text('No Bare Acts found matching criteria.'),
+                    return Center(
+                      child: Text(
+                        'No Bare Acts found matching criteria.',
+                        style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                      ),
                     );
                   }
 
                   return RefreshIndicator(
+                    color: primaryOrGold,
                     onRefresh: () async => _fetchActs(),
                     child: ListView.builder(
                       controller: _scrollController,
@@ -181,20 +202,20 @@ class _ActsListScreenState extends State<ActsListScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       itemCount: state.acts.length + (state.hasMore ? 1 : 0),
                       itemBuilder: (context, idx) {
-                      if (idx == state.acts.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
-                        );
-                      }
+                        if (idx == state.acts.length) {
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator(color: primaryOrGold, strokeWidth: 2)),
+                          );
+                        }
                         final act = state.acts[idx];
                         return ActCard(
-                        act: act,
+                          act: act,
                           onTap: () {
                             Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ActDetailScreen(actId: act.id, actName: act.name),
-                            ),
+                              MaterialPageRoute(
+                                builder: (_) => ActDetailScreen(actId: act.id, actName: act.name),
+                              ),
                             );
                           },
                         );
