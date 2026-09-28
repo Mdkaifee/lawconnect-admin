@@ -37,4 +37,8 @@ class ApiConstants {
   static const String bookmarks = '$baseUrl/bookmarks';
   static const String history = '$baseUrl/history';
   static const String categories = '$baseUrl/categories';
+
+  // Notifications endpoints
+  static const String notifications = '$baseUrl/notifications';
+  static const String notificationsReadAll = '$baseUrl/notifications/read-all';
 }
