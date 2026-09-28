@@ -898,9 +898,10 @@ class _KeyBareActsList extends StatelessWidget {
 
 const List<ActModel> _fallbackActs = [
   ActModel(id: '', name: 'Constitution of India', shortName: 'Constitution'),
-  ActModel(id: '', name: 'Indian Contract Act', shortName: 'Contract Act'),
   ActModel(id: '', name: 'Bharatiya Nyaya Sanhita', shortName: 'BNS'),
+  ActModel(id: '', name: 'Bharatiya Nagarik Suraksha Sanhita', shortName: 'BNSS'),
   ActModel(id: '', name: 'Bharatiya Sakshya Adhiniyam', shortName: 'BSA'),
+  ActModel(id: '', name: 'Indian Contract Act', shortName: 'Contract Act'),
   ActModel(id: '', name: 'Code of Civil Procedure', shortName: 'CPC'),
 ];
 

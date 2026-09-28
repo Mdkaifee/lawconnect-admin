@@ -42,66 +42,93 @@ export async function autoSeed() {
       );
     }
 
-    /* ---- Sample acts & sections if none exist ---- */
-    if ((await Act.countDocuments()) === 0) {
-      await Act.insertMany([
-        {
-          name: "Constitution of India",
-          shortName: "Constitution",
-          year: 1950,
-          type: "Central",
-          description: "The supreme law of India laying down the framework of political code, structure, and fundamental rights.",
-          sections: [
-            { number: "Article 14", title: "Equality before law", text: "The State shall not deny to any person equality before the law or the equal protection of the laws within the territory of India." },
-            { number: "Article 19", title: "Protection of certain rights regarding freedom of speech, etc.", text: "All citizens shall have the right to freedom of speech and expression, assemble peacefully without arms, form associations, move freely throughout India." },
-            { number: "Article 21", title: "Protection of life and personal liberty", text: "No person shall be deprived of his life or personal liberty except according to procedure established by law.", explanation: "Expanded by judiciary to include right to privacy, clean environment, speedy trial, and dignity." },
-            { number: "Article 32", title: "Remedies for enforcement of rights conferred by this Part", text: "The right to move the Supreme Court by appropriate proceedings for the enforcement of the rights conferred by this Part is guaranteed." },
-            { number: "Article 368", title: "Power of Parliament to amend the Constitution and procedure therefor", text: "Parliament may in exercise of its constituent power amend by way of addition, variation or repeal any provision of this Constitution in accordance with the procedure laid down in this article." },
-          ],
-        },
-        {
-          name: "Bharatiya Nyaya Sanhita (BNS), 2023",
-          shortName: "BNS",
-          year: 2023,
-          type: "Central",
-          description: "Substantive criminal law of India replacing the Indian Penal Code, 1860.",
-          sections: [
-            { number: "Section 103", title: "Punishment for murder", text: "Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine." },
-            { number: "Section 115", title: "Voluntarily causing hurt", text: "Whoever does any act with the intention of thereby causing hurt to any person, or with the knowledge that he is likely thereby to cause hurt, commits voluntarily causing hurt." },
-          ],
-        },
-        {
-          name: "Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023",
-          shortName: "BNSS",
-          year: 2023,
-          type: "Central",
-          description: "Procedural criminal code replacing the Code of Criminal Procedure, 1973.",
-          sections: [
-            { number: "Section 35", title: "When police may arrest without warrant", text: "Any police officer may without an order from a Magistrate and without a warrant, arrest any person who commits in the presence of a police officer a cognizable offence." },
-          ],
-        },
-        {
-          name: "Bharatiya Sakshya Adhiniyam (BSA), 2023",
-          shortName: "BSA",
-          year: 2023,
-          type: "Central",
-          description: "Law of evidence in India replacing the Indian Evidence Act, 1872.",
-          sections: [
-            { number: "Section 63", title: "Admissibility of electronic records", text: "Electronic records are admissible subject to the conditions and certificate requirements prescribed by law." },
-          ],
-        },
-        {
-          name: "Indian Contract Act, 1872",
-          shortName: "Contract Act",
-          year: 1872,
-          type: "Central",
-          description: "Governs the law relating to contracts in India.",
-          sections: [
-            { number: "Section 10", title: "What agreements are contracts", text: "All agreements are contracts if they are made by the free consent of parties competent to contract, for a lawful consideration and with a lawful object." },
-            { number: "Section 28", title: "Agreements in restraint of legal proceedings, void", text: "Every agreement by which any party thereto is restricted absolutely from enforcing his rights under or in respect of any contract is void to that extent." },
-          ],
-        },
-      ]);
+    /* ---- Key bare acts & sections ---- */
+    const keyActs = [
+      {
+        name: "Constitution of India",
+        shortName: "Constitution",
+        year: 1950,
+        type: "Central",
+        description: "The supreme law of India laying down the framework of political code, structure, and fundamental rights.",
+        published: true,
+        sections: [
+          { number: "Article 14", title: "Equality before law", text: "The State shall not deny to any person equality before the law or the equal protection of the laws within the territory of India." },
+          { number: "Article 19", title: "Protection of certain rights regarding freedom of speech, etc.", text: "All citizens shall have the right to freedom of speech and expression, assemble peacefully without arms, form associations, move freely throughout India." },
+          { number: "Article 21", title: "Protection of life and personal liberty", text: "No person shall be deprived of his life or personal liberty except according to procedure established by law.", explanation: "Expanded by judiciary to include right to privacy, clean environment, speedy trial, and dignity." },
+          { number: "Article 32", title: "Remedies for enforcement of rights conferred by this Part", text: "The right to move the Supreme Court by appropriate proceedings for the enforcement of the rights conferred by this Part is guaranteed." },
+          { number: "Article 368", title: "Power of Parliament to amend the Constitution and procedure therefor", text: "Parliament may in exercise of its constituent power amend by way of addition, variation or repeal any provision of this Constitution in accordance with the procedure laid down in this article." },
+        ],
+      },
+      {
+        name: "Bharatiya Nyaya Sanhita (BNS), 2023",
+        shortName: "BNS",
+        year: 2023,
+        type: "Central",
+        description: "Substantive criminal law of India replacing the Indian Penal Code, 1860 (IPC).",
+        published: true,
+        sections: [
+          { number: "Section 103", title: "Punishment for murder", text: "Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine." },
+          { number: "Section 115", title: "Voluntarily causing hurt", text: "Whoever does any act with the intention of thereby causing hurt to any person, or with the knowledge that he is likely thereby to cause hurt, commits voluntarily causing hurt." },
+        ],
+      },
+      {
+        name: "Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023",
+        shortName: "BNSS",
+        year: 2023,
+        type: "Central",
+        description: "Procedural criminal code of India replacing the Code of Criminal Procedure, 1973 (CrPC).",
+        published: true,
+        sections: [
+          { number: "Section 35", title: "When police may arrest without warrant", text: "Any police officer may without an order from a Magistrate and without a warrant, arrest any person who commits in the presence of a police officer a cognizable offence." },
+        ],
+      },
+      {
+        name: "Bharatiya Sakshya Adhiniyam (BSA / BAS), 2023",
+        shortName: "BSA",
+        year: 2023,
+        type: "Central",
+        description: "Law of evidence in India replacing the Indian Evidence Act, 1872 (also referred to as BSA or BAS / Bharatiya Sakshya Act).",
+        published: true,
+        sections: [
+          { number: "Section 63", title: "Admissibility of electronic records", text: "Electronic records are admissible subject to the conditions and certificate requirements prescribed by law." },
+        ],
+      },
+      {
+        name: "Indian Contract Act, 1872",
+        shortName: "Contract Act",
+        year: 1872,
+        type: "Central",
+        description: "Governs the law relating to contracts and agreements in India.",
+        published: true,
+        sections: [
+          { number: "Section 10", title: "What agreements are contracts", text: "All agreements are contracts if they are made by the free consent of parties competent to contract, for a lawful consideration and with a lawful object." },
+          { number: "Section 28", title: "Agreements in restraint of legal proceedings, void", text: "Every agreement by which any party thereto is restricted absolutely from enforcing his rights under or in respect of any contract is void to that extent." },
+        ],
+      },
+    ];
+
+    for (const actData of keyActs) {
+      const existing = await Act.findOne({
+        $or: [
+          { shortName: actData.shortName },
+          { name: { $regex: new RegExp(`^${actData.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i") } },
+          { shortName: { $regex: new RegExp(`^${actData.shortName}$`, "i") } },
+        ],
+      });
+      if (!existing) {
+        await Act.create(actData);
+      } else {
+        await Act.updateOne(
+          { _id: existing._id },
+          {
+            $set: {
+              published: true,
+              description: actData.description,
+              ...(existing.sections && existing.sections.length > 0 ? {} : { sections: actData.sections }),
+            },
+          },
+        );
+      }
     }
 
     /* ---- Sample legal updates if none exist ---- */
