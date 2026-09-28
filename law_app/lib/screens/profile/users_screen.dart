@@ -61,7 +61,8 @@ class _UsersScreenState extends State<UsersScreen> {
     }
   }
 
-  Color _buttonColor(String status) {
+  Color _buttonColor(String status, BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     switch (status) {
       case 'friend':
         return AppColors.danger;
@@ -70,30 +71,34 @@ class _UsersScreenState extends State<UsersScreen> {
       case 'incoming':
         return AppColors.goldAccent;
       default:
-        return AppColors.primaryNavy;
+        return isDark ? AppColors.goldAccent : AppColors.primaryNavy;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
-        title: const Text('Users', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+        title: Text('Users', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textPrimary)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: FutureBuilder<List<AppUserConnection>>(
         future: _usersFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+            return Center(child: CircularProgressIndicator(color: primaryOrGold));
           }
           if (snapshot.hasError) {
             return Center(
@@ -103,34 +108,41 @@ class _UsersScreenState extends State<UsersScreen> {
 
           final users = snapshot.data ?? [];
           if (users.isEmpty) {
-            return const Center(child: Text('No users found.'));
+            return Center(
+              child: Text('No users found.', style: TextStyle(color: AppTheme.textSecondaryColor(context))),
+            );
           }
 
           return RefreshIndicator(
+            color: primaryOrGold,
             onRefresh: _refresh,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 12),
               itemCount: users.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 20, endIndent: 20),
+              separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.dividerColor(context), indent: 20, endIndent: 20),
               itemBuilder: (context, index) {
                 final item = users[index];
                 final user = item.user;
-                final color = _buttonColor(item.connectionStatus);
+                final color = _buttonColor(item.connectionStatus, context);
                 final isBusy = _busyUserIds.contains(user.id);
                 const canTap = true;
+                final isDefaultFollow = item.connectionStatus != 'friend' && item.connectionStatus != 'requested' && item.connectionStatus != 'incoming';
 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.primaryNavy,
+                    backgroundColor: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
                     child: Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: isDark ? AppColors.goldAccentLight : Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   title: Text(
                     user.name,
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primaryNavy),
+                    style: TextStyle(fontWeight: FontWeight.w800, color: textPrimary),
                   ),
                   subtitle: Text(
                     '${user.headline}\n${user.college}',
@@ -144,7 +156,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       onPressed: canTap && !isBusy ? () => _updateConnection(item) : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: color,
-                        foregroundColor: Colors.white,
+                        foregroundColor: (isDark && isDefaultFollow) ? AppColors.primaryNavyDark : Colors.white,
                         disabledBackgroundColor: color.withValues(alpha: 0.72),
                         disabledForegroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
