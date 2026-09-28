@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { Admin, Category, Case, Act, LegalUpdate, Post } from "../models/index.js";
+import { Admin, Category, Case, Act, LegalUpdate, Post, AppNotification } from "../models/index.js";
 import { LANDMARK_CASES } from "./landmarkCasesData.js";
 
 export async function autoSeed() {
@@ -141,6 +141,41 @@ export async function autoSeed() {
           likes: 42,
           commentsCount: 8,
           status: "published",
+        },
+      ]);
+    }
+
+    /* ---- Sample dynamic notifications if none exist ---- */
+    if ((await AppNotification.countDocuments()) === 0) {
+      const firstCase = await Case.findOne().sort({ year: -1 });
+      const firstUpdate = await LegalUpdate.findOne().sort({ publishedAt: -1 });
+
+      await AppNotification.insertMany([
+        {
+          title: "Welcome to Rishikesh Law Hub ⚖️",
+          body: "Explore curated landmark judgments, bare acts with detailed explanations, and daily verified legal updates.",
+          type: "system",
+          refType: "general",
+        },
+        {
+          title: "New Landmark Judgment Curated",
+          body: firstCase ? `Explore the complete legal brief and bench reasoning for ${firstCase.title}.` : "Explore curated landmark judgments with constitutional principles.",
+          type: "judgment",
+          refId: firstCase?._id?.toString() || null,
+          refType: "case",
+        },
+        {
+          title: "New Criminal Laws Ready (BNS, BNSS)",
+          body: "Key sections and practical illustrations for Bharatiya Nyaya Sanhita are available in Bare Acts.",
+          type: "act",
+          refType: "act",
+        },
+        {
+          title: "Daily Verified Legal Update",
+          body: firstUpdate ? firstUpdate.title : "Supreme Court and High Court proceedings summary is available.",
+          type: "update",
+          refId: firstUpdate?._id?.toString() || null,
+          refType: "update",
         },
       ]);
     }
