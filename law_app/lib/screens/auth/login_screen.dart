@@ -72,7 +72,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final isDark = AppTheme.isDark(context);
     final textPrimary = AppTheme.textPrimaryColor(context);
     final textSecondary = AppTheme.textSecondaryColor(context);
-    final primaryOrGold = AppTheme.primaryOrGold(context);
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {

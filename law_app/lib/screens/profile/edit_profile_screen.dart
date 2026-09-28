@@ -54,31 +54,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showPhotoOptions() {
+    final isDark = ThemeManager.instance.isDarkMode;
+    final dialogBg = isDark ? const Color(0xFF131D2D) : Colors.white;
+    final titleColor = isDark ? AppColors.textDarkPrimary : AppColors.primaryNavy;
+    final iconColor = isDark ? AppColors.goldAccentLight : AppColors.primaryNavy;
+    final textColor = isDark ? AppColors.textDarkPrimary : AppColors.primaryNavy;
+    final dividerColor = isDark ? const Color(0xFF23354E) : const Color(0xFFE2E8F0);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: dialogBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: isDark ? const Color(0xFF23354E) : Colors.transparent),
+        ),
         title: Text(
           Translation.t('update_profile_photo'),
-          style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primaryNavy),
+          style: TextStyle(fontWeight: FontWeight.w800, color: titleColor),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primaryNavy),
-              title: Text(Translation.t('take_photo'), style: const TextStyle(fontWeight: FontWeight.w700)),
+              leading: Icon(Icons.photo_camera_outlined, color: iconColor),
+              title: Text(
+                Translation.t('take_photo'),
+                style: TextStyle(fontWeight: FontWeight.w700, color: textColor),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickPhoto(ImageSource.camera);
               },
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: dividerColor),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryNavy),
-              title: Text(Translation.t('choose_from_gallery'), style: const TextStyle(fontWeight: FontWeight.w700)),
+              leading: Icon(Icons.photo_library_outlined, color: iconColor),
+              title: Text(
+                Translation.t('choose_from_gallery'),
+                style: TextStyle(fontWeight: FontWeight.w700, color: textColor),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickPhoto(ImageSource.gallery);
@@ -115,10 +132,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final isDark = AppTheme.isDark(context);
     final cardBg = AppTheme.cardColor(context);
     final textPrimary = AppTheme.textPrimaryColor(context);
-    final primaryOrGold = AppTheme.primaryOrGold(context);
 
     return ListenableBuilder(
-      listenable: Translation.instance,
+      listenable: Listenable.merge([Translation.instance, ThemeManager.instance]),
       builder: (context, _) {
         return BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {

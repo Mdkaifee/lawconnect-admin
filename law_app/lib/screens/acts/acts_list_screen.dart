@@ -123,14 +123,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                     final isSelected = _selectedType == type;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
-                    );
-                  }).toList()
-                    ..clear()
-                    ..addAll(_typeFilters.map((type) {
-                      final isSelected = _selectedType == type;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
+                      child: ChoiceChip(
                           label: Text(type == 'All' ? 'All Acts' : '$type Acts'),
                           selected: isSelected,
                           onSelected: (selected) {
