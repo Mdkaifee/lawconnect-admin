@@ -103,7 +103,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
             TextField(
               controller: _noteController,
               maxLines: 5,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: Translation.t('note_hint'),
               ),
             ),
