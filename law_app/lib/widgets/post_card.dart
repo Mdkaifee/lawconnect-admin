@@ -152,16 +152,6 @@ class PostCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.goldAccent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
