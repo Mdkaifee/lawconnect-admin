@@ -65,14 +65,20 @@ class CustomConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AppTheme.cardColor(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final textSecondary = AppTheme.textSecondaryColor(context);
+    final borderColor = AppTheme.borderColor(context);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -93,19 +99,19 @@ class CustomConfirmationDialog extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
+              color: textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Text(
             message,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: textSecondary,
               height: 1.4,
             ),
             textAlign: TextAlign.center,
@@ -117,8 +123,8 @@ class CustomConfirmationDialog extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    side: const BorderSide(color: AppColors.borderLight),
+                    foregroundColor: textSecondary,
+                    side: BorderSide(color: borderColor),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

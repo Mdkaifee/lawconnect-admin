@@ -39,44 +39,47 @@ class _LegalCategoryScreenState extends State<LegalCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         title: Text(
           widget.category.name,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textPrimary),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: RefreshIndicator(
-        color: AppColors.primaryNavy,
+        color: primaryOrGold,
         onRefresh: _refresh,
         child: FutureBuilder<List<CaseModel>>(
           future: _casesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+              return Center(child: CircularProgressIndicator(color: primaryOrGold));
             }
 
             if (snapshot.hasError) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(24),
-                children: const [
-                  SizedBox(height: 120),
-                  Icon(Icons.error_outline_rounded, color: AppColors.textMuted, size: 42),
-                  SizedBox(height: 12),
+                children: [
+                  const SizedBox(height: 120),
+                  const Icon(Icons.error_outline_rounded, color: AppColors.textMuted, size: 42),
+                  const SizedBox(height: 12),
                   Text(
                     'Unable to load this category right now.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppTheme.textSecondaryColor(context), fontWeight: FontWeight.w600),
                   ),
                 ],
               );
@@ -94,7 +97,7 @@ class _LegalCategoryScreenState extends State<LegalCategoryScreen> {
                   Text(
                     'No ${widget.category.name} cases available yet.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppTheme.textSecondaryColor(context), fontWeight: FontWeight.w600),
                   ),
                 ],
               );

@@ -112,6 +112,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return ListenableBuilder(
       listenable: Translation.instance,
       builder: (context, _) {
@@ -135,19 +140,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             }
           },
           child: Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+            backgroundColor: AppTheme.backgroundColor(context),
             appBar: AppBar(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primaryNavy,
-              surfaceTintColor: Colors.white,
+              backgroundColor: AppTheme.appBarColor(context),
+              foregroundColor: textPrimary,
+              surfaceTintColor: AppTheme.appBarColor(context),
               elevation: 0,
               title: Text(
                 Translation.t('edit_profile'),
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textPrimary),
               ),
-              bottom: const PreferredSize(
-                preferredSize: Size.fromHeight(1),
-                child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Divider(height: 1, color: AppTheme.dividerColor(context)),
               ),
             ),
             body: BlocBuilder<AuthBloc, AuthState>(
@@ -165,12 +170,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           children: [
                             CircleAvatar(
                               radius: 44,
-                              backgroundColor: AppColors.primaryNavy,
+                              backgroundColor: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
                               backgroundImage: previewUrl.isNotEmpty ? NetworkImage(previewUrl) : null,
                               child: previewUrl.isEmpty
                                   ? Text(
                                       _nameController.text.trim().isNotEmpty ? _nameController.text.trim()[0].toUpperCase() : 'U',
-                                      style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                                      style: TextStyle(color: isDark ? AppColors.goldAccentLight : Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
                                     )
                                   : null,
                             ),
@@ -182,7 +187,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 decoration: BoxDecoration(
                                   color: AppColors.goldAccent,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(color: cardBg, width: 2),
                                 ),
                                 child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
                               ),
@@ -208,12 +213,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ElevatedButton(
                       onPressed: isLoading ? null : _save,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryNavy,
-                        foregroundColor: Colors.white,
+                        backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+                        foregroundColor: isDark ? AppColors.primaryNavyDark : Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: isLoading
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.primaryNavyDark : Colors.white))
                           : Text(Translation.t('save_profile'), style: const TextStyle(fontWeight: FontWeight.w800)),
                     ),
                   ],
@@ -242,8 +247,6 @@ class _ProfileField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        filled: true,
-        fillColor: Colors.white,
       ),
     );
   }

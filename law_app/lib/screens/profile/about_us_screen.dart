@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/theme/app_theme.dart';
 import '../../widgets/app_version_text.dart';
 
 class AboutUsScreen extends StatelessWidget {
@@ -33,29 +34,36 @@ class AboutUsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final textSecondary = AppTheme.textSecondaryColor(context);
+    final borderColor = AppTheme.borderColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F1E36),
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F1E36)),
+          icon: Icon(Icons.arrow_back, color: textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'About Us',
           style: TextStyle(
-            color: Color(0xFF0F1E36),
+            color: textPrimary,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: ListView(
@@ -65,14 +73,14 @@ class AboutUsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: const [
+              border: Border.all(color: borderColor),
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x080F1E36),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
                   blurRadius: 12,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -82,7 +90,7 @@ class AboutUsScreen extends StatelessWidget {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F1E36),
+                    color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFF0F1E36),
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
@@ -101,22 +109,22 @@ class AboutUsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   'Rishikesh Law Hub',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F1E36),
+                    color: textPrimary,
                     letterSpacing: -0.3,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Smart Legal Research & Case Law Platform',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
+                    color: textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -124,15 +132,15 @@ class AboutUsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const AppVersionText(
+                  child: AppVersionText(
                     includePrefix: true,
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF475569),
+                      color: isDark ? AppColors.textDarkSecondary : const Color(0xFF475569),
                     ),
                   ),
                 ),
@@ -146,12 +154,15 @@ class AboutUsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0F1E36), Color(0xFF1E293B)],
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF131D2D), const Color(0xFF1E2F4D)]
+                    : [const Color(0xFF0F1E36), const Color(0xFF1E293B)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
+              border: isDark ? Border.all(color: AppColors.borderDark) : null,
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF0F1E36).withValues(alpha: 0.18),
@@ -261,61 +272,65 @@ class AboutUsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.auto_stories_rounded, color: Color(0xFF0F1E36), size: 22),
-                    SizedBox(width: 8),
+                    Icon(Icons.auto_stories_rounded, color: primaryOrGold, size: 22),
+                    const SizedBox(width: 8),
                     Text(
                       'Our Mission',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F1E36),
+                        color: textPrimary,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   'Rishikesh Law Hub was built with a singular vision: to make legal study and case law research intuitive, fast, and structured for everyone in the legal fraternity. From landmark Supreme Court judgments to comprehensive Bare Acts and personal research notes, everything is organized in one seamless experience.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.55,
-                    color: Color(0xFF475569),
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                Divider(height: 1, color: AppTheme.dividerColor(context)),
                 const SizedBox(height: 16),
                 _buildFeatureRow(
                   Icons.balance_rounded,
                   'Landmark Judgments',
                   'Supreme Court & High Court cases with bench info, citations, and full text analysis.',
+                  context,
                 ),
                 const SizedBox(height: 14),
                 _buildFeatureRow(
                   Icons.menu_book_rounded,
                   'Bare Acts & Statutes',
                   'Instant search across IPC, CrPC, CPC, Constitution of India, BNS, and more.',
+                  context,
                 ),
                 const SizedBox(height: 14),
                 _buildFeatureRow(
                   Icons.edit_note_rounded,
                   'Case Briefs & Study Notes',
                   'Draft, categorize, and organize your personal case notes and argument outlines.',
+                  context,
                 ),
                 const SizedBox(height: 14),
                 _buildFeatureRow(
                   Icons.forum_rounded,
                   'Legal Community Feed',
                   'Exchange knowledge, ask questions, and discuss ongoing legal developments.',
+                  context,
                 ),
               ],
             ),
@@ -327,27 +342,27 @@ class AboutUsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Have Questions or Suggestions?',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F1E36),
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'We value feedback from students, advocates, and professors to make Law Hub even better.',
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: Color(0xFF64748B),
+                    color: textSecondary,
                     height: 1.4,
                   ),
                 ),
@@ -363,8 +378,8 @@ class AboutUsScreen extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F1E36),
-                      foregroundColor: Colors.white,
+                      backgroundColor: isDark ? AppColors.goldAccent : const Color(0xFF0F1E36),
+                      foregroundColor: isDark ? AppColors.primaryNavyDark : Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -379,13 +394,13 @@ class AboutUsScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Footer
-          const Center(
+          Center(
             child: Text(
               'Crafted with dedication by Rishikesh Yadav\nGalgotias University • Class of 2026',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF94A3B8),
+                color: AppTheme.textSecondaryColor(context),
                 height: 1.5,
                 fontWeight: FontWeight.w500,
               ),
@@ -417,17 +432,22 @@ class AboutUsScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildFeatureRow(IconData icon, String title, String description) {
+  static Widget _buildFeatureRow(IconData icon, String title, String description, BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final textSecondary = AppTheme.textSecondaryColor(context);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF0F1E36)),
+          child: Icon(icon, size: 18, color: primaryOrGold),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -436,18 +456,18 @@ class AboutUsScreen extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F1E36),
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: textSecondary,
                   height: 1.4,
                 ),
               ),
