@@ -18,7 +18,6 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
   late Animation<double> _scaleAnim;
   bool _isRetrying = false;
   bool _wasOffline = false;
-  bool _showRestoredBanner = false;
 
   @override
   void initState() {
@@ -63,11 +62,35 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
   }
 
   void _showBackOnlineBanner() {
-    setState(() => _showRestoredBanner = true);
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() => _showRestoredBanner = false);
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.wifi_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Internet connection restored',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.fromLTRB(
+              20,
+              0,
+              20,
+              MediaQuery.of(context).padding.bottom + 20,
+            ),
+            duration: const Duration(seconds: 3),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
     });
   }
 
@@ -94,46 +117,6 @@ class _NoInternetOverlayState extends State<NoInternetOverlay> with SingleTicker
         return Stack(
           children: [
             widget.child,
-
-            // Restored Green Banner / Toast at bottom
-            if (_showRestoredBanner && isConnected)
-              Positioned(
-                bottom: MediaQuery.of(context).padding.bottom + 24,
-                left: 20,
-                right: 20,
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.wifi_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Internet connection restored',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
 
             // Disconnected Modal Overlay
             if (!isConnected || _animController.value > 0)
