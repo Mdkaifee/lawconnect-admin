@@ -10,12 +10,16 @@ class ActCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Card(
       elevation: 0,
+      color: AppTheme.cardColor(context),
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.borderLight, width: 1),
+        side: BorderSide(color: AppTheme.borderColor(context), width: 1),
       ),
       child: InkWell(
         onTap: onTap,
@@ -28,10 +32,12 @@ class ActCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                  color: isDark
+                      ? AppColors.goldAccent.withValues(alpha: 0.15)
+                      : AppColors.primaryNavy.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.menu_book_rounded, color: AppColors.primaryNavy, size: 24),
+                child: Icon(Icons.menu_book_rounded, color: primaryOrGold, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -43,7 +49,9 @@ class ActCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: act.type == 'Central' ? Colors.blue.withValues(alpha: 0.1) : Colors.purple.withValues(alpha: 0.1),
+                            color: act.type == 'Central'
+                                ? (isDark ? Colors.blue.shade900.withValues(alpha: 0.4) : Colors.blue.withValues(alpha: 0.1))
+                                : (isDark ? Colors.purple.shade900.withValues(alpha: 0.4) : Colors.purple.withValues(alpha: 0.1)),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -51,7 +59,9 @@ class ActCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: act.type == 'Central' ? Colors.blue.shade800 : Colors.purple.shade800,
+                              color: act.type == 'Central'
+                                  ? (isDark ? Colors.lightBlueAccent : Colors.blue.shade800)
+                                  : (isDark ? Colors.purpleAccent : Colors.purple.shade800),
                             ),
                           ),
                         ),
@@ -67,10 +77,10 @@ class ActCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       act.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
+                        color: AppTheme.textPrimaryColor(context),
                         height: 1.25,
                       ),
                       maxLines: 2,
@@ -80,7 +90,7 @@ class ActCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         act.description!,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -95,13 +105,13 @@ class ActCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
+                      color: isDark ? AppColors.surfaceDarkElevated : AppColors.backgroundLight,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.borderLight),
+                      border: Border.all(color: AppTheme.borderColor(context)),
                     ),
                     child: Text(
                       '${act.sectionsCount} Sec',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: primaryOrGold),
                     ),
                   ),
                 ],
