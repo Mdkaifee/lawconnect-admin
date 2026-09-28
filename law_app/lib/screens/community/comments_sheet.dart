@@ -191,33 +191,32 @@ class _CommentsSheetState extends State<CommentsSheet> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                GestureDetector(
-                                  onTap: c.authorType == 'admin' || c.authorId.isEmpty
-                                      ? null
-                                      : () => Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => PublicUserProfileScreen(userId: c.authorId, fallbackName: c.authorName),
-                                            ),
-                                          ),
-                                  child: CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: c.authorType == 'admin'
-                                        ? AppColors.goldAccent
-                                        : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
-                                    backgroundImage: c.authorPhotoUrl?.trim().isNotEmpty == true ? NetworkImage(c.authorPhotoUrl!.trim()) : null,
-                                    child: c.authorPhotoUrl?.trim().isNotEmpty == true
+                                  GestureDetector(
+                                    onTap: c.authorType == 'admin' || c.authorId.isEmpty
                                         ? null
-                                        : Text(
-                                            c.authorName.isNotEmpty ? c.authorName[0].toUpperCase() : 'A',
-                                            style: TextStyle(
-                                              color: isDark && c.authorType != 'admin' ? AppColors.goldAccentLight : Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
+                                        : () => Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => PublicUserProfileScreen(userId: c.authorId, fallbackName: c.authorName),
+                                              ),
                                             ),
-                                          ),
+                                    child: CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: c.authorType == 'admin'
+                                          ? AppColors.goldAccent
+                                          : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
+                                      backgroundImage: c.authorPhotoUrl?.trim().isNotEmpty == true ? NetworkImage(c.authorPhotoUrl!.trim()) : null,
+                                      child: c.authorPhotoUrl?.trim().isNotEmpty == true
+                                          ? null
+                                          : Text(
+                                              c.authorName.isNotEmpty ? c.authorName[0].toUpperCase() : 'A',
+                                              style: TextStyle(
+                                                color: isDark && c.authorType != 'admin' ? AppColors.goldAccentLight : Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                     ),
                                   ),
-                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Container(
