@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
 import '../../repositories/auth_repository.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
@@ -19,7 +20,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
-  String _selectedLanguage = 'English';
 
   @override
   void initState() {
@@ -39,59 +39,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(value ? 'Push notifications enabled' : 'Push notifications disabled'),
+        content: Text(Translation.t(value ? 'notifications_enabled' : 'notifications_disabled')),
         backgroundColor: const Color(0xFF0F1E36),
       ),
     );
   }
 
   void _showLanguageDialog() {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Select Language',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F1E36),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              RadioListTile<String>(
-                title: const Text('English (Default)', style: TextStyle(fontWeight: FontWeight.w600)),
-                value: 'English',
-                groupValue: _selectedLanguage,
-                activeColor: const Color(0xFF0F1E36),
-                onChanged: (val) {
-                  setState(() => _selectedLanguage = val!);
-                  Navigator.pop(ctx);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Hindi (हिंदी)', style: TextStyle(fontWeight: FontWeight.w600)),
-                value: 'Hindi',
-                groupValue: _selectedLanguage,
-                activeColor: const Color(0xFF0F1E36),
-                onChanged: (val) {
-                  setState(() => _selectedLanguage = val!);
-                  Navigator.pop(ctx);
-                },
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          Translation.t('select_language'),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F1E36),
           ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<AppLanguage>(
+              contentPadding: EdgeInsets.zero,
+              title: Text(Translation.t('english_default'), style: const TextStyle(fontWeight: FontWeight.w600)),
+              value: AppLanguage.english,
+              groupValue: Translation.instance.language,
+              activeColor: const Color(0xFF0F1E36),
+              onChanged: (val) async {
+                if (val == null) return;
+                await Translation.instance.setLanguage(val);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) setState(() {});
+              },
+            ),
+            RadioListTile<AppLanguage>(
+              contentPadding: EdgeInsets.zero,
+              title: Text(Translation.t('hindi'), style: const TextStyle(fontWeight: FontWeight.w600)),
+              value: AppLanguage.hindi,
+              groupValue: Translation.instance.language,
+              activeColor: const Color(0xFF0F1E36),
+              onChanged: (val) async {
+                if (val == null) return;
+                await Translation.instance.setLanguage(val);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) setState(() {});
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -99,10 +95,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _clearCache() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Offline judgment cache cleared successfully'),
-        backgroundColor: Color(0xFF0F1E36),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(Translation.t('cache_cleared')),
+        backgroundColor: const Color(0xFF0F1E36),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

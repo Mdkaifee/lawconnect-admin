@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/services/notification_service.dart';
 import '../core/theme/app_theme.dart';
+import '../core/translations/translation.dart';
 import '../repositories/auth_repository.dart';
 import 'home/home_screen.dart';
 import 'cases/case_search_screen.dart';
@@ -65,31 +66,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           iconSize: 22,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10.5),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10.5),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home_rounded),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home_rounded),
+              label: Translation.t('home'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.search_rounded),
-              activeIcon: Icon(Icons.search_rounded),
-              label: 'Search',
+              icon: const Icon(Icons.search_rounded),
+              activeIcon: const Icon(Icons.search_rounded),
+              label: Translation.t('search'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.forum_outlined),
-              activeIcon: Icon(Icons.forum_rounded),
-              label: 'Posts',
+              icon: const Icon(Icons.forum_outlined),
+              activeIcon: const Icon(Icons.forum_rounded),
+              label: Translation.t('posts'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark_border_rounded),
-              activeIcon: Icon(Icons.bookmark_rounded),
-              label: 'Bookmarks',
+              icon: const Icon(Icons.bookmark_border_rounded),
+              activeIcon: const Icon(Icons.bookmark_rounded),
+              label: Translation.t('bookmarks'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
-              activeIcon: Icon(Icons.person_rounded),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline_rounded),
+              activeIcon: const Icon(Icons.person_rounded),
+              label: Translation.t('profile'),
             ),
           ],
         ),

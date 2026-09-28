@@ -7,7 +7,9 @@ import '../../blocs/act/act_bloc.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
+import '../../models/act_model.dart';
 import '../../models/category_model.dart';
 import '../../repositories/category_repository.dart';
 import '../cases/case_search_screen.dart';
@@ -152,10 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _timeBasedGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning,';
-    if (hour < 17) return 'Good Afternoon,';
-    if (hour < 21) return 'Good Evening,';
-    return 'Good Night,';
+    if (hour < 12) return Translation.t('good_morning');
+    if (hour < 17) return Translation.t('good_afternoon');
+    if (hour < 21) return Translation.t('good_evening');
+    return Translation.t('good_night');
   }
 
   Widget _buildDrawerMenuItem(
@@ -275,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.bookmark_border_rounded,
-                      title: 'My Posts',
+                      title: Translation.t('my_posts'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.of(context).push(
@@ -286,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.assignment_outlined,
-                      title: 'My Notes',
+                      title: Translation.t('my_notes'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.of(context).push(
@@ -297,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.bookmark_outline_rounded,
-                      title: 'Bookmarks',
+                      title: Translation.t('bookmarks'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.of(context).push(
@@ -308,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.history_rounded,
-                      title: 'Reading History',
+                      title: Translation.t('reading_history'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.of(context).push(
@@ -319,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.settings_outlined,
-                      title: 'Settings',
+                      title: Translation.t('settings'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.of(context).push(
@@ -330,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.shield_outlined,
-                      title: 'Privacy Policy',
+                      title: Translation.t('privacy_policy'),
                       onTap: () {
                         Navigator.pop(context);
                         UrlHelper.openInAppUrl(
@@ -342,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.help_outline_rounded,
-                      title: 'Help & Support',
+                      title: Translation.t('help_support'),
                       onTap: () {
                         Navigator.pop(context);
                         _openGmailSupport(context);
@@ -591,57 +593,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               BlocBuilder<ActBloc, ActState>(
                 builder: (context, state) {
-                  if (state is ActListLoaded && state.acts.isNotEmpty) {
-                    return SizedBox(
-                      height: 105,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: state.acts.take(6).length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (context, idx) {
-                          final act = state.acts[idx];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => ActDetailScreen(actId: act.id, actName: act.name)),
-                              );
-                            },
-                            child: Container(
-                              width: 140,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.borderLight),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.book_outlined, color: AppColors.goldAccent, size: 22),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    act.shortName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                      color: AppColors.primaryNavy,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    '${act.sectionsCount} Sections',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
+                  if (state is ActListLoaded) {
+                    final acts = state.acts.isNotEmpty ? state.acts : _fallbackActs;
+                    return _KeyBareActsList(acts: acts);
                   }
                   if (state is ActInitial || state is ActLoading) {
                     return const SizedBox(
@@ -650,12 +604,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }
                   if (state is ActError) {
-                    return const SizedBox(
-                      height: 105,
-                      child: Center(child: Text('Unable to load bare acts', style: TextStyle(color: AppColors.textMuted))),
-                    );
+                    return const _KeyBareActsList(acts: _fallbackActs);
                   }
-                  return const SizedBox.shrink();
+                  return const _KeyBareActsList(acts: _fallbackActs);
                 },
               ),
 
@@ -779,6 +730,77 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+class _KeyBareActsList extends StatelessWidget {
+  final List<ActModel> acts;
+
+  const _KeyBareActsList({required this.acts});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 105,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: acts.take(6).length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, idx) {
+          final act = acts[idx];
+          return GestureDetector(
+            onTap: () {
+              if (act.id.isEmpty) {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ActsListScreen()));
+                return;
+              }
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ActDetailScreen(actId: act.id, actName: act.name)),
+              );
+            },
+            child: Container(
+              width: 140,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.book_outlined, color: AppColors.goldAccent, size: 22),
+                  const SizedBox(height: 6),
+                  Text(
+                    act.shortName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AppColors.primaryNavy,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    act.sectionsCount > 0 ? '${act.sectionsCount} Sections' : 'Tap to explore',
+                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+const List<ActModel> _fallbackActs = [
+  ActModel(id: '', name: 'Constitution of India', shortName: 'Constitution'),
+  ActModel(id: '', name: 'Indian Contract Act', shortName: 'Contract Act'),
+  ActModel(id: '', name: 'Bharatiya Nyaya Sanhita', shortName: 'BNS'),
+  ActModel(id: '', name: 'Code of Civil Procedure', shortName: 'CPC'),
+];
 
 const List<CategoryModel> _fallbackCategories = [
   CategoryModel(

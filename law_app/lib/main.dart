@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/translations/translation.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/case_repository.dart';
 import 'repositories/act_repository.dart';
@@ -24,6 +25,7 @@ void main() async {
 
   // Initialize connectivity monitoring service
   ConnectivityService.instance.initialize();
+  await Translation.instance.init();
 
   final authRepository = AuthRepository();
   await authRepository.init();
@@ -90,14 +92,19 @@ class LawHubApp extends StatelessWidget {
           BlocProvider(create: (_) => PostBloc(postRepository: postRepository)),
           BlocProvider(create: (_) => UserDataBloc(userDataRepository: userDataRepository)..add(LoadUserDataEvent())),
         ],
-        child: MaterialApp(
-          title: 'Rishikesh Law Hub',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          builder: (context, child) {
-            return NoInternetOverlay(child: child ?? const SizedBox.shrink());
+        child: AnimatedBuilder(
+          animation: Translation.instance,
+          builder: (context, _) {
+            return MaterialApp(
+              title: 'Rishikesh Law Hub',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              builder: (context, child) {
+                return NoInternetOverlay(child: child ?? const SizedBox.shrink());
+              },
+              home: const SplashScreen(),
+            );
           },
-          home: const SplashScreen(),
         ),
       ),
     );
