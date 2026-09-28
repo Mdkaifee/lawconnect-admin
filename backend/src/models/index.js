@@ -231,6 +231,21 @@ const deletionRequestSchema = new Schema(
   { timestamps: true },
 );
 
+/* ---------------- 11. In-App Notifications ---------------- */
+const notificationSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    title: { type: String, required: true, trim: true },
+    body: { type: String, required: true, trim: true },
+    type: { type: String, enum: ["judgment", "act", "update", "community", "system", "general"], default: "general" },
+    refId: String,
+    refType: { type: String, enum: ["case", "act", "update", "post", "user", "general"], default: "general" },
+    readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    isRead: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
+
 export const Admin = model("Admin", adminSchema);
 export const User = model("User", userSchema);
 export const Category = model("Category", categorySchema);
@@ -244,3 +259,4 @@ export const Note = model("Note", noteSchema);
 export const Bookmark = model("Bookmark", bookmarkSchema);
 export const History = model("History", historySchema);
 export const DeletionRequest = model("DeletionRequest", deletionRequestSchema);
+export const AppNotification = model("AppNotification", notificationSchema);
