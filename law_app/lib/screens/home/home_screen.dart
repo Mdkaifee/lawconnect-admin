@@ -6,6 +6,7 @@ import '../../blocs/case/case_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
+import '../../blocs/notification/notification_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
@@ -17,6 +18,7 @@ import '../cases/case_detail_screen.dart';
 import '../acts/act_detail_screen.dart';
 import '../acts/acts_list_screen.dart';
 import '../community/community_feed_screen.dart';
+import '../notifications/notifications_screen.dart';
 import 'legal_category_screen.dart';
 import '../profile/about_us_screen.dart';
 import '../profile/bookmarks_screen.dart';
@@ -46,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<ActBloc>().add(const LoadActsEvent());
     context.read<UpdateBloc>().add(const LoadUpdatesEvent());
     context.read<PostBloc>().add(const LoadPostsEvent());
+    context.read<NotificationBloc>().add(const LoadNotificationsEvent());
     _categoriesFuture = _loadCategories();
   }
 
@@ -323,6 +326,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     _buildDrawerMenuItem(
                       context,
+                      icon: Icons.notifications_none_rounded,
+                      title: Translation.t('notifications'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
                       icon: Icons.settings_outlined,
                       title: Translation.t('settings'),
                       onTap: () {
@@ -420,9 +434,51 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primaryNavy),
-            onPressed: () {},
+          BlocBuilder<NotificationBloc, NotificationState>(
+            builder: (context, state) {
+              final unreadCount = state is NotificationLoaded ? state.unreadCount : 0;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primaryNavy),
+                    tooltip: Translation.t('notifications'),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                      );
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 9 ? '9+' : unreadCount.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -431,6 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
           context.read<CaseBloc>().add(LoadCuratedLandmarksEvent());
           context.read<ActBloc>().add(const LoadActsEvent());
           context.read<UpdateBloc>().add(const LoadUpdatesEvent());
+          context.read<NotificationBloc>().add(const LoadNotificationsEvent(isRefresh: true));
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
