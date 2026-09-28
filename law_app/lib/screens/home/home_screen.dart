@@ -209,6 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final borderColor = isDark ? const Color(0xFF23354E) : const Color(0xFFE2E8F0);
         final textColor = isDark ? const Color(0xFFF1F5F9) : AppColors.primaryNavy;
         final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        final cardColor = isDark ? const Color(0xFF131D2D) : Colors.white;
         final dividerColor = isDark ? const Color(0xFF1E2F4D) : const Color(0xFFF1F5F9);
 
         return Scaffold(
@@ -882,6 +883,7 @@ class _KeyBareActsList extends StatelessWidget {
           );
         },
       ),
+    );
   }
 }
 
