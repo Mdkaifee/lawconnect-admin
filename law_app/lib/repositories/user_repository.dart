@@ -7,13 +7,25 @@ import 'auth_repository.dart';
 class AppUserConnection {
   final UserModel user;
   final String connectionStatus;
+  final bool isFollowing;
+  final bool isFollower;
+  final bool isFriend;
 
-  const AppUserConnection({required this.user, required this.connectionStatus});
+  const AppUserConnection({
+    required this.user,
+    required this.connectionStatus,
+    required this.isFollowing,
+    required this.isFollower,
+    required this.isFriend,
+  });
 
   factory AppUserConnection.fromJson(Map<String, dynamic> json) {
     return AppUserConnection(
       user: UserModel.fromJson(json),
       connectionStatus: json['connectionStatus']?.toString() ?? 'none',
+      isFollowing: json['isFollowing'] == true,
+      isFollower: json['isFollower'] == true,
+      isFriend: json['isFriend'] == true,
     );
   }
 }
@@ -52,5 +64,14 @@ class UserRepository {
       return data['status']?.toString() ?? 'friend';
     }
     throw Exception(data['error'] ?? 'Failed to accept request');
+  }
+
+  Future<String> removeFollower(String userId) async {
+    final response = await _client.post(Uri.parse('${ApiConstants.users}/$userId/remove-follower'), headers: _authRepo.authHeaders);
+    final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return data['status']?.toString() ?? 'none';
+    }
+    throw Exception(data['error'] ?? 'Failed to remove follower');
   }
 }

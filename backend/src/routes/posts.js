@@ -16,14 +16,14 @@ router.get(
     if (!all) filter.status = "published";
     if (scope === "mine" && authorId) filter.authorId = authorId;
     if (scope === "following") {
-      let followingIds = [];
+      let visibleAuthorIds = [];
       if (req.auth && req.auth.id) {
-        const currentUser = await User.findById(req.auth.id);
-        followingIds = (currentUser?.following || []).map((id) => id.toString());
+        const authorsWhoAllowCurrentUser = await User.find({ following: req.auth.id }).select("_id");
+        visibleAuthorIds = authorsWhoAllowCurrentUser.map((user) => user._id.toString());
       } else if (authorId) {
-        followingIds = authorId.split(",").map((s) => s.trim()).filter(Boolean);
+        visibleAuthorIds = authorId.split(",").map((s) => s.trim()).filter(Boolean);
       }
-      filter.authorId = { $in: followingIds };
+      filter.authorId = { $in: visibleAuthorIds };
     }
     if (category && category !== "All" && category !== "Feed") filter.category = category;
     if (tag) filter.tags = tag;

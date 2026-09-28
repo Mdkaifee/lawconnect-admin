@@ -203,7 +203,7 @@ function getConnectionStatus(currentUser, targetUserId) {
   const target = targetUserId.toString();
   const following = (currentUser.following || []).map((id) => id.toString());
   const incoming = (currentUser.followRequests || []).map((id) => id.toString());
-  if (following.includes(target)) return "friend";
+  if (following.includes(target)) return "following";
   if (incoming.includes(target)) return "incoming";
   return "none";
 }
@@ -218,6 +218,9 @@ users.get(
 
     const outgoingUsers = await User.find({ followRequests: req.auth.id }).select("_id");
     const outgoingIds = new Set(outgoingUsers.map((u) => u._id.toString()));
+    const followerUsers = await User.find({ following: req.auth.id }).select("_id");
+    const followerIds = new Set(followerUsers.map((u) => u._id.toString()));
+    const currentFollowing = new Set((currentUser.following || []).map((id) => id.toString()));
 
     const items = await User.find({ _id: { $ne: req.auth.id }, blocked: { $ne: true } })
       .select("name email photoUrl headline college following followRequests createdAt")
@@ -234,9 +237,16 @@ users.get(
         college: u.college,
         followersCount: Array.isArray(u.following) ? u.following.length : 0,
         followingCount: Array.isArray(u.following) ? u.following.length : 0,
+        isFollowing: currentFollowing.has(u._id.toString()),
+        isFollower: followerIds.has(u._id.toString()),
+        isFriend: currentFollowing.has(u._id.toString()) && followerIds.has(u._id.toString()),
         connectionStatus: outgoingIds.has(u._id.toString())
           ? "requested"
-          : getConnectionStatus(currentUser, u._id),
+          : currentFollowing.has(u._id.toString()) && followerIds.has(u._id.toString())
+            ? "friend"
+            : followerIds.has(u._id.toString())
+              ? "follower"
+              : getConnectionStatus(currentUser, u._id),
       })),
     });
   }),
@@ -260,18 +270,16 @@ users.post(
     const currentFollowing = (currentUser.following || []).map((id) => id.toString());
     const incoming = (currentUser.followRequests || []).map((id) => id.toString());
     const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
+    const targetFollowing = (targetUser.following || []).map((id) => id.toString());
 
     if (currentFollowing.includes(targetUserId)) {
-      await Promise.all([
-        User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUserId } }),
-        User.findByIdAndUpdate(targetUserId, { $pull: { following: currentUserId } }),
-      ]);
+      await User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUserId } });
       await notifyUsers([targetUserId], {
-        title: "Connection removed",
-        body: `${currentUser.name} removed the connection.`,
-        data: { type: "connection_removed", userId: currentUserId },
+        title: "Unfollowed",
+        body: `${currentUser.name} unfollowed you.`,
+        data: { type: "unfollowed", userId: currentUserId },
       });
-      return res.json({ ok: true, status: "none", message: "Connection removed" });
+      return res.json({ ok: true, status: incoming.includes(targetUserId) ? "follower" : "none", message: "Unfollowed" });
     }
 
     if (incoming.includes(targetUserId)) {
@@ -288,6 +296,16 @@ users.post(
         data: { type: "connection_accepted", userId: currentUserId },
       });
       return res.json({ ok: true, status: "friend", message: "Connection request accepted" });
+    }
+
+    if (targetFollowing.includes(currentUserId)) {
+      await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: targetUserId } });
+      await notifyUsers([targetUserId], {
+        title: "Followed back",
+        body: `${currentUser.name} followed you back.`,
+        data: { type: "follow_back", userId: currentUserId },
+      });
+      return res.json({ ok: true, status: "friend", message: "Followed back" });
     }
 
     if (targetRequests.includes(currentUserId)) {
@@ -309,6 +327,33 @@ users.post(
       });
     }
     res.json({ ok: true, status: "requested", message: "Connection request sent" });
+  }),
+);
+
+users.post(
+  "/:id/remove-follower",
+  auth(),
+  requireUser,
+  asyncHandler(async (req, res) => {
+    const currentUserId = req.auth.id;
+    const followerId = req.params.id;
+    if (currentUserId === followerId) return res.status(400).json({ error: "Cannot remove yourself" });
+
+    const [currentUser, follower] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(followerId),
+    ]);
+    if (!currentUser || !follower) return res.status(404).json({ error: "User not found" });
+
+    await User.findByIdAndUpdate(followerId, { $pull: { following: currentUserId } });
+    await notifyUsers([followerId], {
+      title: "Follower removed",
+      body: `${currentUser.name} removed you as a follower.`,
+      data: { type: "follower_removed", userId: currentUserId },
+    });
+
+    const stillFollowing = (currentUser.following || []).map((id) => id.toString()).includes(followerId);
+    res.json({ ok: true, status: stillFollowing ? "following" : "none", message: "Follower removed" });
   }),
 );
 

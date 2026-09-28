@@ -289,16 +289,14 @@ router.post(
     const currentFollowing = (currentUser.following || []).map((id) => id.toString());
     const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
     const currentIncoming = (currentUser.followRequests || []).map((id) => id.toString());
+    const targetFollowing = (targetUser.following || []).map((id) => id.toString());
 
     if (currentFollowing.includes(authorId)) {
-      await Promise.all([
-        User.findByIdAndUpdate(currentUserId, { $pull: { following: authorId } }),
-        User.findByIdAndUpdate(authorId, { $pull: { following: currentUserId } }),
-      ]);
+      await User.findByIdAndUpdate(currentUserId, { $pull: { following: authorId } });
       await notifyUsers([authorId], {
-        title: "Connection removed",
-        body: `${currentUser.name} removed the connection.`,
-        data: { type: "connection_removed", userId: currentUserId },
+        title: "Unfollowed",
+        body: `${currentUser.name} unfollowed you.`,
+        data: { type: "unfollowed", userId: currentUserId },
       });
       const fresh = await User.findById(currentUserId);
       return res.json({
@@ -328,6 +326,23 @@ router.post(
         status: "friend",
         isFollowing: true,
         message: "Connection request accepted",
+        following: (fresh?.following || []).map((id) => id.toString()),
+      });
+    }
+
+    if (targetFollowing.includes(currentUserId)) {
+      await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: authorId } });
+      await notifyUsers([authorId], {
+        title: "Followed back",
+        body: `${currentUser.name} followed you back.`,
+        data: { type: "follow_back", userId: currentUserId },
+      });
+      const fresh = await User.findById(currentUserId);
+      return res.json({
+        ok: true,
+        status: "friend",
+        isFollowing: true,
+        message: "Followed back",
         following: (fresh?.following || []).map((id) => id.toString()),
       });
     }
