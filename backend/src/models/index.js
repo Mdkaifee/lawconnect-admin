@@ -162,6 +162,7 @@ const commentSchema = new Schema(
     authorId: { type: Schema.Types.ObjectId, refPath: "authorModel", required: true },
     authorModel: { type: String, enum: ["Admin", "User"], default: "User" },
     authorName: { type: String, required: true },
+    authorPhotoUrl: String,
     content: { type: String, required: true, trim: true },
     status: { type: String, enum: ["published", "hidden"], default: "published" },
   },

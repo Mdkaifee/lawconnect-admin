@@ -41,12 +41,26 @@ router.get(
       Post.countDocuments(filter),
     ]);
 
-    // Format liked state if auth user token exists in optional header
+    // Live populate author photos
+    const authorIds = items.filter((p) => p.authorId).map((p) => p.authorId);
+    let authorPhotoMap = {};
+    if (authorIds.length > 0) {
+      const users = await User.find({ _id: { $in: authorIds } }).select("_id photoUrl").lean();
+      users.forEach((u) => {
+        if (u.photoUrl) authorPhotoMap[u._id.toString()] = u.photoUrl;
+      });
+    }
+
     res.json({
-      items: items.map((p) => ({
-        ...p,
-        likesCount: p.likedBy ? p.likedBy.length : p.likes || 0,
-      })),
+      items: items.map((p) => {
+        const authorIdStr = p.authorId ? p.authorId.toString() : "";
+        const dynamicPhoto = authorPhotoMap[authorIdStr] || p.authorPhotoUrl || "";
+        return {
+          ...p,
+          authorPhotoUrl: dynamicPhoto,
+          likesCount: p.likedBy ? p.likedBy.length : p.likes || 0,
+        };
+      }),
       total,
       page: pageNum,
       limit: limitNum,
@@ -58,11 +72,15 @@ router.get(
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const item = await Post.findById(req.params.id);
+    const item = await Post.findById(req.params.id).lean();
     if (!item) return res.status(404).json({ error: "Post not found" });
+    if (item.authorId) {
+      const u = await User.findById(item.authorId).select("photoUrl").lean();
+      if (u && u.photoUrl) item.authorPhotoUrl = u.photoUrl;
+    }
     res.json({
       item: {
-        ...item.toObject(),
+        ...item,
         likesCount: item.likedBy ? item.likedBy.length : item.likes || 0,
       },
     });
@@ -158,10 +176,29 @@ router.get(
     const skip = (pageNum - 1) * limitNum;
     const filter = { postId: req.params.id, status: "published" };
     const [comments, total] = await Promise.all([
-      Comment.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limitNum),
+      Comment.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limitNum).lean(),
       Comment.countDocuments(filter),
     ]);
-    res.json({ items: comments, total, page: pageNum, limit: limitNum });
+    const commentAuthorIds = comments.filter((c) => c.authorId).map((c) => c.authorId);
+    let commentAuthorPhotoMap = {};
+    if (commentAuthorIds.length > 0) {
+      const users = await User.find({ _id: { $in: commentAuthorIds } }).select("_id photoUrl").lean();
+      users.forEach((u) => {
+        if (u.photoUrl) commentAuthorPhotoMap[u._id.toString()] = u.photoUrl;
+      });
+    }
+    res.json({
+      items: comments.map((c) => {
+        const aIdStr = c.authorId ? c.authorId.toString() : "";
+        return {
+          ...c,
+          authorPhotoUrl: commentAuthorPhotoMap[aIdStr] || c.authorPhotoUrl || "",
+        };
+      }),
+      total,
+      page: pageNum,
+      limit: limitNum,
+    });
   }),
 );
 
@@ -180,6 +217,7 @@ router.post(
     let authorName = "Advocate";
     let authorType = "user";
     let authorModel = "User";
+    let authorPhotoUrl = "";
 
     if (req.auth.type === "admin") {
       authorType = "admin";
@@ -187,7 +225,10 @@ router.post(
       authorName = "Rishikesh Yadav (Admin)";
     } else {
       const user = await User.findById(req.auth.id);
-      if (user) authorName = user.name;
+      if (user) {
+        authorName = user.name;
+        authorPhotoUrl = user.photoUrl || "";
+      }
     }
 
     const comment = await Comment.create({
@@ -196,6 +237,7 @@ router.post(
       authorId: req.auth.id,
       authorModel,
       authorName,
+      authorPhotoUrl,
       content: content.trim(),
       status: "published",
     });
