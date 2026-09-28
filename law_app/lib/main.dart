@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_manager.dart';
 import 'core/translations/translation.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/case_repository.dart';
@@ -28,6 +29,7 @@ void main() async {
   // Initialize connectivity monitoring service
   ConnectivityService.instance.initialize();
   await Translation.instance.init();
+  await ThemeManager.instance.init();
 
   final authRepository = AuthRepository();
   await authRepository.init();
@@ -101,12 +103,14 @@ class LawHubApp extends StatelessWidget {
           BlocProvider(create: (_) => NotificationBloc(notificationRepository: notificationRepository)..add(const LoadNotificationsEvent())),
         ],
         child: AnimatedBuilder(
-          animation: Translation.instance,
+          animation: Listenable.merge([Translation.instance, ThemeManager.instance]),
           builder: (context, _) {
             return MaterialApp(
               title: 'Rishikesh Law Hub',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: ThemeManager.instance.themeMode,
               builder: (context, child) {
                 return NoInternetOverlay(child: child ?? const SizedBox.shrink());
               },

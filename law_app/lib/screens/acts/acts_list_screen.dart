@@ -129,6 +129,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                           }
                         },
                         selectedColor: AppColors.primaryNavy,
+                        checkmarkColor: Colors.white,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : AppColors.primaryNavy,
                           fontWeight: FontWeight.w600,
