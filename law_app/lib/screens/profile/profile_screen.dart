@@ -38,9 +38,9 @@ class ProfileScreen extends StatelessWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(Translation.t('contact_support_email')),
-            backgroundColor: Color(0xFF0F1E36),
+            backgroundColor: const Color(0xFF0F1E36),
           ),
         );
       }

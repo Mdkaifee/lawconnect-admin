@@ -74,10 +74,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(Translation.t('cannot_follow_self')),
-            backgroundColor: Color(0xFFEF4444),
-            duration: Duration(seconds: 2),
+            backgroundColor: const Color(0xFFEF4444),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
