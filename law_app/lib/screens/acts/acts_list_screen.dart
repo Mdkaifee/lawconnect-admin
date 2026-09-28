@@ -119,11 +119,12 @@ class _ActsListScreenState extends State<ActsListScreen> {
                 ),
                 const SizedBox(height: 10),
                 Row(
-                  children: _typeFilters.map((type) {
-                    final isSelected = _selectedType == type;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
+                  children: <Widget>[
+                    ..._typeFilters.map((type) {
+                      final isSelected = _selectedType == type;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
                           label: Text(type == 'All' ? 'All Acts' : '$type Acts'),
                           selected: isSelected,
                           onSelected: (selected) {
@@ -149,8 +150,9 @@ class _ActsListScreenState extends State<ActsListScreen> {
                           ),
                         ),
                       );
-                    }).toList(),
-                  ),
+                    }),
+                  ],
+                ),
               ],
             ),
           ),
