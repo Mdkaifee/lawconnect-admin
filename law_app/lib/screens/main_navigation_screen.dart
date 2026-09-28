@@ -41,6 +41,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final navBgColor = isDark ? const Color(0xFF0F1827) : Colors.white;
+    final navBorderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final selectedColor = isDark ? AppColors.goldAccentLight : AppColors.primaryNavy;
+    final unselectedColor = isDark ? AppColors.textDarkMuted : AppColors.textMuted;
+
     return ListenableBuilder(
       listenable: Translation.instance,
       builder: (context, _) {
@@ -50,9 +56,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             children: _screens,
           ),
           bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
+            decoration: BoxDecoration(
+              color: navBgColor,
+              border: Border(top: BorderSide(color: navBorderColor, width: 1)),
             ),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
@@ -62,9 +68,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 });
               },
               type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: AppColors.primaryNavy,
-              unselectedItemColor: AppColors.textMuted,
+              backgroundColor: navBgColor,
+              selectedItemColor: selectedColor,
+              unselectedItemColor: unselectedColor,
               elevation: 0,
               iconSize: 22,
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10.5),
