@@ -164,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               surfaceTintColor: AppTheme.appBarColor(context),
               elevation: 0,
               title: Text(
-                Translation.t('edit_profile'),
+                Translation.t('Edit Profile'),
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textPrimary),
               ),
               bottom: PreferredSize(

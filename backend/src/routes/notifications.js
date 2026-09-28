@@ -8,7 +8,7 @@ const router = Router();
 /* ---------------- 1. Get Notifications & Unread Count ---------------- */
 router.get(
   "/",
-  auth({ optional: true }),
+  auth(false),
   asyncHandler(async (req, res) => {
     const userId = req.auth?.id;
     const filter = userId
@@ -77,7 +77,7 @@ router.post(
 /* ---------------- 3. Mark Single Notification as Read ---------------- */
 router.put(
   "/:id/read",
-  auth({ optional: true }),
+  auth(false),
   asyncHandler(async (req, res) => {
     const userId = req.auth?.id;
     const { id } = req.params;

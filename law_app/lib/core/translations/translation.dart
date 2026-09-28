@@ -51,6 +51,7 @@ const Map<String, Map<String, String>> _translations = {
   'posts': {'en': 'Posts', 'hi': 'पोस्ट'},
   'bookmarks': {'en': 'Bookmarks', 'hi': 'बुकमार्क'},
   'profile': {'en': 'Profile', 'hi': 'प्रोफाइल'},
+  'edit_profile': {'en': 'Edit Profile', 'hi': 'प्रोफाइल संपादित करें'},
   'settings': {'en': 'Settings', 'hi': 'सेटिंग्स'},
   'language': {'en': 'Language', 'hi': 'भाषा'},
   'select_language': {'en': 'Select Language', 'hi': 'भाषा चुनें'},
