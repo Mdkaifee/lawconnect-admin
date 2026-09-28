@@ -92,6 +92,20 @@ const Map<String, Map<String, String>> _translations = {
   'reading_history': {'en': 'Reading History', 'hi': 'रीडिंग हिस्ट्री'},
   'help_support': {'en': 'Help & Support', 'hi': 'मदद और सपोर्ट'},
   'about_us': {'en': 'About Us', 'hi': 'हमारे बारे में'},
+  'users': {'en': 'Users', 'hi': 'उपयोगकर्ता'},
+  'all_categories': {'en': 'All Categories', 'hi': 'सभी श्रेणियां'},
+  'saved_bookmarks': {'en': 'Saved Bookmarks', 'hi': 'सुरक्षित बुकमार्क'},
+  'no_bookmarks': {'en': 'No bookmarks saved yet.', 'hi': 'अभी तक कोई बुकमार्क सुरक्षित नहीं किया गया है।'},
+  'confirm_sign_out': {'en': 'Confirm Sign Out', 'hi': 'लॉग आउट की पुष्टि करें'},
+  'confirm_sign_out_message': {
+    'en': 'Are you sure you want to log out of Rishikesh Law Hub?',
+    'hi': 'क्या आप वाकई ऋषिकेश लॉ हब से लॉग आउट करना चाहते हैं?',
+  },
+  'confirm_sign_out_msg': {
+    'en': 'Are you sure you want to log out of Rishikesh Law Hub?',
+    'hi': 'क्या आप वाकई ऋषिकेश लॉ हब से लॉग आउट करना चाहते हैं?',
+  },
+  'cancel': {'en': 'Cancel', 'hi': 'रद्द करें'},
   'log_out': {'en': 'Log Out', 'hi': 'लॉग आउट'},
   'tap_to_explore': {'en': 'Tap to explore', 'hi': 'देखने के लिए टैप करें'},
 };

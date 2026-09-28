@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../cases/case_detail_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
@@ -21,24 +22,27 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: widget.showBackButton
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
-        title: const Text(
-          'Saved Bookmarks',
-          style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800, fontSize: 18),
-        ),
+    return ListenableBuilder(
+      listenable: Translation.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.primaryNavy,
+            surfaceTintColor: Colors.white,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            leading: widget.showBackButton
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                : null,
+            title: Text(
+              Translation.t('saved_bookmarks'),
+              style: const TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800, fontSize: 18),
+            ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, color: AppColors.borderLight),
@@ -115,6 +119,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           return const SizedBox.shrink();
         },
       ),
+    );
+      },
     );
   }
 }
