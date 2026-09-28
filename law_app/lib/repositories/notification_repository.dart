@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/constants/api_constants.dart';
-import '../models/notification_model.dart';
-import 'auth_repository.dart';
+import 'package:law_app/core/constants/api_constants.dart';
+import 'package:law_app/models/notification_model.dart';
+import 'package:law_app/repositories/auth_repository.dart';
 
 class NotificationRepository {
   final http.Client _client;

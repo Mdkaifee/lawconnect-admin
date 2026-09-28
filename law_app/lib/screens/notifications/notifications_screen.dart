@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../blocs/notification/notification_bloc.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/translations/translation.dart';
-import '../../core/utils/date_formatter.dart';
-import '../../models/notification_model.dart';
-import '../cases/case_detail_screen.dart';
-import '../cases/case_search_screen.dart';
-import '../acts/acts_list_screen.dart';
-import '../updates/updates_screen.dart';
-import '../community/community_feed_screen.dart';
+import 'package:law_app/blocs/notification/notification_bloc.dart';
+import 'package:law_app/core/theme/app_theme.dart';
+import 'package:law_app/core/translations/translation.dart';
+import 'package:law_app/core/utils/date_formatter.dart';
+import 'package:law_app/models/notification_model.dart';
+import 'package:law_app/screens/cases/case_detail_screen.dart';
+import 'package:law_app/screens/cases/case_search_screen.dart';
+import 'package:law_app/screens/acts/acts_list_screen.dart';
+import 'package:law_app/screens/updates/updates_screen.dart';
+import 'package:law_app/screens/community/community_feed_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../models/notification_model.dart';
-import '../../repositories/notification_repository.dart';
+import 'package:law_app/models/notification_model.dart';
+import 'package:law_app/repositories/notification_repository.dart';
 
 /* ---------------- EVENTS ---------------- */
 
