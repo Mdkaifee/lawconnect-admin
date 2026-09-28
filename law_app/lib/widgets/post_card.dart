@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/theme/app_theme.dart';
+import '../core/translations/translation.dart';
 import '../models/post_model.dart';
 
 class PostCard extends StatelessWidget {
@@ -232,7 +233,7 @@ class PostCard extends StatelessWidget {
                         children: [
                           Icon(Icons.share_outlined, size: 18, color: primaryOrGold),
                           const SizedBox(width: 8),
-                          Text('Share Post', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
+                          Text(Translation.t('share_post'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
                         ],
                       ),
                     ),
@@ -242,7 +243,7 @@ class PostCard extends StatelessWidget {
                         children: [
                           Icon(Icons.flag_outlined, size: 18, color: AppColors.danger),
                           SizedBox(width: 8),
-                          Text('Report Content', style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w500)),
+                          Text(Translation.t('report_content'), style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),

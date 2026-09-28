@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../repositories/act_repository.dart';
 import '../../repositories/user_data_repository.dart';
 
@@ -119,11 +120,11 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                           ),
                           if (act.year != null) ...[
                             const SizedBox(width: 8),
-                            Text('Enacted: ${act.year}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                            Text('${Translation.t('enacted')}: ${act.year}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                           ],
                           const Spacer(),
                           Text(
-                            '${act.sections.length} Sections',
+                            '${act.sections.length} ${Translation.t('sections')}',
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.goldAccent),
                           ),
                         ],
@@ -137,7 +138,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                         controller: _sectionSearchController,
                         onChanged: (val) => setState(() => _sectionQuery = val.trim()),
                         decoration: InputDecoration(
-                          hintText: 'Filter sections by number or title...',
+                          hintText: Translation.t('filter_sections_hint'),
                           prefixIcon: Icon(Icons.search, size: 20, color: primaryOrGold),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           fillColor: AppTheme.backgroundColor(context),
@@ -150,7 +151,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                 // Sections Accordion List
                 Expanded(
                   child: filteredSections.isEmpty
-                      ? Center(child: Text('No sections match filter.', style: TextStyle(color: AppTheme.textSecondaryColor(context))))
+                      ? Center(child: Text(Translation.t('no_sections_match'), style: TextStyle(color: AppTheme.textSecondaryColor(context))))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           itemCount: filteredSections.length,
@@ -188,7 +189,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                   ),
                                 ),
                                 title: Text(
-                                  s.title.isNotEmpty ? s.title : 'Section ${s.number}',
+                                  s.title.isNotEmpty ? s.title : '${Translation.t('sections')} ${s.number}',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -196,7 +197,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                   ),
                                 ),
                                 subtitle: s.chapter != null && s.chapter!.isNotEmpty
-                                    ? Text('Chapter: ${s.chapter}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted))
+                                    ? Text('${Translation.t('chapter')}: ${s.chapter}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted))
                                     : null,
                                 children: [
                                   Padding(
@@ -207,7 +208,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                         Divider(color: AppTheme.dividerColor(context)),
                                         const SizedBox(height: 6),
                                         SelectableText(
-                                          s.text.isNotEmpty ? s.text : 'Section text not available.',
+                                          s.text.isNotEmpty ? s.text : Translation.t('section_text_not_available'),
                                           style: TextStyle(fontSize: 14, height: 1.55, color: AppTheme.textPrimaryColor(context)),
                                         ),
                                         if (s.explanation != null && s.explanation!.isNotEmpty) ...[
@@ -227,7 +228,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                                     const Icon(Icons.lightbulb_outline, size: 16, color: AppColors.goldAccent),
                                                     const SizedBox(width: 6),
                                                     Text(
-                                                      'Simplified Explanation',
+                                                      Translation.t('simplified_explanation'),
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                         fontWeight: FontWeight.w700,
@@ -251,14 +252,14 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                           children: [
                                             TextButton.icon(
                                               icon: const Icon(Icons.copy, size: 16),
-                                              label: const Text('Copy Text'),
+                                              label: Text(Translation.t('copy_text')),
                                               style: TextButton.styleFrom(
                                                 foregroundColor: primaryOrGold,
                                               ),
                                               onPressed: () {
                                                 Clipboard.setData(ClipboardData(text: '${s.number}: ${s.title}\n\n${s.text}'));
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Section copied to clipboard!')),
+                                                  SnackBar(content: Text(Translation.t('section_copied'))),
                                                 );
                                               },
                                             ),
@@ -267,7 +268,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                               icon: isBookmarkBusy
                                                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                                                   : Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border, size: 16),
-                                              label: Text(isBookmarked ? 'Bookmarked' : 'Bookmark'),
+                                              label: Text(isBookmarked ? Translation.t('bookmarked') : Translation.t('bookmark')),
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: isBookmarked
                                                     ? AppColors.goldAccent.withValues(alpha: 0.22)
@@ -292,13 +293,13 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                                   if (mounted) context.read<UserDataBloc>().add(LoadUserDataEvent());
                                                   if (mounted) {
                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text(isBookmarked ? 'Removed from bookmarks' : 'Bookmarked successfully')),
+                                                      SnackBar(content: Text(isBookmarked ? Translation.t('removed_from_bookmarks') : Translation.t('bookmarked_successfully'))),
                                                     );
                                                   }
                                                 } catch (_) {
                                                   if (mounted) {
                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(content: Text('Could not update bookmark')),
+                                                      SnackBar(content: Text(Translation.t('could_not_update_bookmark'))),
                                                     );
                                                   }
                                                 } finally {

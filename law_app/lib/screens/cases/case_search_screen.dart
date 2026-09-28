@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../repositories/user_data_repository.dart';
 import '../../widgets/case_card.dart';
 import 'case_detail_screen.dart';
@@ -96,9 +97,9 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
     final pickedYear = await showDialog<int>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Filter by Year'),
+        title: Text(Translation.t('filter_by_year')),
         children: [
-          SimpleDialogOption(onPressed: () => Navigator.pop(ctx), child: const Text('All Years')),
+          SimpleDialogOption(onPressed: () => Navigator.pop(ctx), child: Text(Translation.t('all_years'))),
           ...List.generate(30, (i) => currentYear - i).map(
             (year) => SimpleDialogOption(onPressed: () => Navigator.pop(ctx, year), child: Text(year.toString())),
           ),
@@ -135,12 +136,12 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
           },
         ),
         title: Text(
-          'Case Search',
+          Translation.t('case_search'),
           style: TextStyle(color: AppTheme.textPrimaryColor(context), fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh results',
+            tooltip: Translation.t('refresh_results'),
             icon: Icon(Icons.refresh, color: primaryOrGold),
             onPressed: () => _triggerSearch(_searchController.text),
           ),
@@ -164,7 +165,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                   textInputAction: TextInputAction.search,
                   onSubmitted: _triggerSearch,
                   decoration: InputDecoration(
-                    hintText: 'Search case name or citation...',
+                    hintText: Translation.t('search_case_hint'),
                     isDense: true,
                     filled: true,
                     fillColor: AppTheme.backgroundColor(context),
@@ -277,7 +278,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                         CircularProgressIndicator(color: primaryOrGold),
                         const SizedBox(height: 16),
                         Text(
-                          'Searching Indian Kanoon & Case Law Database...',
+                          Translation.t('searching_cases'),
                           style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                         ),
                       ],
@@ -303,7 +304,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                           ElevatedButton.icon(
                             onPressed: () => _triggerSearch(_searchController.text),
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Retry Search'),
+                            label: Text(Translation.t('retry_search')),
                           ),
                         ],
                       ),
@@ -322,12 +323,12 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                             const Icon(Icons.search_off_rounded, size: 54, color: AppColors.textMuted),
                             const SizedBox(height: 12),
                             Text(
-                              'No judgments found',
+                              Translation.t('no_judgments_found'),
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimaryColor(context)),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Try searching with broader keywords, party names, or a standard citation.',
+                              Translation.t('broader_search_hint'),
                               textAlign: TextAlign.center,
                               style: TextStyle(fontSize: 13, color: AppTheme.textSecondaryColor(context)),
                             ),
@@ -347,7 +348,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                           padding: const EdgeInsets.only(top: 4, bottom: 18),
                           child: Center(
                             child: Text(
-                              'Showing ${state.items.length} results',
+                              '${Translation.t('showing_results')}: ${state.items.length}',
                               style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -395,7 +396,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                                         context.read<UserDataBloc>().add(LoadUserDataEvent());
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
-                                            content: Text(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks'),
+                                            content: Text(isBookmarked ? Translation.t('removed_from_bookmarks') : Translation.t('bookmarked_successfully')),
                                             duration: const Duration(seconds: 2),
                                           ),
                                         );

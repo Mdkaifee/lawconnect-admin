@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../widgets/act_card.dart';
 import 'act_detail_screen.dart';
 
@@ -74,7 +75,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Bare Acts & Codes',
+          Translation.t('bare_acts_codes'),
           style: TextStyle(
             color: AppTheme.textPrimaryColor(context),
             fontWeight: FontWeight.w800,
@@ -103,7 +104,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                   controller: _searchController,
                   onChanged: (_) => _fetchActs(),
                   decoration: InputDecoration(
-                    hintText: 'Search Bare Acts (e.g. BNS, Contract, Constitution)...',
+                    hintText: Translation.t('search_bare_acts_hint'),
                     prefixIcon: Icon(Icons.search, color: primaryOrGold),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -125,7 +126,11 @@ class _ActsListScreenState extends State<ActsListScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          label: Text(type == 'All' ? 'All Acts' : '$type Acts'),
+                          label: Text(type == 'All'
+                              ? Translation.t('all_acts')
+                              : type == 'Central'
+                                  ? Translation.t('central_acts')
+                                  : Translation.t('state_acts')),
                           selected: isSelected,
                           onSelected: (selected) {
                             if (selected) {
@@ -172,7 +177,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                         const SizedBox(height: 12),
                         Text(state.message, style: TextStyle(color: AppTheme.textPrimaryColor(context))),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _fetchActs, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _fetchActs, child: Text(Translation.t('retry'))),
                       ],
                     ),
                   );
@@ -182,7 +187,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                   if (state.acts.isEmpty) {
                     return Center(
                       child: Text(
-                        'No Bare Acts found matching criteria.',
+                        Translation.t('no_bare_acts_found'),
                         style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                       ),
                     );

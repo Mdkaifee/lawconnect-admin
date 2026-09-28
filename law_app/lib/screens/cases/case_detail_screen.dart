@@ -6,6 +6,7 @@ import '../../blocs/case/case_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/translations/translation.dart';
 import '../../core/utils/html_sanitizer.dart';
 import '../../core/utils/url_helper.dart';
 import '../../models/case_model.dart';
@@ -72,7 +73,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bookmark update failed')),
+          SnackBar(content: Text(Translation.t('bookmark_update_failed'))),
         );
       }
     } finally {
@@ -87,7 +88,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-        title: const Text('Add Case Study Note', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        title: Text(Translation.t('add_case_study_note'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,7 +104,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
               controller: _noteController,
               maxLines: 5,
               decoration: const InputDecoration(
-                hintText: 'Write your legal insights, principles, or notes here...',
+                hintText: Translation.t('note_hint'),
               ),
             ),
           ],
@@ -111,7 +112,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
         actions: [
           TextButton(
             onPressed: saving ? null : () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(Translation.t('cancel')),
           ),
           ElevatedButton(
             onPressed: saving || _noteController.text.trim().isEmpty ? null : () async {
@@ -127,13 +128,13 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                 if (!ctx.mounted) return;
                 context.read<UserDataBloc>().add(LoadUserDataEvent());
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note saved successfully!'), backgroundColor: AppColors.success));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('note_saved')), backgroundColor: AppColors.success));
               } catch (_) {
                 setDialogState(() => saving = false);
-                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Unable to save note')));
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(Translation.t('unable_save_note'))));
               }
             },
-            child: saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save Note'),
+            child: saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(Translation.t('save_note')),
           ),
         ],
       ),
@@ -162,7 +163,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                 foregroundColor: textPrimary,
                 surfaceTintColor: AppTheme.appBarColor(context),
                 leading: const BackButton(),
-                title: Text('Case Details', style: TextStyle(color: textPrimary)),
+                title: Text(Translation.t('case_details'), style: TextStyle(color: textPrimary)),
               ),
               body: Center(child: CircularProgressIndicator(color: primaryOrGold)),
             );
@@ -176,7 +177,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                 foregroundColor: textPrimary,
                 surfaceTintColor: AppTheme.appBarColor(context),
                 leading: const BackButton(),
-                title: Text('Case Details', style: TextStyle(color: textPrimary)),
+                title: Text(Translation.t('case_details'), style: TextStyle(color: textPrimary)),
               ),
               body: Center(
                 child: Padding(
@@ -190,7 +191,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => context.read<CaseBloc>().add(LoadCaseDetailsEvent(widget.caseId)),
-                        child: const Text('Retry'),
+                        child: Text(Translation.t('retry')),
                       ),
                     ],
                   ),
@@ -216,7 +217,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     title: Text(
-                      'Case Details',
+                      Translation.t('case_details'),
                       style: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     pinned: true,
@@ -341,10 +342,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                       indicatorColor: primaryOrGold,
                       indicatorWeight: 2,
                       tabs: const [
-                        Tab(text: 'Overview'),
-                        Tab(text: 'Judgment'),
-                        Tab(text: 'Notes'),
-                        Tab(text: 'Related'),
+                        Tab(text: Translation.t('overview')),
+                        Tab(text: Translation.t('judgment')),
+                        Tab(text: Translation.t('my_notes_title')),
+                        Tab(text: Translation.t('related')),
                       ],
                     ),
                   ),
@@ -380,7 +381,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                               ),
                               const SizedBox(height: 14),
                               Text(
-                                'Case Summary',
+                                Translation.t('case_summary'),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
@@ -397,7 +398,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                   border: Border.all(color: borderColor),
                                 ),
                                 child: Text(
-                                  HtmlSanitizer.stripHtml(c.summary ?? 'No summary available for this judgment.'),
+                                  HtmlSanitizer.stripHtml(c.summary ?? Translation.t('no_summary_available')),
                                   style: TextStyle(
                                     fontSize: 14.5,
                                     color: textPrimary,
@@ -412,7 +413,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                 child: ElevatedButton.icon(
                                   onPressed: () => _openUrl(c.origDocUrl ?? c.sourceUrl),
                                   icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                                  label: const Text('Read Full Judgment (PDF)'),
+                                  label: Text(Translation.t('read_full_judgment_pdf')),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
                                     foregroundColor: isDark ? AppColors.primaryNavyDark : Colors.white,
@@ -444,16 +445,16 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                     children: [
                                       Icon(Icons.description_outlined, color: primaryOrGold, size: 30),
                                       const SizedBox(height: 10),
-                                      Text('Full judgment text is not available yet.', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary)),
+                                      Text(Translation.t('full_judgment_unavailable'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary)),
                                       const SizedBox(height: 6),
-                                      Text('You can read the official judgment using the PDF button below.', style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4)),
+                                      Text(Translation.t('read_official_pdf_hint'), style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4)),
                                       const SizedBox(height: 16),
                                       SizedBox(
                                         width: double.infinity,
                                         child: OutlinedButton.icon(
                                           onPressed: () => _openUrl(c.origDocUrl ?? c.sourceUrl),
                                           icon: const Icon(Icons.picture_as_pdf_outlined),
-                                          label: const Text('Open Official Judgment PDF'),
+                                          label: Text(Translation.t('open_official_pdf')),
                                         ),
                                       ),
                                     ],
@@ -467,7 +468,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('My Notes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: textPrimary)),
+                              Text(Translation.t('my_notes_title'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: textPrimary)),
                               const SizedBox(height: 8),
                               BlocBuilder<UserDataBloc, UserDataState>(
                                 builder: (context, userState) {
@@ -475,9 +476,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                       ? userState.notes.where((note) => note.refId == c.id).toList()
                                       : const [];
                                   if (notes.isEmpty) {
-                                    return const Padding(
-                                      padding: EdgeInsets.only(bottom: 12),
-                                      child: Text('No notes for this case yet.', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: Text(Translation.t('no_case_notes'), style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
                                     );
                                   }
                                   return Column(
@@ -500,18 +501,18 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                 child: OutlinedButton.icon(
                                   onPressed: () => _showAddNoteDialog(context, c),
                                   icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('Add Note'),
+                                  label: Text(Translation.t('add_note')),
                                 ),
                               ),
                               const SizedBox(height: 20),
                               // Related cases
                               Text(
-                                'Cases Cited By This Judgment',
+                                Translation.t('cited_cases'),
                                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: textPrimary),
                               ),
                               const SizedBox(height: 8),
                               if (c.cites.isEmpty)
-                                const Text('No cited cases documented for this judgment.', style: TextStyle(color: AppColors.textMuted, fontSize: 13))
+                                Text(Translation.t('no_cited_cases'), style: const TextStyle(color: AppColors.textMuted, fontSize: 13))
                               else
                                 ...c.cites.map((ref) => _buildCaseRefCard(ref, context)),
 
@@ -519,12 +520,12 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
 
                               // Cases Citing This Judgment
                               Text(
-                                'Cases Citing This Judgment',
+                                Translation.t('citing_cases'),
                                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: textPrimary),
                               ),
                               const SizedBox(height: 8),
                               if (c.citedBy.isEmpty)
-                                const Text('No subsequent citations documented yet.', style: TextStyle(color: AppColors.textMuted, fontSize: 13))
+                                Text(Translation.t('no_subsequent_citations'), style: const TextStyle(color: AppColors.textMuted, fontSize: 13))
                               else
                                 ...c.citedBy.map((ref) => _buildCaseRefCard(ref, context)),
                             ],
@@ -550,7 +551,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                                     const Icon(Icons.lightbulb_outline_rounded, color: AppColors.goldAccent),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Key Legal Principle',
+                                      Translation.t('key_legal_principle'),
                                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: textPrimary),
                                     ),
                                   ],

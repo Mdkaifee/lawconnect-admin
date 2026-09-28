@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../models/post_model.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/post_repository.dart';
@@ -74,7 +75,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('You cannot follow yourself'),
+            content: Text(Translation.t('cannot_follow_self')),
             backgroundColor: Color(0xFFEF4444),
             duration: Duration(seconds: 2),
           ),
@@ -107,8 +108,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           SnackBar(
             content: Text(
               isAlreadyFollowing
-                  ? 'Removed ${post.authorName} from friends'
-                  : 'Follow request sent to ${post.authorName}',
+                  ? Translation.t('removed_user_from_friends')
+                  : Translation.t('follow_request_sent'),
             ),
             duration: const Duration(seconds: 2),
             backgroundColor: const Color(0xFF0F1E36),
@@ -147,12 +148,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       if (mounted) {
         context.read<UserDataBloc>().add(LoadUserDataEvent());
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isBookmarked ? 'Post removed from bookmarks' : 'Post bookmarked')),
+          SnackBar(content: Text(isBookmarked ? Translation.t('removed_from_bookmarks') : Translation.t('bookmarked_successfully'))),
         );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to update bookmark')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('unable_update_bookmark'))));
       }
     } finally {
       if (mounted) setState(() => _bookmarkBusyPostIds.remove(post.id));
@@ -184,7 +185,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('New Legal Discussion', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          title: Text(Translation.t('new_legal_discussion'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -192,7 +193,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               children: [
                 DropdownButtonFormField<String>(
                   value: category,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: InputDecoration(labelText: Translation.t('category')),
                   items: ['Constitution', 'Supreme Court', 'Criminal Law', 'Civil Law', 'General Law']
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
@@ -203,13 +204,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title / Subject'),
+                  decoration: InputDecoration(labelText: Translation.t('title_subject')),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: contentController,
                   maxLines: 5,
-                  decoration: const InputDecoration(labelText: 'Write your post / legal query...'),
+                  decoration: InputDecoration(labelText: Translation.t('write_post_hint')),
                 ),
               ],
             ),
@@ -217,7 +218,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(Translation.t('cancel')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -231,11 +232,11 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       );
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Post published successfully!'), backgroundColor: AppColors.success),
+                    SnackBar(content: Text(Translation.t('post_published')), backgroundColor: AppColors.success),
                   );
                 }
               },
-              child: const Text('Publish'),
+              child: Text(Translation.t('publish')),
             ),
           ],
         ),
@@ -248,21 +249,21 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Report Post', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        title: Text(Translation.t('report_post'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Please describe why you are reporting this content:'),
+            Text(Translation.t('report_reason_prompt')),
             const SizedBox(height: 10),
             TextField(
               controller: reasonController,
               maxLines: 3,
-              decoration: const InputDecoration(hintText: 'Misleading citation, spam, etc.'),
+              decoration: InputDecoration(hintText: Translation.t('report_hint')),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(Translation.t('cancel'))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () {
@@ -272,11 +273,11 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     );
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Report submitted for moderator review.')),
+                  SnackBar(content: Text(Translation.t('report_submitted'))),
                 );
               }
             },
-            child: const Text('Submit Report'),
+            child: Text(Translation.t('submit_report')),
           ),
         ],
       ),
@@ -317,7 +318,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: Text('Law Posts', style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800)),
+        title: Text(Translation.t('law_posts'), style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: primaryOrGold),
@@ -378,7 +379,11 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            cat,
+                            cat == 'All'
+                                ? Translation.t('all')
+                                : cat == 'My Posts'
+                                    ? Translation.t('my_posts_filter')
+                                    : Translation.t('friends'),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
@@ -413,7 +418,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         const SizedBox(height: 12),
                         Text(state.message, style: TextStyle(color: textPrimary)),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _fetchPosts, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _fetchPosts, child: Text(Translation.t('retry'))),
                       ],
                     ),
                   );
@@ -443,8 +448,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             const SizedBox(height: 12),
                             Text(
                               _selectedCategory == 'Friends'
-                                  ? 'No friends with recent posts yet.\nSend follow requests from Profile > Users and posts appear here after they accept.'
-                                  : 'No community posts in this category.',
+                                  ? Translation.t('no_friends_posts')
+                                  : Translation.t('no_community_posts'),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 13.5,

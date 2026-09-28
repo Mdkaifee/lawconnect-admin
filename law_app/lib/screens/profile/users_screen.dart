@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../repositories/user_repository.dart';
 import 'public_user_profile_screen.dart';
 
@@ -80,15 +81,15 @@ class _UsersScreenState extends State<UsersScreen> {
     switch (status) {
       case 'friend':
       case 'following':
-        return 'Unfollow';
+        return Translation.t('unfollow');
       case 'follower':
-        return 'Follow Back';
+        return Translation.t('follow_back');
       case 'requested':
-        return 'Cancel Request';
+        return Translation.t('cancel_request');
       case 'incoming':
-        return 'Accept Request';
+        return Translation.t('accept_request');
       default:
-        return 'Follow';
+        return Translation.t('follow');
     }
   }
 
@@ -124,13 +125,13 @@ class _UsersScreenState extends State<UsersScreen> {
   String _filterLabel(String filter) {
     switch (filter) {
       case 'following':
-        return 'Following';
+        return Translation.t('following');
       case 'followers':
-        return 'Followers';
+        return Translation.t('followers');
       case 'friends':
-        return 'Friends';
+        return Translation.t('friends');
       default:
-        return 'All';
+        return Translation.t('all');
     }
   }
 
@@ -147,7 +148,7 @@ class _UsersScreenState extends State<UsersScreen> {
         foregroundColor: textPrimary,
         surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
-        title: Text('Users', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textPrimary)),
+        title: Text(Translation.t('users'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textPrimary)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(height: 1, color: AppTheme.dividerColor(context)),
@@ -161,7 +162,7 @@ class _UsersScreenState extends State<UsersScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: ElevatedButton(onPressed: _refresh, child: const Text('Retry')),
+              child: ElevatedButton(onPressed: _refresh, child: Text(Translation.t('retry'))),
             );
           }
 
@@ -202,7 +203,7 @@ class _UsersScreenState extends State<UsersScreen> {
                   Padding(
                     padding: const EdgeInsets.all(28),
                     child: Center(
-                      child: Text('No users found.', style: TextStyle(color: AppTheme.textSecondaryColor(context))),
+                      child: Text(Translation.t('no_users_found'), style: TextStyle(color: AppTheme.textSecondaryColor(context))),
                     ),
                   )
                 else
@@ -259,7 +260,7 @@ class _UsersScreenState extends State<UsersScreen> {
                                       side: const BorderSide(color: AppColors.danger),
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                                     ),
-                                    child: const Text('Remove', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                                    child: Text(Translation.t('remove'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                                   ),
                                 ),
                               SizedBox(

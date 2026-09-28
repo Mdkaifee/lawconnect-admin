@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../models/comment_model.dart';
 import '../../repositories/post_repository.dart';
 import '../profile/public_user_profile_screen.dart';
@@ -110,7 +111,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to post comment: $e'), backgroundColor: AppColors.danger),
+          SnackBar(content: Text('${Translation.t('failed_post_comment')}: $e'), backgroundColor: AppColors.danger),
         );
       }
     }
@@ -149,7 +150,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 Icon(Icons.chat_bubble_outline_rounded, size: 20, color: primaryOrGold),
                 const SizedBox(width: 8),
                 Text(
-                  'Legal Discussion',
+                  Translation.t('legal_discussion'),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: textPrimary),
                 ),
                 const Spacer(),
@@ -169,7 +170,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 : _comments.isEmpty
                     ? Center(
                         child: Text(
-                          'No comments yet. Be the first advocate to reply!',
+                          Translation.t('no_comments_yet'),
                           style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                         ),
                       )
@@ -262,7 +263,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   child: TextField(
                     controller: _commentController,
                     decoration: InputDecoration(
-                      hintText: 'Add your legal perspective...',
+                      hintText: Translation.t('add_legal_perspective'),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       fillColor: AppTheme.backgroundColor(context),
                     ),

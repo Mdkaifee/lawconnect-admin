@@ -90,7 +90,7 @@ async function run() {
       },
       { name: "Indian Penal Code (BNS)", shortName: "BNS", year: 2023, type: "Central", description: "Bharatiya Nyaya Sanhita, 2023", sections: [{ number: "Section 302", title: "Punishment for murder", text: "Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine.", explanation: "Murder = intention + act + cause of death." }] },
       { name: "Code of Criminal Procedure (BNSS)", shortName: "BNSS", year: 2023, type: "Central", description: "Bharatiya Nagarik Suraksha Sanhita, 2023", sections: [] },
-      { name: "Indian Evidence Act", shortName: "Evidence Act", year: 1872, type: "Central", description: "Law of evidence in India", sections: [] },
+      { name: "Bharatiya Sakshya Adhiniyam", shortName: "BSA", year: 2023, type: "Central", description: "Law of evidence in India replacing the Indian Evidence Act, 1872", sections: [] },
       { name: "Indian Contract Act", shortName: "Contract Act", year: 1872, type: "Central", description: "Law of contracts", sections: [{ number: "Section 28", title: "Agreements in restraint of legal proceedings void", text: "Every agreement by which any party is restricted absolutely from enforcing his rights is void to that extent.", explanation: "Unconscionable contracts are void." }] },
       { name: "Indian Torts Act", shortName: "Torts", year: 1872, type: "Central", description: "Civil wrongs and remedies", sections: [] },
       { name: "Family Laws", shortName: "Family", type: "Central", description: "HMA, Muslim Law, Christian Law", sections: [] },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -126,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Sign in to access legal search, judgments & community',
+                    Translation.t('law_hub_subtitle'),
                     style: TextStyle(fontSize: 13, color: textSecondary),
                     textAlign: TextAlign.center,
                   ),
@@ -148,9 +149,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: 'Sign In'),
-                        Tab(text: 'Create Account'),
+                      tabs: [
+                        Tab(text: Translation.t('sign_in')),
+                        Tab(text: Translation.t('create_account')),
                       ],
                     ),
                   ),
@@ -174,18 +175,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 TextFormField(
                                   controller: _loginEmailController,
                                   keyboardType: TextInputType.emailAddress,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email Address',
-                                    prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+                                  decoration: InputDecoration(
+                                    labelText: Translation.t('email_address'),
+                                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
                                   ),
-                                  validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
+                                  validator: (val) => val == null || !val.contains('@') ? Translation.t('valid_email_error') : null,
                                 ),
                                 const SizedBox(height: 18),
                                 TextFormField(
                                   controller: _loginPasswordController,
                                   obscureText: _obscureLoginPassword,
                                   decoration: InputDecoration(
-                                    labelText: 'Password',
+                                    labelText: Translation.t('password'),
                                     prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -199,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       },
                                     ),
                                   ),
-                                  validator: (val) => val == null || val.length < 6 ? 'Password must be at least 6 characters' : null,
+                                  validator: (val) => val == null || val.length < 6 ? Translation.t('password_length_error') : null,
                                 ),
                                 const SizedBox(height: 24),
                                 BlocBuilder<AuthBloc, AuthState>(
@@ -216,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                               width: 20,
                                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                             )
-                                          : const Text('Sign In to Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                          : Text(Translation.t('sign_in_to_account'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                                     );
                                   },
                                 ),
@@ -235,28 +236,28 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               children: [
                                 TextFormField(
                                   controller: _registerNameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Full Name',
-                                    prefixIcon: Icon(Icons.person_outline, color: AppColors.textMuted),
+                                  decoration: InputDecoration(
+                                    labelText: Translation.t('full_name'),
+                                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.textMuted),
                                   ),
-                                  validator: (val) => val == null || val.trim().isEmpty ? 'Enter your name' : null,
+                                  validator: (val) => val == null || val.trim().isEmpty ? Translation.t('enter_name') : null,
                                 ),
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: _registerEmailController,
                                   keyboardType: TextInputType.emailAddress,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email Address',
-                                    prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+                                  decoration: InputDecoration(
+                                    labelText: Translation.t('email_address'),
+                                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
                                   ),
-                                  validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
+                                  validator: (val) => val == null || !val.contains('@') ? Translation.t('valid_email_error') : null,
                                 ),
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: _registerPasswordController,
                                   obscureText: _obscureRegisterPassword,
                                   decoration: InputDecoration(
-                                    labelText: 'Create Password',
+                                    labelText: Translation.t('create_password'),
                                     prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -270,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       },
                                     ),
                                   ),
-                                  validator: (val) => val == null || val.length < 6 ? 'Password must be at least 6 characters' : null,
+                                  validator: (val) => val == null || val.length < 6 ? Translation.t('password_length_error') : null,
                                 ),
                                 const SizedBox(height: 22),
                                 BlocBuilder<AuthBloc, AuthState>(
@@ -289,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                               width: 20,
                                               child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2),
                                             )
-                                          : const Text('Create Free Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                          : Text(Translation.t('create_free_account'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                                     );
                                   },
                                 ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
+import '../../repositories/user_data_repository.dart';
 import '../cases/case_detail_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
@@ -14,6 +15,8 @@ class BookmarksScreen extends StatefulWidget {
 }
 
 class _BookmarksScreenState extends State<BookmarksScreen> {
+  final Set<String> _removingBookmarkIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -22,6 +25,27 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   Future<void> _refresh() async {
     context.read<UserDataBloc>().add(LoadUserDataEvent());
+  }
+
+  Future<void> _removeBookmark(String bookmarkId, String refId) async {
+    final busyKey = bookmarkId.isNotEmpty ? bookmarkId : refId;
+    if (_removingBookmarkIds.contains(busyKey)) return;
+
+    setState(() => _removingBookmarkIds.add(busyKey));
+    try {
+      await context.read<UserDataRepository>().removeBookmark(bookmarkId.isNotEmpty ? bookmarkId : refId);
+      if (mounted) {
+        context.read<UserDataBloc>().add(LoadUserDataEvent());
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _removingBookmarkIds.remove(busyKey));
+    }
   }
 
   @override
@@ -74,7 +98,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                         SizedBox(height: MediaQuery.of(context).size.height * 0.28),
                         Center(
                           child: Text(
-                            'No bookmarks saved yet.',
+                            Translation.t('no_bookmarks'),
                             style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                           ),
                         ),
@@ -92,6 +116,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                     itemCount: state.bookmarks.length,
                     itemBuilder: (context, idx) {
                       final b = state.bookmarks[idx];
+                      final busyKey = b.id.isNotEmpty ? b.id : b.refId;
+                      final isRemoving = _removingBookmarkIds.contains(busyKey);
                       return Card(
                         elevation: 0,
                         color: cardBg,
@@ -120,18 +146,16 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           subtitle: b.subtitle != null
                               ? Text(b.subtitle!, style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)))
                               : null,
-                          trailing: IconButton(
-                            icon: const Icon(Icons.bookmark_remove, color: AppColors.danger, size: 20),
-                            onPressed: () {
-                              context.read<UserDataBloc>().add(
-                                    ToggleBookmarkEvent(
-                                      refType: b.refType,
-                                      refId: b.refId,
-                                      title: b.title,
-                                    ),
-                                  );
-                            },
-                          ),
+                          trailing: isRemoving
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: primaryOrGold),
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.bookmark_remove, color: AppColors.danger, size: 20),
+                                  onPressed: () => _removeBookmark(b.id, b.refId),
+                                ),
                           onTap: () {
                             if (b.refType == 'case') {
                               Navigator.of(context).push(

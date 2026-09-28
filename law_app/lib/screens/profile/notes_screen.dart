@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../models/note_model.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 
@@ -27,24 +28,24 @@ class _NotesScreenState extends State<NotesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(note == null ? 'New Case Note' : 'Edit Note', style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(note == null ? Translation.t('new_case_note') : Translation.t('edit_note'), style: const TextStyle(fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration: InputDecoration(labelText: Translation.t('title')),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: contentController,
               maxLines: 5,
-              decoration: const InputDecoration(labelText: 'Notes / Principles'),
+              decoration: InputDecoration(labelText: Translation.t('notes_principles')),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(Translation.t('cancel'))),
           ElevatedButton(
             onPressed: () {
               if (titleController.text.trim().isNotEmpty) {
@@ -61,7 +62,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Save'),
+            child: Text(Translation.t('save')),
           ),
         ],
       ),
@@ -90,7 +91,7 @@ class _NotesScreenState extends State<NotesScreen> {
               )
             : null,
         title: Text(
-          'Case Study Notes',
+          Translation.t('case_study_notes'),
           style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         bottom: PreferredSize(
@@ -116,7 +117,7 @@ class _NotesScreenState extends State<NotesScreen> {
             if (state.notes.isEmpty) {
               return Center(
                 child: Text(
-                  'No notes yet. Tap + to create your first note!',
+                  Translation.t('no_notes_yet'),
                   style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                 ),
               );
@@ -157,9 +158,9 @@ class _NotesScreenState extends State<NotesScreen> {
                               onPressed: () {
                                 CustomConfirmationDialog.show(
                                   context,
-                                  title: 'Delete Note',
-                                  message: 'Are you sure you want to permanently delete this note?',
-                                  confirmText: 'Delete',
+                                  title: Translation.t('delete_note'),
+                                  message: Translation.t('delete_note_confirm'),
+                                  confirmText: Translation.t('delete'),
                                   onConfirm: () {
                                     context.read<UserDataBloc>().add(DeleteNoteEvent(note.id));
                                   },
@@ -170,7 +171,7 @@ class _NotesScreenState extends State<NotesScreen> {
                         ),
                         if (note.refTitle != null && note.refTitle!.isNotEmpty) ...[
                           const SizedBox(height: 2),
-                          Text('Ref: ${note.refTitle}', style: const TextStyle(fontSize: 12, color: AppColors.goldAccent, fontWeight: FontWeight.w600)),
+                          Text('${Translation.t('ref')}: ${note.refTitle}', style: const TextStyle(fontSize: 12, color: AppColors.goldAccent, fontWeight: FontWeight.w600)),
                         ],
                         const SizedBox(height: 8),
                         Text(

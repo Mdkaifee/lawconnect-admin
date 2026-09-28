@@ -81,6 +81,16 @@ export async function autoSeed() {
           ],
         },
         {
+          name: "Bharatiya Sakshya Adhiniyam (BSA), 2023",
+          shortName: "BSA",
+          year: 2023,
+          type: "Central",
+          description: "Law of evidence in India replacing the Indian Evidence Act, 1872.",
+          sections: [
+            { number: "Section 63", title: "Admissibility of electronic records", text: "Electronic records are admissible subject to the conditions and certificate requirements prescribed by law." },
+          ],
+        },
+        {
           name: "Indian Contract Act, 1872",
           shortName: "Contract Act",
           year: 1872,
