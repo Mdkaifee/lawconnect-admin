@@ -22,104 +22,115 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final isDark = AppTheme.isDark(context);
+
     return ListenableBuilder(
       listenable: Translation.instance,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
+          backgroundColor: AppTheme.backgroundColor(context),
           appBar: AppBar(
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.primaryNavy,
-            surfaceTintColor: Colors.white,
+            backgroundColor: AppTheme.appBarColor(context),
+            foregroundColor: textPrimary,
+            surfaceTintColor: AppTheme.appBarColor(context),
             elevation: 0,
             automaticallyImplyLeading: false,
             leading: widget.showBackButton
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+                    icon: Icon(Icons.arrow_back, color: textPrimary),
                     onPressed: () => Navigator.of(context).pop(),
                   )
                 : null,
             title: Text(
               Translation.t('saved_bookmarks'),
-              style: const TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800, fontSize: 18),
+              style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
             ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.borderLight),
-        ),
-      ),
-      body: BlocBuilder<UserDataBloc, UserDataState>(
-        builder: (context, state) {
-          if (state is UserDataLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
-          }
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Divider(height: 1, color: AppTheme.dividerColor(context)),
+            ),
+          ),
+          body: BlocBuilder<UserDataBloc, UserDataState>(
+            builder: (context, state) {
+              if (state is UserDataLoading) {
+                return Center(child: CircularProgressIndicator(color: primaryOrGold));
+              }
 
-          if (state is UserDataLoaded) {
-            if (state.bookmarks.isEmpty) {
-              return const Center(child: Text('No bookmarks saved yet.'));
-            }
+              if (state is UserDataLoaded) {
+                if (state.bookmarks.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No bookmarks saved yet.',
+                      style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                    ),
+                  );
+                }
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.bookmarks.length,
-              itemBuilder: (context, idx) {
-                final b = state.bookmarks[idx];
-                return Card(
-                  elevation: 0,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: AppColors.borderLight),
-                  ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.goldAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: state.bookmarks.length,
+                  itemBuilder: (context, idx) {
+                    final b = state.bookmarks[idx];
+                    return Card(
+                      elevation: 0,
+                      color: cardBg,
+                      margin: const EdgeInsets.only(bottom: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: AppTheme.borderColor(context)),
                       ),
-                      child: Icon(
-                        b.refType == 'section' ? Icons.menu_book : Icons.account_balance,
-                        color: AppColors.goldAccent,
-                        size: 22,
-                      ),
-                    ),
-                    title: Text(
-                      b.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.primaryNavy),
-                    ),
-                    subtitle: b.subtitle != null
-                        ? Text(b.subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
-                        : null,
-                    trailing: IconButton(
-                      icon: const Icon(Icons.bookmark_remove, color: AppColors.danger, size: 20),
-                      onPressed: () {
-                        context.read<UserDataBloc>().add(
-                              ToggleBookmarkEvent(
-                                refType: b.refType,
-                                refId: b.refId,
-                                title: b.title,
-                              ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldAccent.withValues(alpha: isDark ? 0.2 : 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            b.refType == 'section' ? Icons.menu_book : Icons.account_balance,
+                            color: isDark ? AppColors.goldAccentLight : AppColors.goldAccent,
+                            size: 22,
+                          ),
+                        ),
+                        title: Text(
+                          b.title,
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textPrimary),
+                        ),
+                        subtitle: b.subtitle != null
+                            ? Text(b.subtitle!, style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)))
+                            : null,
+                        trailing: IconButton(
+                          icon: const Icon(Icons.bookmark_remove, color: AppColors.danger, size: 20),
+                          onPressed: () {
+                            context.read<UserDataBloc>().add(
+                                  ToggleBookmarkEvent(
+                                    refType: b.refType,
+                                    refId: b.refId,
+                                    title: b.title,
+                                  ),
+                                );
+                          },
+                        ),
+                        onTap: () {
+                          if (b.refType == 'case') {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => CaseDetailScreen(caseId: b.refId)),
                             );
-                      },
-                    ),
-                    onTap: () {
-                      if (b.refType == 'case') {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => CaseDetailScreen(caseId: b.refId)),
-                        );
-                      }
-                    },
-                  ),
+                          }
+                        },
+                      ),
+                    );
+                  },
                 );
-              },
-            );
-          }
+              }
 
-          return const SizedBox.shrink();
-        },
-      ),
-    );
+              return const SizedBox.shrink();
+            },
+          ),
+        );
       },
     );
   }

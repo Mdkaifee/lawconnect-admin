@@ -70,46 +70,56 @@ class _NotesScreenState extends State<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: widget.showBackButton
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+                icon: Icon(Icons.arrow_back, color: textPrimary),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: const Text(
+        title: Text(
           'Case Study Notes',
-          style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800, fontSize: 18),
+          style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.borderLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showEditNoteDialog(context),
-        backgroundColor: AppColors.primaryNavy,
+        backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
         ),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: isDark ? AppColors.primaryNavyDark : Colors.white),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(
         builder: (context, state) {
           if (state is UserDataLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+            return Center(child: CircularProgressIndicator(color: primaryOrGold));
           }
 
           if (state is UserDataLoaded) {
             if (state.notes.isEmpty) {
-              return const Center(child: Text('No notes yet. Tap + to create your first note!'));
+              return Center(
+                child: Text(
+                  'No notes yet. Tap + to create your first note!',
+                  style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                ),
+              );
             }
 
             return ListView.builder(
@@ -119,10 +129,11 @@ class _NotesScreenState extends State<NotesScreen> {
                 final note = state.notes[idx];
                 return Card(
                   elevation: 0,
+                  color: cardBg,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: AppColors.borderLight),
+                    side: BorderSide(color: AppTheme.borderColor(context)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -134,7 +145,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             Expanded(
                               child: Text(
                                 note.title,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.primaryNavy),
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: textPrimary),
                               ),
                             ),
                             IconButton(
@@ -162,7 +173,10 @@ class _NotesScreenState extends State<NotesScreen> {
                           Text('Ref: ${note.refTitle}', style: const TextStyle(fontSize: 12, color: AppColors.goldAccent, fontWeight: FontWeight.w600)),
                         ],
                         const SizedBox(height: 8),
-                        Text(note.content, style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary, height: 1.45)),
+                        Text(
+                          note.content,
+                          style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondaryColor(context), height: 1.45),
+                        ),
                       ],
                     ),
                   ),

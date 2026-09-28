@@ -21,24 +21,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+          icon: Icon(Icons.arrow_back, color: textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Reading History',
-          style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800, fontSize: 18),
+          style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined, color: AppColors.primaryNavy),
+            icon: Icon(Icons.delete_sweep_outlined, color: primaryOrGold),
             onPressed: () {
               CustomConfirmationDialog.show(
                 context,
@@ -52,20 +56,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
             },
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.borderLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: BlocBuilder<UserDataBloc, UserDataState>(
         builder: (context, state) {
           if (state is UserDataLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+            return Center(child: CircularProgressIndicator(color: primaryOrGold));
           }
 
           if (state is UserDataLoaded) {
             if (state.history.isEmpty) {
-              return const Center(child: Text('No reading history recorded yet.'));
+              return Center(
+                child: Text(
+                  'No reading history recorded yet.',
+                  style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                ),
+              );
             }
 
             return ListView.builder(
@@ -79,16 +88,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
                 return Card(
                   elevation: 0,
+                  color: cardBg,
                   margin: const EdgeInsets.only(bottom: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
-                    side: const BorderSide(color: AppColors.borderLight),
+                    side: BorderSide(color: AppTheme.borderColor(context)),
                   ),
                   child: ListTile(
-                    leading: const Icon(Icons.history, color: AppColors.primaryNavy),
+                    leading: Icon(Icons.history, color: primaryOrGold),
                     title: Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: textPrimary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
