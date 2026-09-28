@@ -11,12 +11,14 @@ import 'repositories/update_repository.dart';
 import 'repositories/post_repository.dart';
 import 'repositories/user_data_repository.dart';
 import 'repositories/user_repository.dart';
+import 'repositories/notification_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'blocs/case/case_bloc.dart';
 import 'blocs/act/act_bloc.dart';
 import 'blocs/update/update_bloc.dart';
 import 'blocs/post/post_bloc.dart';
 import 'blocs/user_data/user_data_bloc.dart';
+import 'blocs/notification/notification_bloc.dart';
 import 'screens/splash_screen.dart';
 import 'widgets/no_internet_overlay.dart';
 
@@ -37,6 +39,7 @@ void main() async {
   final postRepository = PostRepository(authRepo: authRepository);
   final userDataRepository = UserDataRepository(authRepo: authRepository);
   final userRepository = UserRepository(authRepo: authRepository);
+  final notificationRepository = NotificationRepository(authRepo: authRepository);
 
   runApp(
     LawHubApp(
@@ -47,6 +50,7 @@ void main() async {
       postRepository: postRepository,
       userDataRepository: userDataRepository,
       userRepository: userRepository,
+      notificationRepository: notificationRepository,
     ),
   );
 }
@@ -59,6 +63,7 @@ class LawHubApp extends StatelessWidget {
   final PostRepository postRepository;
   final UserDataRepository userDataRepository;
   final UserRepository userRepository;
+  final NotificationRepository notificationRepository;
 
   const LawHubApp({
     super.key,
@@ -69,6 +74,7 @@ class LawHubApp extends StatelessWidget {
     required this.postRepository,
     required this.userDataRepository,
     required this.userRepository,
+    required this.notificationRepository,
   });
 
   @override
@@ -82,6 +88,7 @@ class LawHubApp extends StatelessWidget {
         RepositoryProvider.value(value: postRepository),
         RepositoryProvider.value(value: userDataRepository),
         RepositoryProvider.value(value: userRepository),
+        RepositoryProvider.value(value: notificationRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -91,6 +98,7 @@ class LawHubApp extends StatelessWidget {
           BlocProvider(create: (_) => UpdateBloc(updateRepository: updateRepository)),
           BlocProvider(create: (_) => PostBloc(postRepository: postRepository)),
           BlocProvider(create: (_) => UserDataBloc(userDataRepository: userDataRepository)..add(LoadUserDataEvent())),
+          BlocProvider(create: (_) => NotificationBloc(notificationRepository: notificationRepository)..add(const LoadNotificationsEvent())),
         ],
         child: AnimatedBuilder(
           animation: Translation.instance,
