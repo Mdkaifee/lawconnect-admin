@@ -83,11 +83,11 @@ export async function autoSeed() {
         ],
       },
       {
-        name: "Bharatiya Sakshya Adhiniyam (BSA / BAS), 2023",
+        name: "Bharatiya Sakshya Adhiniyam (BSA), 2023",
         shortName: "BSA",
         year: 2023,
         type: "Central",
-        description: "Law of evidence in India replacing the Indian Evidence Act, 1872 (also referred to as BSA or BAS / Bharatiya Sakshya Act).",
+        description: "Law of evidence in India replacing the Indian Evidence Act, 1872.",
         published: true,
         sections: [
           { number: "Section 63", title: "Admissibility of electronic records", text: "Electronic records are admissible subject to the conditions and certificate requirements prescribed by law." },
