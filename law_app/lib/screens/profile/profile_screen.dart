@@ -164,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.bookmark_border_rounded,
-                    title: 'My Posts',
+                    title: Translation.t('my_posts'),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const CommunityFeedScreen(showBackButton: true)),
@@ -174,7 +174,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.assignment_outlined,
-                    title: 'My Notes',
+                    title: Translation.t('my_notes'),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const NotesScreen(showBackButton: true)),
@@ -184,7 +184,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.bookmark_outline_rounded,
-                    title: 'Bookmarks',
+                    title: Translation.t('bookmarks'),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const BookmarksScreen(showBackButton: true)),
@@ -194,7 +194,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.history_rounded,
-                    title: 'Reading History',
+                    title: Translation.t('reading_history'),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const HistoryScreen()),
@@ -204,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.people_outline_rounded,
-                    title: 'Users',
+                    title: Translation.t('users'),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const UsersScreen()),
                     ),
@@ -212,7 +212,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.settings_outlined,
-                    title: 'Settings',
+                    title: Translation.t('settings'),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
@@ -220,7 +220,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.shield_outlined,
-                    title: 'Privacy Policy',
+                    title: Translation.t('privacy_policy'),
                     onTap: () => UrlHelper.openInAppUrl(
                       context,
                       'https://rishikesh-law-hub-admin.onrender.com/privacy-policy',
@@ -229,13 +229,13 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.help_outline_rounded,
-                    title: 'Help & Support',
+                    title: Translation.t('help_support'),
                     onTap: () => _openGmailSupport(context),
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.info_outline_rounded,
-                    title: 'About Us',
+                    title: Translation.t('about_us'),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AboutUsScreen()),
                     ),
@@ -243,14 +243,14 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.logout_rounded,
-                    title: 'Log Out',
+                    title: Translation.t('log_out'),
                     onTap: () {
                       CustomConfirmationDialog.show(
                         context,
-                        title: 'Confirm Sign Out',
-                        message: 'Are you sure you want to log out of Rishikesh Law Hub?',
-                        confirmText: 'Log Out',
-                        cancelText: 'Cancel',
+                        title: Translation.t('confirm_sign_out'),
+                        message: Translation.t('confirm_sign_out_message'),
+                        confirmText: Translation.t('log_out'),
+                        cancelText: Translation.t('cancel'),
                         icon: Icons.logout_rounded,
                         iconColor: const Color(0xFFEF4444),
                         onConfirm: () {
