@@ -229,25 +229,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 class _ProfileField extends StatelessWidget {
   final String label;
-  final String? hint;
   final TextEditingController controller;
-  final ValueChanged<String>? onChanged;
 
   const _ProfileField({
     required this.label,
     required this.controller,
-    this.hint,
-    this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        hintText: hint,
         filled: true,
         fillColor: Colors.white,
       ),
