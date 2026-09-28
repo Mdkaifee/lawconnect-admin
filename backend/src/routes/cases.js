@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Case } from "../models/index.js";
+import { Case, AppNotification } from "../models/index.js";
 import { IndianKanoonService } from "../services/indianKanoon.js";
 import { auth, requireAdmin, asyncHandler } from "../middleware/auth.js";
 import { sanitizeLogOutput } from "../utils/security.js";
@@ -29,10 +29,17 @@ router.post(
   asyncHandler(async (_req, res) => {
     const result = await IndianKanoonService.syncLandmarkCasesToDb(Case);
     if ((result?.count || 0) > 0) {
+      await AppNotification.create({
+        userId: null,
+        title: "New Landmark Judgments Added",
+        body: `${result.count} new landmark judgments were synced to the library.`,
+        type: "judgment",
+        refType: "general",
+      });
       await notifyAllUsers({
         title: "New judgments added",
         body: `${result.count} judgments were added to the case library.`,
-        data: { type: "case_sync", count: result.count },
+        data: { type: "judgment", refType: "general", count: result.count },
       });
     }
     res.json(result);
@@ -309,10 +316,18 @@ router.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const item = await Case.create(req.body);
-    await notifyAllUsers({
-      title: "New landmark case",
+    await AppNotification.create({
+      userId: null,
+      title: "New Landmark Judgment",
       body: item.title,
-      data: { type: "case", caseId: item._id.toString() },
+      type: "judgment",
+      refType: "case",
+      refId: item._id.toString(),
+    });
+    await notifyAllUsers({
+      title: "New Landmark Judgment",
+      body: item.title,
+      data: { type: "judgment", refType: "case", refId: item._id.toString(), caseId: item._id.toString() },
     });
     res.status(201).json({ item });
   }),
