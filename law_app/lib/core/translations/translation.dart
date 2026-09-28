@@ -125,4 +125,18 @@ const Map<String, Map<String, String>> _translations = {
   'name_required': {'en': 'Name is required', 'hi': 'नाम अनिवार्य है'},
   'profile_updated': {'en': 'Profile updated successfully', 'hi': 'प्रोफाइल सफलतापूर्वक अपडेट हो गई'},
   'tap_to_explore': {'en': 'Tap to explore', 'hi': 'देखने के लिए टैप करें'},
+  'notifications': {'en': 'Notifications', 'hi': 'नोटिफिकेशन्स'},
+  'no_notifications': {'en': 'No notifications yet', 'hi': 'अभी कोई नोटिफिकेशन नहीं है'},
+  'no_notifications_subtitle': {
+    'en': 'You are all caught up with latest legal alerts & updates',
+    'hi': 'आप सभी नवीनतम कानूनी अलर्ट और अपडेट से पूरी तरह अवगत हैं',
+  },
+  'mark_all_as_read': {'en': 'Mark all as read', 'hi': 'सभी पढ़े हुए चिह्नित करें'},
+  'all_notifications': {'en': 'All', 'hi': 'सभी'},
+  'unread_notifications': {'en': 'Unread', 'hi': 'अपठित'},
+  'notification_dismissed': {'en': 'Notification dismissed', 'hi': 'नोटिफिकेशन हटा दिया गया'},
+  'legal_announcement': {'en': 'Legal Announcement', 'hi': 'कानूनी घोषणा'},
+  'close': {'en': 'Close', 'hi': 'बंद करें'},
+  'view_details': {'en': 'View Details', 'hi': 'विवरण देखें'},
 };
+
