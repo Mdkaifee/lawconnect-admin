@@ -410,9 +410,11 @@ users.post(
     const following = (currentUser.following || []).map((id) => id.toString());
     const incoming = (currentUser.followRequests || []).map((id) => id.toString());
     const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
+    const targetFollowing = (targetUser.following || []).map((id) => id.toString());
 
     if (following.includes(targetUserId)) {
-      return res.json({ ok: true, status: "friend", isFollowing: true });
+      await User.findByIdAndUpdate(req.auth.id, { $pull: { following: targetUserId } });
+      return res.json({ ok: true, status: "none", isFollowing: false });
     }
 
     if (incoming.includes(targetUserId)) {
@@ -423,6 +425,11 @@ users.post(
         }),
         User.findByIdAndUpdate(targetUserId, { $addToSet: { following: req.auth.id } }),
       ]);
+      return res.json({ ok: true, status: "friend", isFollowing: true });
+    }
+
+    if (targetFollowing.includes(req.auth.id)) {
+      await User.findByIdAndUpdate(req.auth.id, { $addToSet: { following: targetUserId } });
       return res.json({ ok: true, status: "friend", isFollowing: true });
     }
 
