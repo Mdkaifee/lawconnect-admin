@@ -424,12 +424,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
-        foregroundColor: AppColors.primaryNavy,
+        backgroundColor: bgColor,
+        foregroundColor: textColor,
         elevation: 0,
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: AppColors.primaryNavy),
+            icon: Icon(Icons.menu_rounded, color: textColor),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
@@ -438,13 +438,13 @@ class _HomeScreenState extends State<HomeScreen> {
             BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
               final name = state is Authenticated ? state.user.name : 'Advocate';
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(_timeBasedGreeting(), style: const TextStyle(fontSize: 11, color: AppColors.primaryNavy)),
+                Text(_timeBasedGreeting(), style: TextStyle(fontSize: 11, color: textMuted)),
                 Row(children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.primaryNavy)),
+                  Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor)),
                   const SizedBox(width: 3),
                   const Icon(Icons.waving_hand_rounded, size: 13, color: AppColors.goldAccent),
                 ]),
-                Text(Translation.t('learn_explore_grow'), style: TextStyle(fontSize: 9, color: AppColors.primaryNavy)),
+                Text(Translation.t('learn_explore_grow'), style: TextStyle(fontSize: 9, color: textMuted)),
               ]);
             }),
           ],
@@ -457,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 alignment: Alignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primaryNavy),
+                    icon: Icon(Icons.notifications_none_rounded, color: textColor),
                     tooltip: Translation.t('notifications'),
                     onPressed: () {
                       Navigator.of(context).push(
@@ -515,9 +515,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                decoration: const BoxDecoration(
-                  color: AppColors.backgroundLight,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(24),
                     bottomRight: Radius.circular(24),
                   ),
@@ -535,11 +535,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardColor,
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: borderColor),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -547,14 +548,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.search, color: AppColors.textMuted, size: 22),
-                            SizedBox(width: 10),
+                            Icon(Icons.search, color: isDark ? AppColors.goldAccentLight : AppColors.textMuted, size: 22),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 Translation.t('quick_search_hint'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: AppColors.textMuted, fontSize: 13.5),
+                                style: TextStyle(color: textMuted, fontSize: 13.5),
                               ),
                             ),
                           ],
@@ -572,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 margin: EdgeInsets.zero,
                 height: 156,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF0F1827) : Colors.white,
                   image: const DecorationImage(
                     image: AssetImage('assets/sci.png'),
                     fit: BoxFit.fill,
@@ -588,9 +589,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                           colors: [
-                            Colors.white.withValues(alpha: 0.84),
-                            Colors.white.withValues(alpha: 0.48),
-                            Colors.white.withValues(alpha: 0),
+                            (isDark ? const Color(0xFF090E17) : Colors.white).withValues(alpha: 0.88),
+                            (isDark ? const Color(0xFF090E17) : Colors.white).withValues(alpha: 0.55),
+                            (isDark ? const Color(0xFF090E17) : Colors.white).withValues(alpha: 0),
                           ],
                           stops: const [0, 0.45, 0.72],
                         ),
@@ -606,13 +607,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               maxLines: 7,
                               overflow: TextOverflow.visible,
                               style: TextStyle(
-                                color: const Color(0xFF061328),
+                                color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF061328),
                                 fontSize: 10.8,
                                 height: 1.16,
                                 fontWeight: FontWeight.w800,
                                 shadows: [
                                   Shadow(
-                                    color: Colors.white.withValues(alpha: 0.95),
+                                    color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.95),
                                     blurRadius: 4,
                                   ),
                                 ],
@@ -652,7 +653,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primaryNavy,
+                        color: textColor,
                       ),
                     ),
                     TextButton(
@@ -662,7 +663,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                         if (mounted) context.read<ActBloc>().add(const LoadActsEvent());
                       },
-                      child: Text(Translation.t('view_all'), style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
+                      child: Text(
+                        Translation.t('view_all'),
+                        style: TextStyle(
+                          color: isDark ? AppColors.goldAccentLight : AppColors.primaryNavy,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -674,9 +681,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     return _KeyBareActsList(acts: acts);
                   }
                   if (state is ActInitial || state is ActLoading) {
-                    return const SizedBox(
+                    return SizedBox(
                       height: 105,
-                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy)),
+                      child: Center(child: CircularProgressIndicator(color: isDark ? AppColors.goldAccentLight : AppColors.primaryNavy)),
                     );
                   }
                   if (state is ActError) {
@@ -696,7 +703,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primaryNavy,
+                    color: textColor,
                   ),
                 ),
               ),
@@ -705,10 +712,10 @@ class _HomeScreenState extends State<HomeScreen> {
               BlocBuilder<CaseBloc, CaseState>(
                 builder: (context, state) {
                   if (state is CaseLoading) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: CircularProgressIndicator(color: AppColors.primaryNavy),
+                        padding: const EdgeInsets.all(32),
+                        child: CircularProgressIndicator(color: isDark ? AppColors.goldAccentLight : AppColors.primaryNavy),
                       ),
                     );
                   }
@@ -749,7 +756,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primaryNavy,
+                        color: textColor,
                       ),
                     ),
                   ],
@@ -766,21 +773,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: AppColors.borderLight),
+                            side: BorderSide(color: borderColor),
                           ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                                color: isDark ? const Color(0xFF1E2F4D) : AppColors.primaryNavy.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.article_outlined, color: AppColors.primaryNavy, size: 22),
+                              child: Icon(Icons.article_outlined, color: isDark ? AppColors.goldAccentLight : AppColors.primaryNavy, size: 22),
                             ),
                             title: Text(
                               u.title,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: textColor),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -788,7 +795,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
                                 '${u.source} • ${u.category}',
-                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                style: TextStyle(fontSize: 11, color: textMuted),
                               ),
                             ),
                           ),
@@ -816,6 +823,12 @@ class _KeyBareActsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeManager.instance.isDarkMode;
+    final cardBg = isDark ? const Color(0xFF131D2D) : Colors.white;
+    final cardBorder = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final titleColor = isDark ? AppColors.textDarkPrimary : AppColors.primaryNavy;
+    final textMuted = isDark ? AppColors.textDarkMuted : AppColors.textMuted;
+
     return SizedBox(
       height: 105,
       child: ListView.separated(
@@ -839,9 +852,9 @@ class _KeyBareActsList extends StatelessWidget {
               width: 140,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderLight),
+                border: Border.all(color: cardBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -851,18 +864,27 @@ class _KeyBareActsList extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     act.shortName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: AppColors.primaryNavy,
+                      color: titleColor,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     act.sectionsCount > 0 ? '${act.sectionsCount} Sections' : 'Tap to explore',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: textMuted),
                   ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
                 ],
               ),
             ),
