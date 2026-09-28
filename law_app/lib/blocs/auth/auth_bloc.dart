@@ -55,6 +55,16 @@ class DeleteAccountEvent extends AuthEvent {
   List<Object?> get props => [reason];
 }
 
+class UploadProfilePhotoEvent extends AuthEvent {
+  final List<int> imageBytes;
+  final String mimeType;
+
+  const UploadProfilePhotoEvent({required this.imageBytes, required this.mimeType});
+
+  @override
+  List<Object?> get props => [imageBytes, mimeType];
+}
+
 // States
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -94,6 +104,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterEvent>(_onRegister);
     on<LogoutEvent>(_onLogout);
     on<UpdateProfileEvent>(_onUpdateProfile);
+    on<UploadProfilePhotoEvent>(_onUploadProfilePhoto);
     on<DeleteAccountEvent>(_onDeleteAccount);
   }
 
@@ -148,6 +159,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         photoUrl: event.photoUrl,
         headline: event.headline,
         college: event.college,
+      );
+      emit(Authenticated(user));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+      final currentUser = _authRepository.currentUser;
+      if (currentUser != null) emit(Authenticated(currentUser));
+    }
+  }
+
+  Future<void> _onUploadProfilePhoto(UploadProfilePhotoEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authRepository.uploadProfilePhoto(
+        imageBytes: event.imageBytes,
+        mimeType: event.mimeType,
       );
       emit(Authenticated(user));
     } catch (e) {

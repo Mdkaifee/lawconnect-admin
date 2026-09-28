@@ -115,6 +115,30 @@ class AuthRepository {
     throw Exception(data['error'] ?? 'Failed to update profile.');
   }
 
+  Future<UserModel> uploadProfilePhoto({
+    required List<int> imageBytes,
+    required String mimeType,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.me}/photo'),
+      headers: authHeaders,
+      body: jsonEncode({
+        'imageBase64': base64Encode(imageBytes),
+        'mimeType': mimeType,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      _currentUser = UserModel.fromJson(data['user']);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_user', jsonEncode(_currentUser!.toJson()));
+      return _currentUser!;
+    }
+
+    throw Exception(data['error'] ?? 'Failed to upload profile photo.');
+  }
+
   Future<void> logout() async {
     _token = null;
     _currentUser = null;

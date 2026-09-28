@@ -198,6 +198,49 @@ router.put(
   }),
 );
 
+router.post(
+  "/me/photo",
+  auth(),
+  asyncHandler(async (req, res) => {
+    if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
+    const { imageBase64, mimeType = "image/jpeg" } = req.body || {};
+    if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
+
+    const cleanBase64 = imageBase64.includes(",") ? imageBase64.split(",").pop() : imageBase64;
+    const approxBytes = Math.ceil((cleanBase64.length * 3) / 4);
+    if (approxBytes > 2 * 1024 * 1024) {
+      return res.status(400).json({ error: "Profile image must be under 2MB." });
+    }
+
+    const publicBase = process.env.PUBLIC_API_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const photoUrl = `${publicBase.replace(/\/$/, "")}/api/auth/users/${req.auth.id}/photo`;
+    const user = await User.findByIdAndUpdate(
+      req.auth.id,
+      {
+        $set: {
+          photoData: cleanBase64,
+          photoMimeType: mimeType,
+          photoUrl,
+        },
+      },
+      { new: true },
+    ).select("-passwordHash -photoData");
+
+    res.json({ user, photoUrl });
+  }),
+);
+
+router.get(
+  "/users/:id/photo",
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id).select("photoData photoMimeType");
+    if (!user || !user.photoData) return res.status(404).json({ error: "Photo not found" });
+    res.setHeader("Content-Type", user.photoMimeType || "image/jpeg");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.send(Buffer.from(user.photoData, "base64"));
+  }),
+);
+
 /* ---- Connection request / accept friend (Prevent Self-Follow) ---- */
 router.post(
   "/follow/:authorId",

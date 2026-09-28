@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
@@ -17,7 +18,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _headlineController;
   late final TextEditingController _collegeController;
-  late final TextEditingController _photoUrlController;
+  final ImagePicker _picker = ImagePicker();
+  String? _photoUrl;
+  bool _savingProfile = false;
 
   @override
   void initState() {
@@ -25,7 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.user.name);
     _headlineController = TextEditingController(text: widget.user.headline);
     _collegeController = TextEditingController(text: widget.user.college);
-    _photoUrlController = TextEditingController(text: widget.user.photoUrl ?? '');
+    _photoUrl = widget.user.photoUrl;
   }
 
   @override
@@ -33,8 +36,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _headlineController.dispose();
     _collegeController.dispose();
-    _photoUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    final picked = await _picker.pickImage(
+      source: source,
+      imageQuality: 72,
+      maxWidth: 900,
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    final mimeType = picked.mimeType ?? (picked.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+    if (!mounted) return;
+    context.read<AuthBloc>().add(UploadProfilePhotoEvent(imageBytes: bytes, mimeType: mimeType));
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primaryNavy),
+                title: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickPhoto(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryNavy),
+                title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickPhoto(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _save() {
@@ -51,9 +101,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             name: name,
             headline: _headlineController.text.trim(),
             college: _collegeController.text.trim(),
-            photoUrl: _photoUrlController.text.trim().isEmpty ? null : _photoUrlController.text.trim(),
+            photoUrl: _photoUrl,
           ),
         );
+    _savingProfile = true;
   }
 
   @override
@@ -61,10 +112,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
+          _photoUrl = state.user.photoUrl;
+          if (mounted) setState(() {});
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated successfully'), backgroundColor: AppColors.success),
           );
-          Navigator.of(context).pop();
+          if (_savingProfile) {
+            _savingProfile = false;
+            Navigator.of(context).pop();
+          }
         }
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -88,22 +144,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         body: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
             final isLoading = state is AuthLoading;
-            final previewUrl = _photoUrlController.text.trim();
+            final previewUrl = state is Authenticated ? state.user.photoUrl ?? _photoUrl ?? '' : _photoUrl ?? '';
 
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
                 Center(
-                  child: CircleAvatar(
-                    radius: 44,
-                    backgroundColor: AppColors.primaryNavy,
-                    backgroundImage: previewUrl.isNotEmpty ? NetworkImage(previewUrl) : null,
-                    child: previewUrl.isEmpty
-                        ? Text(
-                            _nameController.text.trim().isNotEmpty ? _nameController.text.trim()[0].toUpperCase() : 'U',
-                            style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
-                          )
-                        : null,
+                  child: GestureDetector(
+                    onTap: isLoading ? null : _showPhotoOptions,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 44,
+                          backgroundColor: AppColors.primaryNavy,
+                          backgroundImage: previewUrl.isNotEmpty ? NetworkImage(previewUrl) : null,
+                          child: previewUrl.isEmpty
+                              ? Text(
+                                  _nameController.text.trim().isNotEmpty ? _nameController.text.trim()[0].toUpperCase() : 'U',
+                                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: AppColors.goldAccent,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Center(
+                  child: Text(
+                    'Tap photo to change',
+                    style: TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -112,13 +195,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _ProfileField(label: 'Headline', controller: _headlineController),
                 const SizedBox(height: 14),
                 _ProfileField(label: 'College / Organization', controller: _collegeController),
-                const SizedBox(height: 14),
-                _ProfileField(
-                  label: 'Profile Image URL',
-                  controller: _photoUrlController,
-                  hint: 'Paste uploaded photo link here',
-                  onChanged: (_) => setState(() {}),
-                ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: isLoading ? null : _save,

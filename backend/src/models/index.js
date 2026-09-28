@@ -20,6 +20,8 @@ const userSchema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     photoUrl: String,
+    photoData: String,
+    photoMimeType: String,
     headline: { type: String, default: "Law Student | Future Advocate" },
     college: { type: String, default: "Galgotias University" },
     blocked: { type: Boolean, default: false },
