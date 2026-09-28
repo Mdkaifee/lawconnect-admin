@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../models/user_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -57,9 +58,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Update Profile Photo',
-          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primaryNavy),
+        title: Text(
+          Translation.t('update_profile_photo'),
+          style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primaryNavy),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -67,7 +68,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primaryNavy),
-              title: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w700)),
+              title: Text(Translation.t('take_photo'), style: const TextStyle(fontWeight: FontWeight.w700)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickPhoto(ImageSource.camera);
@@ -77,7 +78,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryNavy),
-              title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w700)),
+              title: Text(Translation.t('choose_from_gallery'), style: const TextStyle(fontWeight: FontWeight.w700)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickPhoto(ImageSource.gallery);
@@ -93,7 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name is required')),
+        SnackBar(content: Text(Translation.t('name_required'))),
       );
       return;
     }
@@ -111,109 +112,117 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Authenticated) {
-          _photoUrl = state.user.photoUrl;
-          if (mounted) setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully'), backgroundColor: AppColors.success),
-          );
-          if (_savingProfile) {
-            _savingProfile = false;
-            Navigator.of(context).pop();
-          }
-        }
-        if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.danger),
-          );
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.primaryNavy,
-          surfaceTintColor: Colors.white,
-          elevation: 0,
-          title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-          ),
-        ),
-        body: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, state) {
-            final isLoading = state is AuthLoading;
-            final previewUrl = state is Authenticated ? state.user.photoUrl ?? _photoUrl ?? '' : _photoUrl ?? '';
-
-            return ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Center(
-                  child: GestureDetector(
-                    onTap: isLoading ? null : _showPhotoOptions,
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 44,
-                          backgroundColor: AppColors.primaryNavy,
-                          backgroundImage: previewUrl.isNotEmpty ? NetworkImage(previewUrl) : null,
-                          child: previewUrl.isEmpty
-                              ? Text(
-                                  _nameController.text.trim().isNotEmpty ? _nameController.text.trim()[0].toUpperCase() : 'U',
-                                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
-                                )
-                              : null,
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: AppColors.goldAccent,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Center(
-                  child: Text(
-                    'Tap photo to change',
-                    style: TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                _ProfileField(label: 'Name', controller: _nameController),
-                const SizedBox(height: 14),
-                _ProfileField(label: 'Headline', controller: _headlineController),
-                const SizedBox(height: 14),
-                _ProfileField(label: 'College / Organization', controller: _collegeController),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: isLoading ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryNavy,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: isLoading
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Save Profile', style: TextStyle(fontWeight: FontWeight.w800)),
-                ),
-              ],
-            );
+    return ListenableBuilder(
+      listenable: Translation.instance,
+      builder: (context, _) {
+        return BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is Authenticated) {
+              _photoUrl = state.user.photoUrl;
+              if (mounted) setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(Translation.t('profile_updated')), backgroundColor: AppColors.success),
+              );
+              if (_savingProfile) {
+                _savingProfile = false;
+                Navigator.of(context).pop();
+              }
+            }
+            if (state is AuthError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message), backgroundColor: AppColors.danger),
+              );
+            }
           },
-        ),
-      ),
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF8FAFC),
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primaryNavy,
+              surfaceTintColor: Colors.white,
+              elevation: 0,
+              title: Text(
+                Translation.t('edit_profile'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+              bottom: const PreferredSize(
+                preferredSize: Size.fromHeight(1),
+                child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+              ),
+            ),
+            body: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                final isLoading = state is AuthLoading;
+                final previewUrl = state is Authenticated ? state.user.photoUrl ?? _photoUrl ?? '' : _photoUrl ?? '';
+
+                return ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Center(
+                      child: GestureDetector(
+                        onTap: isLoading ? null : _showPhotoOptions,
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 44,
+                              backgroundColor: AppColors.primaryNavy,
+                              backgroundImage: previewUrl.isNotEmpty ? NetworkImage(previewUrl) : null,
+                              child: previewUrl.isEmpty
+                                  ? Text(
+                                      _nameController.text.trim().isNotEmpty ? _nameController.text.trim()[0].toUpperCase() : 'U',
+                                      style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                                    )
+                                  : null,
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldAccent,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        Translation.t('tap_photo_to_change'),
+                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    _ProfileField(label: Translation.t('name'), controller: _nameController),
+                    const SizedBox(height: 14),
+                    _ProfileField(label: Translation.t('headline'), controller: _headlineController),
+                    const SizedBox(height: 14),
+                    _ProfileField(label: Translation.t('college_org'), controller: _collegeController),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryNavy,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: isLoading
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : Text(Translation.t('save_profile'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }
