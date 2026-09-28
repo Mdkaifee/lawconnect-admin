@@ -15,6 +15,7 @@ class PostCard extends StatelessWidget {
   final bool bookmarkBusy;
   final bool isFollowing;
   final bool isSelf;
+  final String? currentUserPhotoUrl;
 
   const PostCard({
     super.key,
@@ -28,6 +29,7 @@ class PostCard extends StatelessWidget {
     this.bookmarkBusy = false,
     this.isFollowing = false,
     this.isSelf = false,
+    this.currentUserPhotoUrl,
   });
 
   String _formatDateTime(String rawDate) {
@@ -49,6 +51,9 @@ class PostCard extends StatelessWidget {
     final cardBg = AppTheme.cardColor(context);
     final isAdminAuthor = post.authorType == 'admin';
     final formattedTime = _formatDateTime(post.createdAt);
+    final effectivePhotoUrl = (post.authorPhotoUrl != null && post.authorPhotoUrl!.isNotEmpty)
+        ? post.authorPhotoUrl
+        : (isSelf ? currentUserPhotoUrl : null);
 
     return Card(
       elevation: 0,
@@ -71,14 +76,25 @@ class PostCard extends StatelessWidget {
                   backgroundColor: isAdminAuthor
                       ? AppColors.goldAccent
                       : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
-                  child: Text(
-                    post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'A',
-                    style: TextStyle(
-                      color: isDark && !isAdminAuthor ? AppColors.goldAccentLight : Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
+                  backgroundImage: (effectivePhotoUrl != null && effectivePhotoUrl.isNotEmpty)
+                      ? NetworkImage(effectivePhotoUrl)
+                      : null,
+                  child: (effectivePhotoUrl != null && effectivePhotoUrl.isNotEmpty)
+                      ? null
+                      : (isSelf
+                          ? Icon(
+                              Icons.person_rounded,
+                              size: 20,
+                              color: isDark ? AppColors.goldAccentLight : Colors.white,
+                            )
+                          : Text(
+                              post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'A',
+                              style: TextStyle(
+                                color: isDark && !isAdminAuthor ? AppColors.goldAccentLight : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            )),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -98,6 +114,24 @@ class PostCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (isSelf) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: (isDark ? AppColors.goldAccentLight : AppColors.primaryNavy).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'You',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? AppColors.goldAccentLight : AppColors.primaryNavy,
+                                ),
+                              ),
+                            ),
+                          ],
                           if (isAdminAuthor) ...[
                             const SizedBox(width: 6),
                             Container(
@@ -108,6 +142,16 @@ class PostCard extends StatelessWidget {
                               ),
                               child: const Text(
                                 'Verified Hub',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.goldAccent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
