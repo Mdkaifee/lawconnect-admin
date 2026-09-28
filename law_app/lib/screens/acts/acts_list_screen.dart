@@ -194,7 +194,7 @@ class _ActsListScreenState extends State<ActsListScreen> {
                             MaterialPageRoute(
                               builder: (_) => ActDetailScreen(actId: act.id, actName: act.name),
                             ),
-                            ).then((_) => _fetchActs());
+                            );
                           },
                         );
                       },

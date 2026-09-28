@@ -150,6 +150,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _timeBasedGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning,';
+    if (hour < 17) return 'Good Afternoon,';
+    if (hour < 21) return 'Good Evening,';
+    return 'Good Night,';
+  }
+
   Widget _buildDrawerMenuItem(
     BuildContext context, {
     required IconData icon,
@@ -395,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
             BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
               final name = state is Authenticated ? state.user.name : 'Advocate';
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Good Morning,', style: TextStyle(fontSize: 11, color: AppColors.primaryNavy)),
+                Text(_timeBasedGreeting(), style: const TextStyle(fontSize: 11, color: AppColors.primaryNavy)),
                 Row(children: [
                   Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.primaryNavy)),
                   const SizedBox(width: 3),

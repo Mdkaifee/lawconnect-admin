@@ -94,6 +94,7 @@ class PostRepository {
       return {
         'ok': data['ok'] == true,
         'isFollowing': data['isFollowing'] == true,
+        'status': data['status']?.toString() ?? '',
         'message': data['message']?.toString() ?? '',
         'following': (data['following'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       };

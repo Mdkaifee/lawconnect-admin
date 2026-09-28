@@ -198,7 +198,119 @@ history.delete(
 /* ---------------- 5. Users & Follow & Public Profile ---------------- */
 export const users = Router();
 
-// Follow / Unfollow user (authenticated app user)
+function getConnectionStatus(currentUser, targetUserId) {
+  const target = targetUserId.toString();
+  const following = (currentUser.following || []).map((id) => id.toString());
+  const incoming = (currentUser.followRequests || []).map((id) => id.toString());
+  if (following.includes(target)) return "friend";
+  if (incoming.includes(target)) return "incoming";
+  return "none";
+}
+
+users.get(
+  "/app/list",
+  auth(),
+  requireUser,
+  asyncHandler(async (req, res) => {
+    const currentUser = await User.findById(req.auth.id).select("following followRequests");
+    if (!currentUser) return res.status(404).json({ error: "User not found" });
+
+    const outgoingUsers = await User.find({ followRequests: req.auth.id }).select("_id");
+    const outgoingIds = new Set(outgoingUsers.map((u) => u._id.toString()));
+
+    const items = await User.find({ _id: { $ne: req.auth.id }, blocked: { $ne: true } })
+      .select("name email photoUrl headline college following followRequests createdAt")
+      .sort({ name: 1 })
+      .lean();
+
+    res.json({
+      items: items.map((u) => ({
+        id: u._id.toString(),
+        name: u.name,
+        email: u.email,
+        photoUrl: u.photoUrl,
+        headline: u.headline,
+        college: u.college,
+        followersCount: Array.isArray(u.following) ? u.following.length : 0,
+        followingCount: Array.isArray(u.following) ? u.following.length : 0,
+        connectionStatus: outgoingIds.has(u._id.toString())
+          ? "requested"
+          : getConnectionStatus(currentUser, u._id),
+      })),
+    });
+  }),
+);
+
+users.post(
+  "/:id/connect",
+  auth(),
+  requireUser,
+  asyncHandler(async (req, res) => {
+    const currentUserId = req.auth.id;
+    const targetUserId = req.params.id;
+    if (currentUserId === targetUserId) return res.status(400).json({ error: "Cannot connect with yourself" });
+
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(targetUserId),
+    ]);
+    if (!currentUser || !targetUser) return res.status(404).json({ error: "User not found" });
+
+    const currentFollowing = (currentUser.following || []).map((id) => id.toString());
+    const incoming = (currentUser.followRequests || []).map((id) => id.toString());
+    const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
+
+    if (currentFollowing.includes(targetUserId)) {
+      return res.json({ ok: true, status: "friend", message: "Already connected" });
+    }
+
+    if (incoming.includes(targetUserId)) {
+      await Promise.all([
+        User.findByIdAndUpdate(currentUserId, {
+          $pull: { followRequests: targetUserId },
+          $addToSet: { following: targetUserId },
+        }),
+        User.findByIdAndUpdate(targetUserId, { $addToSet: { following: currentUserId } }),
+      ]);
+      return res.json({ ok: true, status: "friend", message: "Connection request accepted" });
+    }
+
+    if (!targetRequests.includes(currentUserId)) {
+      await User.findByIdAndUpdate(targetUserId, { $addToSet: { followRequests: currentUserId } });
+    }
+    res.json({ ok: true, status: "requested", message: "Connection request sent" });
+  }),
+);
+
+users.post(
+  "/:id/accept",
+  auth(),
+  requireUser,
+  asyncHandler(async (req, res) => {
+    const currentUserId = req.auth.id;
+    const requesterId = req.params.id;
+    if (currentUserId === requesterId) return res.status(400).json({ error: "Cannot connect with yourself" });
+
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) return res.status(404).json({ error: "User not found" });
+    const incoming = (currentUser.followRequests || []).map((id) => id.toString());
+    if (!incoming.includes(requesterId)) {
+      return res.status(400).json({ error: "No pending request from this user" });
+    }
+
+    await Promise.all([
+      User.findByIdAndUpdate(currentUserId, {
+        $pull: { followRequests: requesterId },
+        $addToSet: { following: requesterId },
+      }),
+      User.findByIdAndUpdate(requesterId, { $addToSet: { following: currentUserId } }),
+    ]);
+
+    res.json({ ok: true, status: "friend", message: "Connection request accepted" });
+  }),
+);
+
+// Connection request / accept friend (authenticated app user)
 users.post(
   "/:id/follow",
   auth(),
@@ -209,22 +321,36 @@ users.post(
       return res.status(400).json({ error: "Cannot follow yourself" });
     }
 
-    const currentUser = await User.findById(req.auth.id);
-    if (!currentUser) return res.status(404).json({ error: "User not found" });
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(req.auth.id),
+      User.findById(targetUserId),
+    ]);
+    if (!currentUser || !targetUser) return res.status(404).json({ error: "User not found" });
 
-    const isFollowing = (currentUser.following || []).some((id) => id.toString() === targetUserId);
+    const following = (currentUser.following || []).map((id) => id.toString());
+    const incoming = (currentUser.followRequests || []).map((id) => id.toString());
+    const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
 
-    if (isFollowing) {
-      await User.findByIdAndUpdate(req.auth.id, {
-        $pull: { following: new mongoose.Types.ObjectId(targetUserId) },
-      });
-    } else {
-      await User.findByIdAndUpdate(req.auth.id, {
-        $addToSet: { following: new mongoose.Types.ObjectId(targetUserId) },
-      });
+    if (following.includes(targetUserId)) {
+      return res.json({ ok: true, status: "friend", isFollowing: true });
     }
 
-    res.json({ isFollowing: !isFollowing });
+    if (incoming.includes(targetUserId)) {
+      await Promise.all([
+        User.findByIdAndUpdate(req.auth.id, {
+          $pull: { followRequests: targetUserId },
+          $addToSet: { following: targetUserId },
+        }),
+        User.findByIdAndUpdate(targetUserId, { $addToSet: { following: req.auth.id } }),
+      ]);
+      return res.json({ ok: true, status: "friend", isFollowing: true });
+    }
+
+    if (!targetRequests.includes(req.auth.id)) {
+      await User.findByIdAndUpdate(targetUserId, { $addToSet: { followRequests: req.auth.id } });
+    }
+
+    res.json({ ok: true, status: "requested", isFollowing: false });
   }),
 );
 

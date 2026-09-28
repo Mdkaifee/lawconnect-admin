@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../repositories/act_repository.dart';
 import '../../repositories/user_data_repository.dart';
 
 class ActDetailScreen extends StatefulWidget {
@@ -20,16 +21,19 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
   final TextEditingController _sectionSearchController = TextEditingController();
   String _sectionQuery = '';
   final Set<String> _bookmarkBusy = {};
+  ActBloc? _actBloc;
 
   @override
-  void initState() {
-    super.initState();
-    context.read<ActBloc>().add(LoadActDetailsEvent(widget.actId));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _actBloc ??= ActBloc(actRepository: context.read<ActRepository>())
+      ..add(LoadActDetailsEvent(widget.actId));
   }
 
   @override
   void dispose() {
     _sectionSearchController.dispose();
+    _actBloc?.close();
     super.dispose();
   }
 
@@ -60,6 +64,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
         ),
       ),
       body: BlocBuilder<ActBloc, ActState>(
+        bloc: _actBloc,
         builder: (context, state) {
           if (state is ActLoading) {
             return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));

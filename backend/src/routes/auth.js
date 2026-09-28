@@ -193,7 +193,7 @@ router.put(
   }),
 );
 
-/* ---- Follow / Unfollow Author (Prevent Self-Follow) ---- */
+/* ---- Connection request / accept friend (Prevent Self-Follow) ---- */
 router.post(
   "/follow/:authorId",
   auth(),
@@ -207,38 +207,65 @@ router.post(
       return res.status(400).json({ error: "You cannot follow yourself" });
     }
 
-    const currentUser = await User.findById(currentUserId);
-    if (!currentUser) return res.status(404).json({ error: "User not found" });
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(authorId),
+    ]);
+    if (!currentUser || !targetUser) return res.status(404).json({ error: "User not found" });
 
-    const followingList = (currentUser.following || []).map((id) => id.toString());
-    const isAlreadyFollowing = followingList.includes(authorId);
+    const currentFollowing = (currentUser.following || []).map((id) => id.toString());
+    const targetRequests = (targetUser.followRequests || []).map((id) => id.toString());
+    const currentIncoming = (currentUser.followRequests || []).map((id) => id.toString());
 
-    let updatedUser;
-    if (isAlreadyFollowing) {
-      updatedUser = await User.findByIdAndUpdate(
-        currentUserId,
-        { $pull: { following: authorId } },
-        { new: true },
-      );
-    } else {
-      updatedUser = await User.findByIdAndUpdate(
-        currentUserId,
-        { $addToSet: { following: authorId } },
-        { new: true },
-      );
+    if (currentFollowing.includes(authorId)) {
+      await Promise.all([
+        User.findByIdAndUpdate(currentUserId, { $pull: { following: authorId } }),
+        User.findByIdAndUpdate(authorId, { $pull: { following: currentUserId } }),
+      ]);
+      const fresh = await User.findById(currentUserId);
+      return res.json({
+        ok: true,
+        status: "none",
+        message: "Connection removed",
+        following: (fresh?.following || []).map((id) => id.toString()),
+      });
     }
 
-    const updatedFollowing = (updatedUser.following || []).map((id) => id.toString());
+    if (currentIncoming.includes(authorId)) {
+      await Promise.all([
+        User.findByIdAndUpdate(currentUserId, {
+          $pull: { followRequests: authorId },
+          $addToSet: { following: authorId },
+        }),
+        User.findByIdAndUpdate(authorId, { $addToSet: { following: currentUserId } }),
+      ]);
+      const fresh = await User.findById(currentUserId);
+      return res.json({
+        ok: true,
+        status: "friend",
+        isFollowing: true,
+        message: "Connection request accepted",
+        following: (fresh?.following || []).map((id) => id.toString()),
+      });
+    }
+
+    if (!targetRequests.includes(currentUserId)) {
+      await User.findByIdAndUpdate(authorId, { $addToSet: { followRequests: currentUserId } });
+    }
+
+    const updatedUser = await User.findById(currentUserId);
+    const updatedFollowing = (updatedUser?.following || []).map((id) => id.toString());
     res.json({
       ok: true,
-      isFollowing: !isAlreadyFollowing,
-      message: !isAlreadyFollowing ? "Author followed successfully" : "Author unfollowed successfully",
+      status: "requested",
+      isFollowing: false,
+      message: "Connection request sent",
       following: updatedFollowing,
     });
   }),
 );
 
-/* ---- Get current user's followed authors ---- */
+/* ---- Get current user's accepted connections ---- */
 router.get(
   "/following",
   auth(),

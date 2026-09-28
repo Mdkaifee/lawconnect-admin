@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "750169715776",
+    "project_id": "law-hub-514c3",
+    "storage_bucket": "law-hub-514c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:750169715776:android:1b7467776153f1a3285ba5",
+        "android_client_info": {
+          "package_name": "com.rishikesh_law_hub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_ZoaHkoZxwNN5NML80jR--u5RZSIl4zA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

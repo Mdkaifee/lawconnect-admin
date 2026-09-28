@@ -24,6 +24,7 @@ const userSchema = new Schema(
     college: { type: String, default: "Galgotias University" },
     blocked: { type: Boolean, default: false },
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    followRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],
     deletionRequested: { type: Boolean, default: false, index: true },
     deletionRequestedAt: { type: Date },
     deletionDueAt: { type: Date, index: true },

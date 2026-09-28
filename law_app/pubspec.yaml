@@ -1,7 +1,7 @@
 name: law_app
 description: "Rishikesh Law Hub - Comprehensive Legal Research & Community App"
 publish_to: 'none'
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.8.1

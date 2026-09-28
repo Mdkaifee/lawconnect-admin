@@ -8,6 +8,7 @@ import 'repositories/act_repository.dart';
 import 'repositories/update_repository.dart';
 import 'repositories/post_repository.dart';
 import 'repositories/user_data_repository.dart';
+import 'repositories/user_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'blocs/case/case_bloc.dart';
 import 'blocs/act/act_bloc.dart';
@@ -31,6 +32,7 @@ void main() async {
   final updateRepository = UpdateRepository();
   final postRepository = PostRepository(authRepo: authRepository);
   final userDataRepository = UserDataRepository(authRepo: authRepository);
+  final userRepository = UserRepository(authRepo: authRepository);
 
   runApp(
     LawHubApp(
@@ -40,6 +42,7 @@ void main() async {
       updateRepository: updateRepository,
       postRepository: postRepository,
       userDataRepository: userDataRepository,
+      userRepository: userRepository,
     ),
   );
 }
@@ -51,6 +54,7 @@ class LawHubApp extends StatelessWidget {
   final UpdateRepository updateRepository;
   final PostRepository postRepository;
   final UserDataRepository userDataRepository;
+  final UserRepository userRepository;
 
   const LawHubApp({
     super.key,
@@ -60,6 +64,7 @@ class LawHubApp extends StatelessWidget {
     required this.updateRepository,
     required this.postRepository,
     required this.userDataRepository,
+    required this.userRepository,
   });
 
   @override
@@ -72,6 +77,7 @@ class LawHubApp extends StatelessWidget {
         RepositoryProvider.value(value: updateRepository),
         RepositoryProvider.value(value: postRepository),
         RepositoryProvider.value(value: userDataRepository),
+        RepositoryProvider.value(value: userRepository),
       ],
       child: MultiBlocProvider(
         providers: [

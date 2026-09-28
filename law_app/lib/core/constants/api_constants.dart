@@ -28,6 +28,7 @@ class ApiConstants {
   // Posts & Social endpoints
   static const String posts = '$baseUrl/posts';
   static const String users = '$baseUrl/users';
+  static const String appUsers = '$baseUrl/users/app/list';
 
   // Personal user data
   static const String notes = '$baseUrl/notes';

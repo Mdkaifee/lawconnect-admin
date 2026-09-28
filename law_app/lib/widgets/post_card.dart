@@ -158,15 +158,15 @@ class PostCard extends StatelessWidget {
                         child: Row(
                           children: [
                             Icon(
-                              isFollowing ? Icons.person_remove_outlined : Icons.person_add_outlined,
+                              isFollowing ? Icons.people_alt_outlined : Icons.person_add_outlined,
                               size: 18,
-                              color: isFollowing ? const Color(0xFFEF4444) : AppColors.primaryNavy,
+                              color: isFollowing ? AppColors.success : AppColors.primaryNavy,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              isFollowing ? 'Unfollow ${post.authorName}' : 'Follow ${post.authorName}',
+                              isFollowing ? 'Friend: ${post.authorName}' : 'Send request to ${post.authorName}',
                               style: TextStyle(
-                                color: isFollowing ? const Color(0xFFEF4444) : AppColors.primaryNavy,
+                                color: isFollowing ? AppColors.success : AppColors.primaryNavy,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),

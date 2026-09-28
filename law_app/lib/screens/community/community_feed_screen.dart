@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
@@ -22,9 +21,9 @@ class CommunityFeedScreen extends StatefulWidget {
 class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
-  final List<String> _categories = ['All', 'My Posts', 'Following'];
+  final List<String> _categories = ['All', 'My Posts', 'Friends'];
   final Set<String> _bookmarkBusyPostIds = {};
-  final Set<String> _followedAuthorIds = {'Adv. Ananya Sharma', 'Law Hub Editorial'};
+  final Set<String> _followedAuthorIds = {};
 
   @override
   void initState() {
@@ -41,23 +40,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   }
 
   Future<void> _loadFollowedAuthors() async {
-    // 1. Load local cache
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList('followed_authors');
-      if (list != null && list.isNotEmpty && mounted) {
-        setState(() => _followedAuthorIds.addAll(list));
-      }
-    } catch (_) {}
-
-    // 2. Fetch live following list from backend
-    if (!mounted) return;
     try {
       final backendList = await context.read<PostRepository>().getFollowingAuthors();
-      if (backendList.isNotEmpty && mounted) {
-        setState(() => _followedAuthorIds.addAll(backendList));
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setStringList('followed_authors', _followedAuthorIds.toList());
+      if (mounted) {
+        setState(() {
+          _followedAuthorIds
+            ..clear()
+            ..addAll(backendList);
+        });
       }
     } catch (_) {}
   }
@@ -66,7 +56,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     context.read<PostBloc>().add(
           LoadPostsEvent(
             mine: _selectedCategory == 'My Posts',
-            following: _selectedCategory == 'Following',
+            following: _selectedCategory == 'Friends',
           ),
         );
   }
@@ -93,40 +83,31 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     }
 
     final targetId = post.authorId.isNotEmpty ? post.authorId : post.authorName;
-    final isAlreadyFollowing = _followedAuthorIds.contains(targetId) || _followedAuthorIds.contains(post.authorName);
-
-    // Optimistic UI update
-    setState(() {
-      if (isAlreadyFollowing) {
-        _followedAuthorIds.remove(targetId);
-        _followedAuthorIds.remove(post.authorName);
-      } else {
-        _followedAuthorIds.add(targetId);
-        _followedAuthorIds.add(post.authorName);
-      }
-    });
+    final isAlreadyFollowing = _followedAuthorIds.contains(targetId);
 
     try {
-      // Call backend dynamic follow endpoint
       if (post.authorId.isNotEmpty) {
         final res = await context.read<PostRepository>().toggleFollowAuthor(post.authorId);
         if (res['following'] is List) {
           final serverList = (res['following'] as List).map((e) => e.toString()).toList();
           if (mounted) {
-            setState(() => _followedAuthorIds.addAll(serverList));
+            setState(() {
+              _followedAuthorIds
+                ..clear()
+                ..addAll(serverList);
+            });
           }
         }
       }
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('followed_authors', _followedAuthorIds.toList());
 
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isAlreadyFollowing ? 'Unfollowed ${post.authorName}' : 'You are now following ${post.authorName}',
+              isAlreadyFollowing
+                  ? 'Removed ${post.authorName} from friends'
+                  : 'Follow request sent to ${post.authorName}',
             ),
             duration: const Duration(seconds: 2),
             backgroundColor: const Color(0xFF0F1E36),
@@ -134,7 +115,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         );
 
         // If currently on Following tab, re-fetch feed dynamically from backend
-        if (_selectedCategory == 'Following') {
+        if (_selectedCategory == 'Friends') {
           _fetchPosts();
         }
       }
@@ -185,7 +166,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             LoadPostsEvent(
               category: null,
               mine: _selectedCategory == 'My Posts',
-              following: _selectedCategory == 'Following',
+              following: _selectedCategory == 'Friends',
               page: state.page + 1,
               isNewLoad: false,
             ),
@@ -418,11 +399,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
                 if (state is PostLoaded) {
                   final allPosts = state.posts;
-                  final displayPosts = _selectedCategory == 'Following'
+                  final displayPosts = _selectedCategory == 'Friends'
                       ? allPosts
                           .where((p) =>
-                              _followedAuthorIds.contains(p.authorId) ||
-                              _followedAuthorIds.contains(p.authorName))
+                              _followedAuthorIds.contains(p.authorId))
                           .toList()
                       : allPosts;
 
@@ -434,7 +414,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              _selectedCategory == 'Following'
+                              _selectedCategory == 'Friends'
                                   ? Icons.people_outline_rounded
                                   : Icons.forum_outlined,
                               size: 48,
@@ -442,8 +422,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              _selectedCategory == 'Following'
-                                  ? 'You are not following any authors with recent posts yet.\nTap the 3-dot menu on any post to follow legal authors!'
+                              _selectedCategory == 'Friends'
+                                  ? 'No friends with recent posts yet.\nSend follow requests from Profile > Users and posts appear here after they accept.'
                                   : 'No community posts in this category.',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
@@ -464,7 +444,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.only(top: 8, bottom: 80),
-                      itemCount: displayPosts.length + (state.hasMore && _selectedCategory != 'Following' ? 1 : 0),
+                      itemCount: displayPosts.length + (state.hasMore && _selectedCategory != 'Friends' ? 1 : 0),
                       itemBuilder: (context, idx) {
                         if (idx == displayPosts.length) {
                           return const Padding(
@@ -479,8 +459,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             (currentUserName != null &&
                                 currentUserName.isNotEmpty &&
                                 currentUserName.toLowerCase() == post.authorName.toLowerCase());
-                        final isFollowing = _followedAuthorIds.contains(post.authorId) ||
-                            _followedAuthorIds.contains(post.authorName);
+                        final isFollowing = _followedAuthorIds.contains(post.authorId);
 
                         return BlocBuilder<UserDataBloc, UserDataState>(
                           builder: (context, userState) {

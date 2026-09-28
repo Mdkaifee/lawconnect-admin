@@ -11,6 +11,7 @@ import 'bookmarks_screen.dart';
 import 'history_screen.dart';
 import 'notes_screen.dart';
 import 'settings_screen.dart';
+import 'users_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -175,6 +176,14 @@ class ProfileScreen extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const HistoryScreen()),
                       );
                     },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.people_outline_rounded,
+                    title: 'Users',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const UsersScreen()),
+                    ),
                   ),
                   _buildMenuItem(
                     context,
