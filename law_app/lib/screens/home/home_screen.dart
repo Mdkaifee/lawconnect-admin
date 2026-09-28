@@ -201,91 +201,99 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Translation.instance,
+      listenable: Listenable.merge([Translation.instance, ThemeManager.instance]),
       builder: (context, _) {
+        final isDark = ThemeManager.instance.isDarkMode;
+        final bgColor = isDark ? const Color(0xFF090E17) : AppColors.backgroundLight;
+        final surfaceColor = isDark ? const Color(0xFF0F1827) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF23354E) : const Color(0xFFE2E8F0);
+        final textColor = isDark ? const Color(0xFFF1F5F9) : AppColors.primaryNavy;
+        final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        final dividerColor = isDark ? const Color(0xFF1E2F4D) : const Color(0xFFF1F5F9);
+
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
+          backgroundColor: bgColor,
           drawer: Drawer(
-            backgroundColor: Colors.white,
+            backgroundColor: surfaceColor,
             child: SafeArea(
               child: BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
-              final user = state is Authenticated ? state.user : null;
-              final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
-              final college = user?.college ?? 'Galgotias University';
+                builder: (context, state) {
+                  final user = state is Authenticated ? state.user : null;
+                  final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
+                  final college = user?.college ?? 'Galgotias University';
 
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    // Top Profile Header Row (Avatar + Name + Subtitle)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Circular Profile Avatar
-                          Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFF0F1E36),
-                              border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-                            ),
-                            child: Center(
-                              child: Text(
-                                userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        // Top Profile Header Row (Avatar + Name + Subtitle)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Circular Profile Avatar
+                              Container(
+                                width: 54,
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isDark ? const Color(0xFF1B283D) : const Color(0xFF0F1E36),
+                                  border: Border.all(color: borderColor, width: 2),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
+                                    style: TextStyle(
+                                      color: isDark ? AppColors.goldAccentLight : Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 14),
+                              // Name & Subtitle
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      userName,
+                                      style: TextStyle(
+                                        fontSize: 16.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: textColor,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Law Student | Future Advocate',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: textMuted,
+                                      ),
+                                    ),
+                                    Text(
+                                      college,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w400,
+                                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 14),
-                          // Name & Subtitle
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  userName,
-                                  style: const TextStyle(
-                                    fontSize: 16.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F1E36),
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  'Law Student | Future Advocate',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                                Text(
-                                  college,
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w400,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    const SizedBox(height: 8),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        const SizedBox(height: 8),
+                        Divider(height: 1, color: dividerColor),
 
                     // Menu Items List (matching exact profile screen)
                     _buildDrawerMenuItem(
