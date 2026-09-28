@@ -112,15 +112,20 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: AppTheme.textPrimaryColor(context),
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryNavy),
+        surfaceTintColor: AppTheme.appBarColor(context),
+        iconTheme: IconThemeData(color: AppTheme.textPrimaryColor(context)),
         leading: IconButton(
-          color: AppColors.primaryNavy,
+          color: AppTheme.textPrimaryColor(context),
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.of(context).pushAndRemoveUntil(
@@ -129,11 +134,14 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
             );
           },
         ),
-        title: const Text('Case Search', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w700)),
+        title: Text(
+          'Case Search',
+          style: TextStyle(color: AppTheme.textPrimaryColor(context), fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
             tooltip: 'Refresh results',
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: primaryOrGold),
             onPressed: () => _triggerSearch(_searchController.text),
           ),
         ],
@@ -143,9 +151,9 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
           // Search Input & Filters Box
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: AppColors.borderLight)),
+            decoration: BoxDecoration(
+              color: cardBg,
+              border: Border(bottom: BorderSide(color: AppTheme.borderColor(context))),
             ),
             child: Column(
               children: [
@@ -159,16 +167,23 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                     hintText: 'Search case name or citation...',
                     isDense: true,
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.primaryNavy),
+                    fillColor: AppTheme.backgroundColor(context),
+                    prefixIcon: Icon(Icons.search, color: primaryOrGold),
                     suffixIconConstraints: const BoxConstraints.tightFor(width: 40, height: 40),
                     suffixIcon: Container(
                       margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(color: AppColors.primaryNavy, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Icons.search, size: 18, color: Colors.white),
+                        icon: Icon(
+                          Icons.search,
+                          size: 18,
+                          color: isDark ? AppColors.primaryNavyDark : Colors.white,
+                        ),
                         onPressed: () => _triggerSearch(_searchController.text),
                       ),
                     ),
@@ -185,58 +200,66 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                      ..._courtFilters.map((court) {
-                        final isSelected = _selectedCourt == court;
-                        return Padding(
+                        ..._courtFilters.map((court) {
+                          final isSelected = _selectedCourt == court;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(court),
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: EdgeInsets.zero,
+                              showCheckmark: true,
+                              checkmarkColor: isDark ? AppColors.primaryNavyDark : Colors.white,
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() => _selectedCourt = court);
+                                  _triggerSearch(_searchController.text);
+                                }
+                              },
+                              selectedColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? (isDark ? AppColors.primaryNavyDark : Colors.white)
+                                    : AppTheme.textPrimaryColor(context),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              backgroundColor: cardBg,
+                              side: BorderSide(
+                                color: isSelected
+                                    ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                                    : AppTheme.borderColor(context),
+                              ),
+                            ),
+                          );
+                        }),
+                        // Year filter control at the far right.
+                        Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(court),
-                            labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                            padding: EdgeInsets.zero,
-                            showCheckmark: true,
-                            checkmarkColor: Colors.white,
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              if (selected) {
-                                setState(() => _selectedCourt = court);
-                                _triggerSearch(_searchController.text);
-                              }
-                            },
-                            selectedColor: AppColors.primaryNavy,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : AppColors.primaryNavy,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              border: Border.all(color: AppTheme.borderColor(context)),
+                              borderRadius: BorderRadius.circular(9),
                             ),
-                            backgroundColor: Colors.white,
-                            side: BorderSide(
-                              color: isSelected ? AppColors.primaryNavy : AppColors.borderLight,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              tooltip: _selectedYear == null ? 'Filter by year' : 'Year: $_selectedYear',
+                              icon: Icon(
+                                Icons.filter_alt_outlined,
+                                size: 18,
+                                color: _selectedYear == null ? primaryOrGold : AppColors.goldAccent,
+                              ),
+                              onPressed: _showYearFilter,
                             ),
-                          ),
-                        );
-                      }),
-                      // Year filter control at the far right.
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: AppColors.borderLight),
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            tooltip: _selectedYear == null ? 'Filter by year' : 'Year: $_selectedYear',
-                            icon: Icon(Icons.filter_alt_outlined, size: 18, color: _selectedYear == null ? AppColors.primaryNavy : AppColors.goldAccent),
-                            onPressed: _showYearFilter,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 ),
               ],
             ),
@@ -247,13 +270,16 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
             child: BlocBuilder<CaseBloc, CaseState>(
               builder: (context, state) {
                 if (state is CaseLoading) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(color: AppColors.primaryNavy),
-                        SizedBox(height: 16),
-                        Text('Searching Indian Kanoon & Case Law Database...', style: TextStyle(color: AppColors.textSecondary)),
+                        CircularProgressIndicator(color: primaryOrGold),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Searching Indian Kanoon & Case Law Database...',
+                          style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                        ),
                       ],
                     ),
                   );
@@ -271,7 +297,7 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                           Text(
                             state.message,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                            style: TextStyle(color: AppTheme.textPrimaryColor(context), fontSize: 14),
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
@@ -295,15 +321,15 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                           children: [
                             const Icon(Icons.search_off_rounded, size: 54, color: AppColors.textMuted),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'No judgments found',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimaryColor(context)),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
+                            Text(
                               'Try searching with broader keywords, party names, or a standard citation.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 13, color: AppTheme.textSecondaryColor(context)),
                             ),
                           ],
                         ),
@@ -328,10 +354,10 @@ class _CaseSearchScreenState extends State<CaseSearchScreen> {
                         );
                       }
                       if (idx == state.items.length) {
-                        return const Center(
+                        return Center(
                           child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2),
+                            padding: const EdgeInsets.all(16),
+                            child: CircularProgressIndicator(color: primaryOrGold, strokeWidth: 2),
                           ),
                         );
                       }

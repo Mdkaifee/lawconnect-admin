@@ -39,39 +39,43 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: AppTheme.textPrimaryColor(context),
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           widget.actName,
-          style: const TextStyle(
-            color: AppColors.primaryNavy,
+          style: TextStyle(
+            color: AppTheme.textPrimaryColor(context),
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.borderLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: BlocBuilder<ActBloc, ActState>(
         bloc: _actBloc,
         builder: (context, state) {
           if (state is ActLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+            return Center(child: CircularProgressIndicator(color: primaryOrGold));
           }
 
           if (state is ActError) {
-            return Center(child: Text(state.message));
+            return Center(child: Text(state.message, style: TextStyle(color: AppTheme.textPrimaryColor(context))));
           }
 
           if (state is ActDetailsLoaded) {
@@ -90,7 +94,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  color: Colors.white,
+                  color: cardBg,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -99,12 +103,18 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryNavy.withValues(alpha: 0.1),
+                              color: isDark
+                                  ? AppColors.goldAccent.withValues(alpha: 0.15)
+                                  : AppColors.primaryNavy.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               '${act.type} Act',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: primaryOrGold,
+                              ),
                             ),
                           ),
                           if (act.year != null) ...[
@@ -120,7 +130,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                       ),
                       if (act.description != null && act.description!.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        Text(act.description!, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                        Text(act.description!, style: TextStyle(fontSize: 13, color: AppTheme.textSecondaryColor(context))),
                       ],
                       const SizedBox(height: 12),
                       TextField(
@@ -128,9 +138,9 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                         onChanged: (val) => setState(() => _sectionQuery = val.trim()),
                         decoration: InputDecoration(
                           hintText: 'Filter sections by number or title...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
+                          prefixIcon: Icon(Icons.search, size: 20, color: primaryOrGold),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          fillColor: AppColors.backgroundLight,
+                          fillColor: AppTheme.backgroundColor(context),
                         ),
                       ),
                     ],
@@ -140,7 +150,7 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                 // Sections Accordion List
                 Expanded(
                   child: filteredSections.isEmpty
-                      ? const Center(child: Text('No sections match filter.'))
+                      ? Center(child: Text('No sections match filter.', style: TextStyle(color: AppTheme.textSecondaryColor(context))))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           itemCount: filteredSections.length,
@@ -152,34 +162,37 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                             final isBookmarkBusy = _bookmarkBusy.contains(refId);
                             return Card(
                               elevation: 0,
+                              color: cardBg,
                               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                side: const BorderSide(color: AppColors.borderLight),
+                                side: BorderSide(color: AppTheme.borderColor(context)),
                               ),
                               child: ExpansionTile(
                                 shape: const Border(),
                                 leading: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                                    color: isDark
+                                        ? AppColors.goldAccent.withValues(alpha: 0.15)
+                                        : AppColors.primaryNavy.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     s.number,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 12,
-                                      color: AppColors.primaryNavy,
+                                      color: primaryOrGold,
                                     ),
                                   ),
                                 ),
                                 title: Text(
                                   s.title.isNotEmpty ? s.title : 'Section ${s.number}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.primaryNavy,
+                                    color: AppTheme.textPrimaryColor(context),
                                   ),
                                 ),
                                 subtitle: s.chapter != null && s.chapter!.isNotEmpty
@@ -191,36 +204,43 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Divider(color: AppColors.borderLight),
+                                        Divider(color: AppTheme.dividerColor(context)),
                                         const SizedBox(height: 6),
                                         SelectableText(
                                           s.text.isNotEmpty ? s.text : 'Section text not available.',
-                                          style: const TextStyle(fontSize: 14, height: 1.55, color: AppColors.textPrimary),
+                                          style: TextStyle(fontSize: 14, height: 1.55, color: AppTheme.textPrimaryColor(context)),
                                         ),
                                         if (s.explanation != null && s.explanation!.isNotEmpty) ...[
                                           const SizedBox(height: 12),
                                           Container(
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: AppColors.goldAccent.withValues(alpha: 0.08),
+                                              color: AppColors.goldAccent.withValues(alpha: isDark ? 0.14 : 0.08),
                                               borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: AppColors.goldAccent.withValues(alpha: 0.2)),
+                                              border: Border.all(color: AppColors.goldAccent.withValues(alpha: 0.25)),
                                             ),
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                const Row(
+                                                Row(
                                                   children: [
-                                                    Icon(Icons.lightbulb_outline, size: 16, color: AppColors.goldAccent),
-                                                    SizedBox(width: 6),
+                                                    const Icon(Icons.lightbulb_outline, size: 16, color: AppColors.goldAccent),
+                                                    const SizedBox(width: 6),
                                                     Text(
                                                       'Simplified Explanation',
-                                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: primaryOrGold,
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
                                                 const SizedBox(height: 4),
-                                                Text(s.explanation!, style: const TextStyle(fontSize: 13, height: 1.4)),
+                                                Text(
+                                                  s.explanation!,
+                                                  style: TextStyle(fontSize: 13, height: 1.4, color: AppTheme.textPrimaryColor(context)),
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -232,6 +252,9 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                             TextButton.icon(
                                               icon: const Icon(Icons.copy, size: 16),
                                               label: const Text('Copy Text'),
+                                              style: TextButton.styleFrom(
+                                                foregroundColor: primaryOrGold,
+                                              ),
                                               onPressed: () {
                                                 Clipboard.setData(ClipboardData(text: '${s.number}: ${s.title}\n\n${s.text}'));
                                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -248,8 +271,10 @@ class _ActDetailScreenState extends State<ActDetailScreen> {
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: isBookmarked
                                                     ? AppColors.goldAccent.withValues(alpha: 0.22)
-                                                    : AppColors.primaryNavy,
-                                                foregroundColor: isBookmarked ? AppColors.primaryNavy : Colors.white,
+                                                    : (isDark ? AppColors.goldAccent : AppColors.primaryNavy),
+                                                foregroundColor: isBookmarked
+                                                    ? primaryOrGold
+                                                    : (isDark ? AppColors.primaryNavyDark : Colors.white),
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                               ),
                                               onPressed: isBookmarkBusy ? null : () async {
