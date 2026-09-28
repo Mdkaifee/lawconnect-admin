@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 import '../models/category_model.dart';
 
 class LegalCategoryGrid extends StatelessWidget {
@@ -88,11 +88,11 @@ class LegalCategoryTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.visible,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10.6,
                   height: 1.12,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF17233A),
+                  color: AppTheme.textPrimaryColor(context),
                 ),
               ),
             ),
