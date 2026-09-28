@@ -69,6 +69,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final textSecondary = AppTheme.textSecondaryColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
@@ -86,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppTheme.backgroundColor(context),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -99,11 +104,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryNavy,
+                      color: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryNavy.withValues(alpha: 0.25),
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.2),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -112,18 +117,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: const Icon(Icons.scale_rounded, color: AppColors.goldAccent, size: 36),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Law Hub',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primaryNavy,
+                      color: textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Sign in to access legal search, judgments & community',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 13, color: textSecondary),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 28),
@@ -131,15 +136,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   // Tabs
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.borderLight.withValues(alpha: 0.5),
+                      color: isDark ? AppColors.surfaceDarkElevated : AppColors.borderLight.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TabBar(
                       controller: _tabController,
-                      labelColor: Colors.white,
-                      unselectedLabelColor: AppColors.primaryNavy,
+                      labelColor: isDark ? AppColors.primaryNavyDark : Colors.white,
+                      unselectedLabelColor: isDark ? AppColors.textDarkSecondary : AppColors.primaryNavy,
                       indicator: BoxDecoration(
-                        color: AppColors.primaryNavy,
+                        color: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
