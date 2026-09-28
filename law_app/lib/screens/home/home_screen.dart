@@ -109,10 +109,10 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 12),
                 child: Text(
-                  'All Legal Categories',
+                  Translation.t('all_categories'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -353,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.info_outline_rounded,
-                      title: 'About Us',
+                      title: Translation.t('about_us'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.of(context).push(
@@ -364,15 +364,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDrawerMenuItem(
                       context,
                       icon: Icons.logout_rounded,
-                      title: 'Log Out',
+                      title: Translation.t('log_out'),
                       onTap: () {
                         Navigator.pop(context);
                         CustomConfirmationDialog.show(
                           context,
-                          title: 'Confirm Sign Out',
-                          message: 'Are you sure you want to log out of Rishikesh Law Hub?',
-                          confirmText: 'Log Out',
-                          cancelText: 'Cancel',
+                          title: Translation.t('confirm_sign_out'),
+                          message: Translation.t('confirm_sign_out_msg'),
+                          confirmText: Translation.t('log_out'),
+                          cancelText: Translation.t('cancel'),
                           icon: Icons.logout_rounded,
                           iconColor: const Color(0xFFEF4444),
                           onConfirm: () {
@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 3),
                   const Icon(Icons.waving_hand_rounded, size: 13, color: AppColors.goldAccent),
                 ]),
-                const Text('Learn • Explore • Grow', style: TextStyle(fontSize: 9, color: AppColors.primaryNavy)),
+                Text(Translation.t('learn_explore_grow'), style: TextStyle(fontSize: 9, color: AppColors.primaryNavy)),
               ]);
             }),
           ],
@@ -475,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Search case name, citation, or keywords...',
+                                Translation.t('quick_search_hint'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: AppColors.textMuted, fontSize: 13.5),
@@ -571,8 +571,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Key Bare Acts',
+                    Text(
+                      Translation.t('key_bare_acts'),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -586,7 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                         if (mounted) context.read<ActBloc>().add(const LoadActsEvent());
                       },
-                      child: const Text('View All', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
+                      child: Text(Translation.t('view_all'), style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -613,10 +613,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // Landmark Judgments Header
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Landmark Judgments',
+                  Translation.t('landmark_judgments'),
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -668,8 +668,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Verified Legal Updates',
+                    Text(
+                      Translation.t('verified_legal_updates'),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,

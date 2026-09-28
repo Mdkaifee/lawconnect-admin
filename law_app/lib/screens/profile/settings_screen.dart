@@ -106,69 +106,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _confirmDeleteAccount() {
     CustomConfirmationDialog.show(
       context,
-      title: 'Delete Account?',
-      message:
-          'Your account will be scheduled for deletion. If you do not log in again within 7 days, your account and all associated data will be permanently deleted.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
+      title: Translation.t('delete_account'),
+      message: Translation.t('delete_account_subtitle'),
+      confirmText: Translation.t('delete_account'),
+      cancelText: Translation.t('cancel'),
       icon: Icons.delete_forever_rounded,
       iconColor: const Color(0xFFDC2626),
       onConfirm: () {
-        context.read<AuthBloc>().add(
-              const DeleteAccountEvent(reason: 'User requested account deletion from app settings'),
-            );
+        context.read<AuthBloc>().add(const DeleteAccountEvent(reason: 'User requested in-app deletion'));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(Translation.t('delete_account_subtitle')),
+            backgroundColor: const Color(0xFFDC2626),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: const Color(0xFFDC2626),
-            ),
-          );
-        }
-        if (state is Unauthenticated) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF0F1E36),
-          surfaceTintColor: Colors.white,
-          elevation: 0,
-          centerTitle: false,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF0F1E36)),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: const Text(
-            'Settings',
-            style: TextStyle(
-              color: Color(0xFF0F1E36),
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-            ),
-          ),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F1E36),
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F1E36)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          Translation.t('settings'),
+          style: const TextStyle(
+            color: Color(0xFF0F1E36),
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
           ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          children: [
-          _buildSectionHeader('PREFERENCES'),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        children: [
+          _buildSectionHeader(Translation.t('preferences')),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -180,13 +173,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: const Text(
-                    'Push Notifications',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                  title: Text(
+                    Translation.t('push_notifications'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  subtitle: const Text(
-                    'Daily legal updates & new judgments',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  subtitle: Text(
+                    Translation.t('push_notifications_subtitle'),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   value: _notificationsEnabled,
                   activeColor: const Color(0xFF0F1E36),
@@ -195,13 +188,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 SwitchListTile(
                   secondary: const Icon(Icons.dark_mode_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: const Text(
-                    'Dark Mode',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                  title: Text(
+                    Translation.t('dark_mode'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  subtitle: const Text(
-                    'Easier reading for long legal briefs',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  subtitle: Text(
+                    Translation.t('dark_mode_subtitle'),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   value: _darkModeEnabled,
                   activeColor: const Color(0xFF0F1E36),
@@ -212,12 +205,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.language_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: const Text(
-                    'Language',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                  title: Text(
+                    Translation.t('language'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
                   subtitle: Text(
-                    _selectedLanguage,
+                    Translation.instance.currentLanguageLabel,
                     style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
@@ -229,7 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 24),
 
-          _buildSectionHeader('STORAGE & DATA'),
+          _buildSectionHeader(Translation.t('storage_data')),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -241,13 +234,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.cleaning_services_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: const Text(
-                    'Clear Cached Judgments',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                  title: Text(
+                    Translation.t('clear_cached_judgments'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  subtitle: const Text(
-                    'Free up local device storage (4.2 MB)',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  subtitle: Text(
+                    Translation.t('clear_cached_judgments_subtitle'),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   trailing: const Icon(Icons.delete_outline_rounded, color: Color(0xFF94A3B8), size: 20),
                   onTap: _clearCache,
@@ -256,34 +249,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-            _buildSectionHeader('ACCOUNT MANAGEMENT'),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFFECACA)),
-              ),
-              child: ListTile(
-                leading: const Icon(Icons.delete_forever_outlined, color: Color(0xFFDC2626), size: 22),
-                title: const Text(
-                  'Delete Account',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFFDC2626)),
-                ),
-                subtitle: const Text(
-                  'Permanently delete after 7 days if you do not log back in',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-                trailing: const Icon(Icons.chevron_right, color: Color(0xFFDC2626), size: 20),
-                onTap: _confirmDeleteAccount,
-              ),
+          _buildSectionHeader(Translation.t('account_management')),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFECACA)),
             ),
+            child: ListTile(
+              leading: const Icon(Icons.delete_forever_outlined, color: Color(0xFFDC2626), size: 22),
+              title: Text(
+                Translation.t('delete_account'),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFFDC2626)),
+              ),
+              subtitle: Text(
+                Translation.t('delete_account_subtitle'),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+              trailing: const Icon(Icons.chevron_right, color: Color(0xFFDC2626), size: 20),
+              onTap: _confirmDeleteAccount,
+            ),
+          ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-            _buildSectionHeader('ABOUT & LEGAL'),
+          _buildSectionHeader(Translation.t('about_legal')),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -293,43 +286,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Column(
               children: [
-                const ListTile(
-                  leading: Icon(Icons.verified_outlined, color: Color(0xFF0F1E36), size: 22),
+                ListTile(
+                  leading: const Icon(Icons.verified_outlined, color: Color(0xFF0F1E36), size: 22),
                   title: Text(
-                    'App Version',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    Translation.t('app_version'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  trailing: AppVersionText(
+                  trailing: const AppVersionText(
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF64748B)),
                   ),
                 ),
-                Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.shield_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: const Text(
-                    'Privacy Policy',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                  title: Text(
+                    Translation.t('privacy_policy'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
                   onTap: () => UrlHelper.openInAppUrl(context, ApiConstants.privacyPolicyUrl),
                 ),
-                Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 ListTile(
-                  leading: Icon(Icons.description_outlined, color: Color(0xFF0F1E36), size: 22),
+                  leading: const Icon(Icons.description_outlined, color: Color(0xFF0F1E36), size: 22),
                   title: Text(
-                    'Terms of Service',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    Translation.t('terms_of_service'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
                   ),
-                  trailing: Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
                   onTap: () => UrlHelper.openInAppUrl(context, ApiConstants.termsOfServiceUrl),
                 ),
               ],
             ),
           ),
 
-            const SizedBox(height: 30),
-          ],
-        ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }
