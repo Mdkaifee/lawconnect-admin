@@ -284,8 +284,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = context.read<AuthRepository>().currentUser?.id;
-    final currentUserName = context.read<AuthRepository>().currentUser?.name;
+    final currentUser = context.read<AuthRepository>().currentUser;
+    final currentUserId = currentUser?.id;
+    final currentUserName = currentUser?.name;
+    final currentUserPhotoUrl = currentUser?.photoUrl;
     final isDark = AppTheme.isDark(context);
     final cardBg = AppTheme.cardColor(context);
     final primaryOrGold = AppTheme.primaryOrGold(context);
@@ -476,6 +478,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             return PostCard(
                               post: post,
                               isSelf: isSelf,
+                              currentUserPhotoUrl: currentUserPhotoUrl,
                               isFollowing: isFollowing,
                               isBookmarked: isBookmarked,
                               bookmarkBusy: _bookmarkBusyPostIds.contains(post.id),
