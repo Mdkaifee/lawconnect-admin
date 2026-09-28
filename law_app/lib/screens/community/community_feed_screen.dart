@@ -286,47 +286,51 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   Widget build(BuildContext context) {
     final currentUserId = context.read<AuthRepository>().currentUser?.id;
     final currentUserName = context.read<AuthRepository>().currentUser?.name;
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: widget.showBackButton
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
+                icon: Icon(Icons.arrow_back, color: textPrimary),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: const Text('Law Posts', style: TextStyle(color: AppColors.primaryNavy, fontWeight: FontWeight.w800)),
+        title: Text('Law Posts', style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryNavy),
+            icon: Icon(Icons.refresh, color: primaryOrGold),
             onPressed: _fetchPosts,
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: AppColors.borderLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreatePostDialog(context),
-        backgroundColor: AppColors.primaryNavy,
+        backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
         ),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: isDark ? AppColors.primaryNavyDark : Colors.white),
       ),
       body: Column(
         children: [
           // Top Category Tabs with Equal Width
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            color: Colors.white,
+            color: cardBg,
             child: Row(
               children: _categories.asMap().entries.map((entry) {
                 final idx = entry.key;
@@ -349,10 +353,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primaryNavy : const Color(0xFFF1F5F9),
+                          color: isSelected
+                              ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                              : (isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isSelected ? AppColors.primaryNavy : const Color(0xFFE2E8F0),
+                            color: isSelected
+                                ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                                : (isDark ? AppColors.borderDark : const Color(0xFFE2E8F0)),
                             width: 1,
                           ),
                         ),
@@ -362,7 +370,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                              color: isSelected ? Colors.white : AppColors.primaryNavy,
+                              color: isSelected
+                                  ? (isDark ? AppColors.primaryNavyDark : Colors.white)
+                                  : textPrimary,
                             ),
                           ),
                         ),
@@ -379,7 +389,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             child: BlocBuilder<PostBloc, PostState>(
               builder: (context, state) {
                 if (state is PostLoading) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+                  return Center(child: CircularProgressIndicator(color: primaryOrGold));
                 }
 
                 if (state is PostError) {
@@ -389,7 +399,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       children: [
                         const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
                         const SizedBox(height: 12),
-                        Text(state.message),
+                        Text(state.message, style: TextStyle(color: textPrimary)),
                         const SizedBox(height: 16),
                         ElevatedButton(onPressed: _fetchPosts, child: const Text('Retry')),
                       ],
@@ -413,10 +423,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              _selectedCategory == 'Friends'
-                                  ? Icons.people_outline_rounded
-                                  : Icons.forum_outlined,
+                            const Icon(
+                              Icons.forum_outlined,
                               size: 48,
                               color: AppColors.textMuted,
                             ),
@@ -439,6 +447,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   }
 
                   return RefreshIndicator(
+                    color: primaryOrGold,
                     onRefresh: () async => _fetchPosts(),
                     child: ListView.builder(
                       controller: _scrollController,
@@ -447,10 +456,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                       itemCount: displayPosts.length + (state.hasMore && _selectedCategory != 'Friends' ? 1 : 0),
                       itemBuilder: (context, idx) {
                         if (idx == displayPosts.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
                             child: Center(
-                              child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2),
+                              child: CircularProgressIndicator(color: primaryOrGold, strokeWidth: 2),
                             ),
                           );
                         }

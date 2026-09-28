@@ -42,15 +42,21 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+    final textPrimary = AppTheme.textPrimaryColor(context);
+    final textSecondary = AppTheme.textSecondaryColor(context);
+    final cardBg = AppTheme.cardColor(context);
     final isAdminAuthor = post.authorType == 'admin';
     final formattedTime = _formatDateTime(post.createdAt);
 
     return Card(
       elevation: 0,
+      color: cardBg,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.borderLight, width: 1),
+        side: BorderSide(color: AppTheme.borderColor(context), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -62,10 +68,16 @@ class PostCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: isAdminAuthor ? AppColors.goldAccent : AppColors.primaryNavy,
+                  backgroundColor: isAdminAuthor
+                      ? AppColors.goldAccent
+                      : (isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy),
                   child: Text(
                     post.authorName.isNotEmpty ? post.authorName[0].toUpperCase() : 'A',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: TextStyle(
+                      color: isDark && !isAdminAuthor ? AppColors.goldAccentLight : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -78,10 +90,10 @@ class PostCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               post.authorName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.primaryNavy,
+                                color: textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -91,7 +103,7 @@ class PostCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.goldAccent.withValues(alpha: 0.2),
+                                color: AppColors.goldAccent.withValues(alpha: isDark ? 0.3 : 0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
@@ -112,10 +124,10 @@ class PostCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               post.category,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primaryNavy,
+                                color: primaryOrGold,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -143,6 +155,7 @@ class PostCard extends StatelessWidget {
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
                   padding: EdgeInsets.zero,
+                  color: cardBg,
                   constraints: const BoxConstraints(),
                   onSelected: (val) {
                     if (val == 'follow') onFollow?.call();
@@ -160,13 +173,13 @@ class PostCard extends StatelessWidget {
                             Icon(
                               isFollowing ? Icons.people_alt_outlined : Icons.person_add_outlined,
                               size: 18,
-                              color: isFollowing ? AppColors.success : AppColors.primaryNavy,
+                              color: isFollowing ? AppColors.success : primaryOrGold,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               isFollowing ? 'Friend: ${post.authorName}' : 'Send request to ${post.authorName}',
                               style: TextStyle(
-                                color: isFollowing ? AppColors.success : AppColors.primaryNavy,
+                                color: isFollowing ? AppColors.success : textPrimary,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -174,13 +187,13 @@ class PostCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'share',
                       child: Row(
                         children: [
-                          Icon(Icons.share_outlined, size: 18, color: AppColors.primaryNavy),
-                          SizedBox(width: 8),
-                          Text('Share Post', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                          Icon(Icons.share_outlined, size: 18, color: primaryOrGold),
+                          const SizedBox(width: 8),
+                          Text('Share Post', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
                         ],
                       ),
                     ),
@@ -203,19 +216,19 @@ class PostCard extends StatelessWidget {
             // Post Title & Content
             Text(
               post.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primaryNavy,
+                color: textPrimary,
                 height: 1.35,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               post.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13.5,
-                color: Color(0xFF334155),
+                color: textSecondary,
                 height: 1.5,
               ),
             ),
@@ -230,15 +243,17 @@ class PostCard extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF), // soft sky blue capsule
+                      color: isDark
+                          ? AppColors.goldAccent.withValues(alpha: 0.15)
+                          : const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '#$t',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1D4ED8), // Royal blue tag text
+                        color: isDark ? AppColors.goldAccentLight : const Color(0xFF1D4ED8),
                       ),
                     ),
                   );
@@ -247,7 +262,7 @@ class PostCard extends StatelessWidget {
             ],
 
             const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.borderLight),
+            Divider(height: 1, color: AppTheme.dividerColor(context)),
             const SizedBox(height: 8),
 
             // Action Metrics Bar (Likes, Comments, Bookmark)
@@ -263,15 +278,15 @@ class PostCard extends StatelessWidget {
                         Icon(
                           post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                           size: 19,
-                          color: post.isLiked ? AppColors.danger : AppColors.primaryNavy,
+                          color: post.isLiked ? AppColors.danger : primaryOrGold,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           '${post.likesCount}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primaryNavy,
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -286,14 +301,14 @@ class PostCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Row(
                       children: [
-                        const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.primaryNavy),
+                        Icon(Icons.chat_bubble_outline_rounded, size: 18, color: primaryOrGold),
                         const SizedBox(width: 6),
                         Text(
                           '${post.commentsCount}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primaryNavy,
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -307,11 +322,11 @@ class PostCard extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: bookmarkBusy
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryNavy))
+                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primaryOrGold))
                         : Icon(
                             isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                             size: 20,
-                            color: isBookmarked ? AppColors.goldAccent : AppColors.primaryNavy,
+                            color: isBookmarked ? AppColors.goldAccent : primaryOrGold,
                           ),
                   ),
                 ),

@@ -61,30 +61,34 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final cardBg = AppTheme.cardColor(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryNavy,
-        surfaceTintColor: Colors.white,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: AppTheme.textPrimaryColor(context),
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Legal Updates & News',
           style: TextStyle(
-            color: AppColors.primaryNavy,
+            color: AppTheme.textPrimaryColor(context),
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryNavy),
+            icon: Icon(Icons.refresh, color: primaryOrGold),
             onPressed: _fetchUpdates,
           ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: AppColors.borderLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppTheme.dividerColor(context)),
         ),
       ),
       body: Column(
@@ -92,7 +96,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
           // Filter Chips
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: Colors.white,
+            color: cardBg,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -112,14 +116,21 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                               _fetchUpdates();
                             }
                           },
-                          selectedColor: AppColors.primaryNavy,
+                          selectedColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+                          checkmarkColor: isDark ? AppColors.primaryNavyDark : Colors.white,
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.primaryNavy,
+                            color: isSelected
+                                ? (isDark ? AppColors.primaryNavyDark : Colors.white)
+                                : AppTheme.textPrimaryColor(context),
                             fontWeight: FontWeight.w600,
                             fontSize: 12,
                           ),
-                          backgroundColor: Colors.white,
-                          side: BorderSide(color: isSelected ? AppColors.primaryNavy : AppColors.borderLight),
+                          backgroundColor: cardBg,
+                          side: BorderSide(
+                            color: isSelected
+                                ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                                : AppTheme.borderColor(context),
+                          ),
                         ),
                       );
                     }).toList(),
@@ -140,14 +151,20 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                             setState(() => _selectedCategory = selected ? cat : 'All');
                             _fetchUpdates();
                           },
-                          selectedColor: AppColors.goldAccent.withValues(alpha: 0.25),
+                          selectedColor: isDark
+                              ? AppColors.goldAccent.withValues(alpha: 0.3)
+                              : AppColors.goldAccent.withValues(alpha: 0.25),
                           labelStyle: TextStyle(
-                            color: isSelected ? AppColors.primaryNavy : AppColors.textSecondary,
+                            color: isSelected
+                                ? (isDark ? AppColors.goldAccentLight : AppColors.primaryNavy)
+                                : AppTheme.textSecondaryColor(context),
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                             fontSize: 11.5,
                           ),
-                          backgroundColor: Colors.white,
-                          side: BorderSide(color: isSelected ? AppColors.goldAccent : AppColors.borderLight),
+                          backgroundColor: cardBg,
+                          side: BorderSide(
+                            color: isSelected ? AppColors.goldAccent : AppTheme.borderColor(context),
+                          ),
                         ),
                       );
                     }).toList(),
@@ -162,7 +179,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
             child: BlocBuilder<UpdateBloc, UpdateState>(
               builder: (context, state) {
                 if (state is UpdateLoading) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryNavy));
+                  return Center(child: CircularProgressIndicator(color: primaryOrGold));
                 }
 
                 if (state is UpdateError) {
@@ -172,7 +189,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                       children: [
                         const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
                         const SizedBox(height: 12),
-                        Text(state.message),
+                        Text(state.message, style: TextStyle(color: AppTheme.textPrimaryColor(context))),
                         const SizedBox(height: 16),
                         ElevatedButton(onPressed: _fetchUpdates, child: const Text('Retry')),
                       ],
@@ -182,10 +199,16 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
 
                 if (state is UpdateLoaded) {
                   if (state.updates.isEmpty) {
-                    return const Center(child: Text('No legal updates found.'));
+                    return Center(
+                      child: Text(
+                        'No legal updates found.',
+                        style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                      ),
+                    );
                   }
 
                   return RefreshIndicator(
+                    color: primaryOrGold,
                     onRefresh: () async => _fetchUpdates(),
                     child: ListView.builder(
                       controller: _scrollController,
@@ -193,14 +216,14 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemCount: state.updates.length + (state.hasMore ? 1 : 0),
                       itemBuilder: (context, idx) {
-                      if (idx == state.updates.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2)),
-                        );
-                      }
+                        if (idx == state.updates.length) {
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator(color: primaryOrGold, strokeWidth: 2)),
+                          );
+                        }
                         final u = state.updates[idx];
-                        return _buildUpdateCard(u);
+                        return _buildUpdateCard(u, context);
                       },
                     ),
                   );
@@ -215,13 +238,17 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     );
   }
 
-  Widget _buildUpdateCard(UpdateModel u) {
+  Widget _buildUpdateCard(UpdateModel u, BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    final primaryOrGold = AppTheme.primaryOrGold(context);
+
     return Card(
       elevation: 0,
+      color: AppTheme.cardColor(context),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.borderLight),
+        side: BorderSide(color: AppTheme.borderColor(context)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -233,12 +260,18 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                    color: isDark
+                        ? AppColors.goldAccent.withValues(alpha: 0.15)
+                        : AppColors.primaryNavy.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     u.category,
-                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: primaryOrGold,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -261,28 +294,45 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
             const SizedBox(height: 10),
             Text(
               u.title,
-              style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.primaryNavy, height: 1.3),
+              style: TextStyle(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimaryColor(context),
+                height: 1.3,
+              ),
             ),
             if (u.summary != null && u.summary!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 u.summary!,
-                style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary, height: 1.45),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: AppTheme.textSecondaryColor(context),
+                  height: 1.45,
+                ),
               ),
             ],
             if (u.sourceUrl != null && u.sourceUrl!.isNotEmpty) ...[
               const SizedBox(height: 12),
               InkWell(
                 onTap: () => _openSourceUrl(u.sourceUrl),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Read Official Source',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.goldAccent),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.goldAccentLight : AppColors.goldAccent,
+                      ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.open_in_new, size: 14, color: AppColors.goldAccent),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.open_in_new,
+                      size: 14,
+                      color: isDark ? AppColors.goldAccentLight : AppColors.goldAccent,
+                    ),
                   ],
                 ),
               ),
