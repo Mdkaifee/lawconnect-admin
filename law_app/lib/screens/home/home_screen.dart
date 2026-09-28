@@ -169,24 +169,31 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    Color? iconColor,
+    Color? textColor,
   }) {
+    final isDark = ThemeManager.instance.isDarkMode;
+    final defaultIconColor = iconColor ?? (isDark ? AppColors.goldAccentLight : const Color(0xFF0F1E36));
+    final defaultTextColor = textColor ?? (isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F1E36));
+    final dividerColor = isDark ? const Color(0xFF1E2F4D) : const Color(0xFFF1F5F9);
+
     return Column(
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-          leading: Icon(icon, color: const Color(0xFF0F1E36), size: 22),
+          leading: Icon(icon, color: defaultIconColor, size: 22),
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14.5,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F1E36),
+              color: defaultTextColor,
             ),
           ),
-          trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+          trailing: Icon(Icons.chevron_right, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8), size: 20),
           onTap: onTap,
         ),
-        const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 20, endIndent: 20),
+        Divider(height: 1, color: dividerColor, indent: 20, endIndent: 20),
       ],
     );
   }
