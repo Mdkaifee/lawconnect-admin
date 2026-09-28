@@ -286,7 +286,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             surfaceTintColor: surfaceColor,
             elevation: 0,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: textColor),
+              icon: Icon(Icons.arrow_back, size: 20, color: textColor),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
