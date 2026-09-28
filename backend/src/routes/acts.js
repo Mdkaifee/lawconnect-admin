@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Act } from "../models/index.js";
+import { Act, AppNotification } from "../models/index.js";
 import { auth, requireAdmin, asyncHandler } from "../middleware/auth.js";
 import { validateSafeUrl } from "../utils/security.js";
 import { notifyAllUsers } from "../services/notifications.js";
@@ -356,10 +356,18 @@ router.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const item = await Act.create(req.body);
-    await notifyAllUsers({
-      title: "New bare act",
+    await AppNotification.create({
+      userId: null,
+      title: "New Bare Act Added",
       body: item.name,
-      data: { type: "act", actId: item._id.toString() },
+      type: "act",
+      refType: "act",
+      refId: item._id.toString(),
+    });
+    await notifyAllUsers({
+      title: "New Bare Act Added",
+      body: item.name,
+      data: { type: "act", refType: "act", refId: item._id.toString(), actId: item._id.toString() },
     });
     res.status(201).json({ item });
   }),
@@ -400,10 +408,19 @@ router.post(
     if (!act) return res.status(404).json({ error: "Act not found" });
     act.sections.push({ ...req.body, lastVerifiedDate: new Date() });
     await act.save();
+    const sectionNumber = req.body?.number || "";
+    await AppNotification.create({
+      userId: null,
+      title: "New Bare Act Section Added",
+      body: `${act.shortName || act.name} - Section ${sectionNumber}`,
+      type: "act",
+      refType: "act",
+      refId: act._id.toString(),
+    });
     await notifyAllUsers({
-      title: "Bare act section added",
-      body: act.name,
-      data: { type: "act_section", actId: act._id.toString() },
+      title: "New Bare Act Section Added",
+      body: `${act.shortName || act.name} - Section ${sectionNumber}`,
+      data: { type: "act", refType: "act", refId: act._id.toString(), actId: act._id.toString() },
     });
     res.status(201).json({ item: act });
   }),
