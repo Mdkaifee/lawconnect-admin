@@ -106,222 +106,230 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _confirmDeleteAccount() {
     CustomConfirmationDialog.show(
       context,
-      title: Translation.t('delete_account'),
-      message: Translation.t('delete_account_subtitle'),
-      confirmText: Translation.t('delete_account'),
-      cancelText: Translation.t('cancel'),
+      title: 'Delete Account?',
+      message:
+          'Your account will be scheduled for deletion. If you do not log in again within 7 days, your account and all associated data will be permanently deleted.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
       icon: Icons.delete_forever_rounded,
       iconColor: const Color(0xFFDC2626),
       onConfirm: () {
-        context.read<AuthBloc>().add(const DeleteAccountEvent(reason: 'User requested in-app deletion'));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(Translation.t('delete_account_subtitle')),
-            backgroundColor: const Color(0xFFDC2626),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
+        context.read<AuthBloc>().add(
+              const DeleteAccountEvent(reason: 'User requested account deletion from app settings'),
+            );
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F1E36),
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F1E36)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          Translation.t('settings'),
-          style: const TextStyle(
-            color: Color(0xFF0F1E36),
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        children: [
-          _buildSectionHeader(Translation.t('preferences')),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: const Color(0xFFDC2626),
             ),
-            child: Column(
-              children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('push_notifications'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  subtitle: Text(
-                    Translation.t('push_notifications_subtitle'),
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                  ),
-                  value: _notificationsEnabled,
-                  activeColor: const Color(0xFF0F1E36),
-                  onChanged: _setNotificationsEnabled,
-                ),
-                const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
-                SwitchListTile(
-                  secondary: const Icon(Icons.dark_mode_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('dark_mode'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  subtitle: Text(
-                    Translation.t('dark_mode_subtitle'),
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                  ),
-                  value: _darkModeEnabled,
-                  activeColor: const Color(0xFF0F1E36),
-                  onChanged: (value) {
-                    setState(() => _darkModeEnabled = value);
-                  },
-                ),
-                const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.language_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('language'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  subtitle: Text(
-                    Translation.instance.currentLanguageLabel,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
-                  onTap: _showLanguageDialog,
-                ),
-              ],
+          );
+        }
+        if (state is Unauthenticated) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF0F1E36),
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF0F1E36)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            Translation.t('settings'),
+            style: const TextStyle(
+              color: Color(0xFF0F1E36),
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          _buildSectionHeader(Translation.t('storage_data')),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.cleaning_services_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('clear_cached_judgments'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  subtitle: Text(
-                    Translation.t('clear_cached_judgments_subtitle'),
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                  ),
-                  trailing: const Icon(Icons.delete_outline_rounded, color: Color(0xFF94A3B8), size: 20),
-                  onTap: _clearCache,
-                ),
-              ],
-            ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(height: 1, color: Color(0xFFE2E8F0)),
           ),
-
-          const SizedBox(height: 24),
-
-          _buildSectionHeader(Translation.t('account_management')),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFFECACA)),
-            ),
-            child: ListTile(
-              leading: const Icon(Icons.delete_forever_outlined, color: Color(0xFFDC2626), size: 22),
-              title: Text(
-                Translation.t('delete_account'),
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFFDC2626)),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          children: [
+            _buildSectionHeader(Translation.t('preferences')),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              subtitle: Text(
-                Translation.t('delete_account_subtitle'),
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.notifications_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('push_notifications'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    subtitle: Text(
+                      Translation.t('push_notifications_subtitle'),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    value: _notificationsEnabled,
+                    activeColor: const Color(0xFF0F1E36),
+                    onChanged: _setNotificationsEnabled,
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.dark_mode_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('dark_mode'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    subtitle: Text(
+                      Translation.t('dark_mode_subtitle'),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    value: _darkModeEnabled,
+                    activeColor: const Color(0xFF0F1E36),
+                    onChanged: (value) {
+                      setState(() => _darkModeEnabled = value);
+                    },
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.language_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('language'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    subtitle: Text(
+                      Translation.instance.currentLanguageLabel,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                    onTap: _showLanguageDialog,
+                  ),
+                ],
               ),
-              trailing: const Icon(Icons.chevron_right, color: Color(0xFFDC2626), size: 20),
-              onTap: _confirmDeleteAccount,
             ),
-          ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          _buildSectionHeader(Translation.t('about_legal')),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+            _buildSectionHeader(Translation.t('storage_data')),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.cleaning_services_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('clear_cached_judgments'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    subtitle: Text(
+                      Translation.t('clear_cached_judgments_subtitle'),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(Icons.delete_outline_rounded, color: Color(0xFF94A3B8), size: 20),
+                    onTap: _clearCache,
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.verified_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('app_version'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  trailing: const AppVersionText(
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF64748B)),
-                  ),
-                ),
-                const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.shield_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('privacy_policy'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
-                  onTap: () => UrlHelper.openInAppUrl(context, ApiConstants.privacyPolicyUrl),
-                ),
-                const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.description_outlined, color: Color(0xFF0F1E36), size: 22),
-                  title: Text(
-                    Translation.t('terms_of_service'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
-                  onTap: () => UrlHelper.openInAppUrl(context, ApiConstants.termsOfServiceUrl),
-                ),
-              ],
-            ),
-          ),
 
-          const SizedBox(height: 30),
-        ],
+            const SizedBox(height: 24),
+
+            _buildSectionHeader(Translation.t('account_management')),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.delete_forever_outlined, color: Color(0xFFDC2626), size: 22),
+                title: Text(
+                  Translation.t('delete_account'),
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFFDC2626)),
+                ),
+                subtitle: Text(
+                  Translation.t('delete_account_subtitle'),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                trailing: const Icon(Icons.chevron_right, color: Color(0xFFDC2626), size: 20),
+                onTap: _confirmDeleteAccount,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            _buildSectionHeader(Translation.t('about_legal')),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.verified_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('app_version'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    trailing: const AppVersionText(
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.shield_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('privacy_policy'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                    onTap: () => UrlHelper.openInAppUrl(context, ApiConstants.privacyPolicyUrl),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.description_outlined, color: Color(0xFF0F1E36), size: 22),
+                    title: Text(
+                      Translation.t('terms_of_service'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5, color: Color(0xFF0F1E36)),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                    onTap: () => UrlHelper.openInAppUrl(context, ApiConstants.termsOfServiceUrl),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
