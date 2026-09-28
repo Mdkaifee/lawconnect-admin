@@ -70,6 +70,7 @@ export type AppUser = {
   email: string;
   college?: string;
   headline?: string;
+  photoUrl?: string;
   blocked?: boolean;
   createdAt?: string;
 };

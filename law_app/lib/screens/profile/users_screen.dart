@@ -213,20 +213,23 @@ class _UsersScreenState extends State<UsersScreen> {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           leading: CircleAvatar(
                             backgroundColor: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
-                            child: Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                              style: TextStyle(
-                                color: isDark ? AppColors.goldAccentLight : Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            backgroundImage: user.photoUrl?.trim().isNotEmpty == true ? NetworkImage(user.photoUrl!.trim()) : null,
+                            child: user.photoUrl?.trim().isNotEmpty == true
+                                ? null
+                                : Text(
+                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                    style: TextStyle(
+                                      color: isDark ? AppColors.goldAccentLight : Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                           ),
                           title: Text(
                             user.name,
                             style: TextStyle(fontWeight: FontWeight.w800, color: textPrimary),
                           ),
                           subtitle: Text(
-                            '${user.headline}\n${user.college}',
+                            [user.headline, user.college].where((value) => value.trim().isNotEmpty).join('\n'),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),

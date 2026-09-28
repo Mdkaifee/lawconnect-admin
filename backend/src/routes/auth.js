@@ -112,7 +112,17 @@ router.post(
     if (exists) return res.status(409).json({ error: "Email already registered" });
     const user = await User.create({ name, email, passwordHash: await bcrypt.hash(password, 10) });
     const token = signToken({ type: "user", id: user._id.toString() });
-    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        photoUrl: user.photoUrl,
+        headline: user.headline,
+        college: user.college,
+      },
+    });
   }),
 );
 

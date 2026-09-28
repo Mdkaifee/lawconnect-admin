@@ -20,6 +20,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     context.read<UserDataBloc>().add(LoadUserDataEvent());
   }
 
+  Future<void> _refresh() async {
+    context.read<UserDataBloc>().add(LoadUserDataEvent());
+  }
+
   @override
   Widget build(BuildContext context) {
     final cardBg = AppTheme.cardColor(context);
@@ -61,69 +65,84 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
               if (state is UserDataLoaded) {
                 if (state.bookmarks.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No bookmarks saved yet.',
-                      style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                  return RefreshIndicator(
+                    color: primaryOrGold,
+                    onRefresh: _refresh,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.28),
+                        Center(
+                          child: Text(
+                            'No bookmarks saved yet.',
+                            style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.bookmarks.length,
-                  itemBuilder: (context, idx) {
-                    final b = state.bookmarks[idx];
-                    return Card(
-                      elevation: 0,
-                      color: cardBg,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: AppTheme.borderColor(context)),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.goldAccent.withValues(alpha: isDark ? 0.2 : 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            b.refType == 'section' ? Icons.menu_book : Icons.account_balance,
-                            color: isDark ? AppColors.goldAccentLight : AppColors.goldAccent,
-                            size: 22,
-                          ),
+                return RefreshIndicator(
+                  color: primaryOrGold,
+                  onRefresh: _refresh,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: state.bookmarks.length,
+                    itemBuilder: (context, idx) {
+                      final b = state.bookmarks[idx];
+                      return Card(
+                        elevation: 0,
+                        color: cardBg,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: AppTheme.borderColor(context)),
                         ),
-                        title: Text(
-                          b.title,
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textPrimary),
-                        ),
-                        subtitle: b.subtitle != null
-                            ? Text(b.subtitle!, style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)))
-                            : null,
-                        trailing: IconButton(
-                          icon: const Icon(Icons.bookmark_remove, color: AppColors.danger, size: 20),
-                          onPressed: () {
-                            context.read<UserDataBloc>().add(
-                                  ToggleBookmarkEvent(
-                                    refType: b.refType,
-                                    refId: b.refId,
-                                    title: b.title,
-                                  ),
-                                );
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.goldAccent.withValues(alpha: isDark ? 0.2 : 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              b.refType == 'section' ? Icons.menu_book : Icons.account_balance,
+                              color: isDark ? AppColors.goldAccentLight : AppColors.goldAccent,
+                              size: 22,
+                            ),
+                          ),
+                          title: Text(
+                            b.title,
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textPrimary),
+                          ),
+                          subtitle: b.subtitle != null
+                              ? Text(b.subtitle!, style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)))
+                              : null,
+                          trailing: IconButton(
+                            icon: const Icon(Icons.bookmark_remove, color: AppColors.danger, size: 20),
+                            onPressed: () {
+                              context.read<UserDataBloc>().add(
+                                    ToggleBookmarkEvent(
+                                      refType: b.refType,
+                                      refId: b.refId,
+                                      title: b.title,
+                                    ),
+                                  );
+                            },
+                          ),
+                          onTap: () {
+                            if (b.refType == 'case') {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => CaseDetailScreen(caseId: b.refId)),
+                              );
+                            }
                           },
                         ),
-                        onTap: () {
-                          if (b.refType == 'case') {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => CaseDetailScreen(caseId: b.refId)),
-                            );
-                          }
-                        },
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 );
               }
 

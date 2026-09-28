@@ -220,8 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, state) {
                   final user = state is Authenticated ? state.user : null;
-                  final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
-                  final college = user?.college ?? 'Galgotias University';
+                  final userName = user?.name.isNotEmpty == true ? user!.name : 'User';
+                  final headline = user?.headline.trim() ?? '';
+                  final college = user?.college.trim() ?? '';
+                  final photoUrl = user?.photoUrl?.trim() ?? '';
 
                   return SingleChildScrollView(
                     child: Column(
@@ -242,17 +244,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                   shape: BoxShape.circle,
                                   color: isDark ? const Color(0xFF1B283D) : const Color(0xFF0F1E36),
                                   border: Border.all(color: borderColor, width: 2),
+                                  image: photoUrl.isNotEmpty
+                                      ? DecorationImage(image: NetworkImage(photoUrl), fit: BoxFit.cover)
+                                      : null,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
-                                    style: TextStyle(
-                                      color: isDark ? AppColors.goldAccentLight : Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
+                                child: photoUrl.isEmpty
+                                    ? Center(
+                                        child: Text(
+                                          userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                                          style: TextStyle(
+                                            color: isDark ? AppColors.goldAccentLight : Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                               ),
                               const SizedBox(width: 14),
                               // Name & Subtitle
@@ -270,22 +277,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 2),
-                                    Text(
-                                      'Law Student | Future Advocate',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: textMuted,
+                                    if (headline.isNotEmpty)
+                                      Text(
+                                        headline,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: textMuted,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      college,
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w400,
-                                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                    if (college.isNotEmpty)
+                                      Text(
+                                        college,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w400,
+                                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),

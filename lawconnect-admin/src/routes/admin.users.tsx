@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Trash2, Edit, Users, User, Mail, GraduationCap, Shield } from "lucide-react";
+import { Ban, CheckCircle2, Edit, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/users")({
@@ -43,6 +43,7 @@ function UsersAdmin() {
 
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [statusUser, setStatusUser] = useState<AppUser | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Edit Form State
@@ -92,7 +93,7 @@ function UsersAdmin() {
         headline: headline.trim(),
       };
       if (newPassword.trim()) {
-        payload.password = newPassword.trim();
+        payload["password"] = newPassword.trim();
       }
 
       await api(`/api/users/${editingUser._id}`, { method: "PUT", body: payload });
@@ -113,6 +114,20 @@ function UsersAdmin() {
       load();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to delete user");
+    }
+  }
+
+  async function toggleUserStatus() {
+    if (!statusUser) return;
+    try {
+      await api(`/api/users/${statusUser._id}`, {
+        method: "PUT",
+        body: { blocked: !statusUser.blocked },
+      });
+      setStatusUser(null);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to update user status");
     }
   }
 
@@ -167,11 +182,26 @@ function UsersAdmin() {
                   <tr key={user._id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-sm">
-                          {user.name ? user.name.slice(0, 2).toUpperCase() : "U"}
-                        </div>
+                        {user.photoUrl ? (
+                          <img
+                            src={user.photoUrl}
+                            alt={user.name || "User"}
+                            className="size-9 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-sm">
+                            {user.name ? user.name.slice(0, 2).toUpperCase() : "U"}
+                          </div>
+                        )}
                         <div>
-                          <p className="font-semibold text-card-foreground">{user.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-card-foreground">{user.name}</p>
+                            {user.blocked && (
+                              <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive">
+                                Deactivated
+                              </span>
+                            )}
+                          </div>
                           {user.headline && (
                             <p className="text-xs text-muted-foreground">{user.headline}</p>
                           )}
@@ -191,6 +221,14 @@ function UsersAdmin() {
                       <div className="flex items-center justify-end gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openEdit(user)}>
                           <Edit className="size-3.5 text-muted-foreground hover:text-foreground" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setStatusUser(user)}
+                          className={user.blocked ? "text-emerald-600 hover:bg-emerald-50" : "text-amber-600 hover:bg-amber-50"}
+                        >
+                          {user.blocked ? <CheckCircle2 className="size-3.5" /> : <Ban className="size-3.5" />}
                         </Button>
                         <Button
                           size="sm"
@@ -279,6 +317,30 @@ function UsersAdmin() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(statusUser)} onOpenChange={() => setStatusUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {statusUser?.blocked ? "Reactivate this user account?" : "Deactivate this user account?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {statusUser?.blocked
+                ? "The user will be able to sign in again."
+                : "The user will be blocked from signing in until you reactivate the account."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={toggleUserStatus}
+              className={statusUser?.blocked ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-amber-600 text-white hover:bg-amber-700"}
+            >
+              {statusUser?.blocked ? "Reactivate" : "Deactivate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -60,7 +60,7 @@ class LegalCategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tileColor = isMore ? const Color(0xFFEC4899) : category!.color;
+    final tileColor = isMore ? AppTheme.primaryOrGold(context) : category!.color;
     final label = isMore ? 'More' : category!.name;
     final icon = isMore ? Icons.more_horiz_rounded : category!.iconData;
 

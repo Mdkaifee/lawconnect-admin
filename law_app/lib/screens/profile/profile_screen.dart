@@ -73,9 +73,9 @@ class ProfileScreen extends StatelessWidget {
             },
             builder: (context, state) {
               final user = state is Authenticated ? state.user : null;
-              final userName = user?.name.isNotEmpty == true ? user!.name : 'Rishikesh Yadav';
-              final college = user?.college ?? 'Galgotias University';
-              final headline = user?.headline ?? 'Law Student | Future Advocate';
+              final userName = user?.name.isNotEmpty == true ? user!.name : 'User';
+              final college = user?.college.trim() ?? '';
+              final headline = user?.headline.trim() ?? '';
               final photoUrl = user?.photoUrl;
 
               return SafeArea(
@@ -105,7 +105,7 @@ class ProfileScreen extends StatelessWidget {
                               child: photoUrl == null || photoUrl.isEmpty
                                   ? Center(
                                       child: Text(
-                                        userName.isNotEmpty ? userName[0].toUpperCase() : 'R',
+                                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                                         style: TextStyle(
                                           color: isDark ? AppColors.goldAccentLight : Colors.white,
                                           fontSize: 22,
@@ -143,22 +143,24 @@ class ProfileScreen extends StatelessWidget {
                                         ),
                                     ],
                                   ),
-                                  Text(
-                                    headline,
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: textMuted,
+                                  if (headline.isNotEmpty)
+                                    Text(
+                                      headline,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: textMuted,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    college,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                  if (college.isNotEmpty)
+                                    Text(
+                                      college,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             ),
