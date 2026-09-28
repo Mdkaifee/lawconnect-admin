@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:law_app/blocs/notification/notification_bloc.dart';
-import 'package:law_app/core/theme/app_theme.dart';
 import 'package:law_app/core/translations/translation.dart';
 import 'package:law_app/core/utils/date_formatter.dart';
 import 'package:law_app/models/notification_model.dart';
