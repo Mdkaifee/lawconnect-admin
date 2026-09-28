@@ -244,6 +244,16 @@ router.post(
 
     await Post.findByIdAndUpdate(post._id, { $inc: { commentsCount: 1 } });
 
+    const postAuthorId = post.authorId?.toString();
+    const commenterId = req.auth.id?.toString();
+    if (postAuthorId && postAuthorId !== commenterId && post.authorModel === "User") {
+      await notifyUsers([postAuthorId], {
+        title: "New comment on your post",
+        body: `${authorName} commented: ${content.trim().slice(0, 80)}`,
+        data: { type: "post_comment", postId: post._id.toString(), commentId: comment._id.toString() },
+      });
+    }
+
     res.status(201).json({ item: comment });
   }),
 );

@@ -28,6 +28,13 @@ router.post(
   requireAdmin,
   asyncHandler(async (_req, res) => {
     const result = await IndianKanoonService.syncLandmarkCasesToDb(Case);
+    if ((result?.count || 0) > 0) {
+      await notifyAllUsers({
+        title: "New judgments added",
+        body: `${result.count} judgments were added to the case library.`,
+        data: { type: "case_sync", count: result.count },
+      });
+    }
     res.json(result);
   }),
 );

@@ -2,6 +2,7 @@ import admin from "firebase-admin";
 import { User } from "../models/index.js";
 
 let initialized = false;
+let missingConfigLogged = false;
 
 function initFirebase() {
   if (initialized || admin.apps.length) {
@@ -10,7 +11,13 @@ function initFirebase() {
   }
 
   const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!rawServiceAccount) return false;
+  if (!rawServiceAccount) {
+    if (!missingConfigLogged) {
+      console.warn("[Notifications] FIREBASE_SERVICE_ACCOUNT_JSON is not set. Push notifications will not be sent.");
+      missingConfigLogged = true;
+    }
+    return false;
+  }
 
   try {
     const credentials = JSON.parse(rawServiceAccount);
@@ -35,11 +42,13 @@ export async function notifyUsers(userIds, { title, body, data = {} }) {
   if (tokens.length === 0) return;
 
   try {
-    await admin.messaging().sendEachForMulticast({
-      tokens: [...new Set(tokens)],
+    const uniqueTokens = [...new Set(tokens)];
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens: uniqueTokens,
       notification: { title, body },
       data: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, String(value)])),
     });
+    await removeInvalidTokens(uniqueTokens, response);
   } catch (error) {
     console.error("[Notifications] Send failed:", error?.message || error);
   }
@@ -52,12 +61,32 @@ export async function notifyAllUsers({ title, body, data = {} }) {
   if (tokens.length === 0) return;
 
   try {
-    await admin.messaging().sendEachForMulticast({
-      tokens: [...new Set(tokens)],
+    const uniqueTokens = [...new Set(tokens)];
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens: uniqueTokens,
       notification: { title, body },
       data: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, String(value)])),
     });
+    await removeInvalidTokens(uniqueTokens, response);
   } catch (error) {
     console.error("[Notifications] Broadcast failed:", error?.message || error);
+  }
+}
+
+async function removeInvalidTokens(tokens, response) {
+  const invalidTokens = [];
+
+  response.responses.forEach((result, index) => {
+    const code = result.error?.code;
+    if (
+      code === "messaging/registration-token-not-registered" ||
+      code === "messaging/invalid-registration-token"
+    ) {
+      invalidTokens.push(tokens[index]);
+    }
+  });
+
+  if (invalidTokens.length > 0) {
+    await User.updateMany({ fcmTokens: { $in: invalidTokens } }, { $pull: { fcmTokens: { $in: invalidTokens } } });
   }
 }
