@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Contact support: rishikesh4287@gmail.com'),
+            content: Text(Translation.t('contact_support_email')),
             backgroundColor: Color(0xFF0F1E36),
           ),
         );
@@ -746,7 +746,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(24),
-                      child: Text('No landmark judgments available right now.'),
+                      child: Text(Translation.t('no_landmark_judgments')),
                     ),
                   );
                 },

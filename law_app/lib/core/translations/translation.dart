@@ -183,6 +183,12 @@ const Map<String, Map<String, String>> _translations = {
   'broader_search_hint': {'en': 'Try searching with broader keywords, party names, or a standard citation.', 'hi': 'व्यापक कीवर्ड, पक्षकारों के नाम या मानक उद्धरण से खोजें।'},
   'searching_cases': {'en': 'Searching Indian Kanoon & Case Law Database...', 'hi': 'इंडियन कानून और केस लॉ डेटाबेस खोजा जा रहा है...'},
   'showing_results': {'en': 'Showing results', 'hi': 'परिणाम दिखाए जा रहे हैं'},
+  'legal_updates_news': {'en': 'Legal Updates & News', 'hi': 'कानूनी अपडेट और समाचार'},
+  'no_legal_updates': {'en': 'No legal updates found.', 'hi': 'कोई कानूनी अपडेट नहीं मिला।'},
+  'verified': {'en': 'Verified', 'hi': 'सत्यापित'},
+  'read_official_source': {'en': 'Read Official Source', 'hi': 'आधिकारिक स्रोत पढ़ें'},
+  'no_landmark_judgments': {'en': 'No landmark judgments available right now.', 'hi': 'अभी कोई महत्वपूर्ण फैसला उपलब्ध नहीं है।'},
+  'contact_support_email': {'en': 'Contact support: rishikesh4287@gmail.com', 'hi': 'सहायता से संपर्क करें: rishikesh4287@gmail.com'},
   'delete_account_title': {'en': 'Delete Account?', 'hi': 'अकाउंट हटाएं?'},
   'delete_account_confirm_message': {
     'en': 'Your account will be scheduled for deletion. If you do not log in again within 7 days, your account and all associated data will be permanently deleted.',

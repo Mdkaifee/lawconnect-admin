@@ -341,7 +341,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
                       unselectedLabelColor: textSecondary,
                       indicatorColor: primaryOrGold,
                       indicatorWeight: 2,
-                      tabs: const [
+                      tabs: [
                         Tab(text: Translation.t('overview')),
                         Tab(text: Translation.t('judgment')),
                         Tab(text: Translation.t('my_notes_title')),

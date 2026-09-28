@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/update/update_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../models/update_model.dart';
 import '../../core/utils/url_helper.dart';
 
@@ -73,7 +74,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
         surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         title: Text(
-          'Legal Updates & News',
+          Translation.t('legal_updates_news'),
           style: TextStyle(
             color: AppTheme.textPrimaryColor(context),
             fontWeight: FontWeight.w800,
@@ -191,7 +192,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                         const SizedBox(height: 12),
                         Text(state.message, style: TextStyle(color: AppTheme.textPrimaryColor(context))),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _fetchUpdates, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _fetchUpdates, child: Text(Translation.t('retry'))),
                       ],
                     ),
                   );
@@ -201,7 +202,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                   if (state.updates.isEmpty) {
                     return Center(
                       child: Text(
-                        'No legal updates found.',
+                        Translation.t('no_legal_updates'),
                         style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                       ),
                     );
@@ -287,7 +288,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                 if (u.verificationStatus == 'verified') ...[
                   const Icon(Icons.verified, size: 15, color: AppColors.success),
                   const SizedBox(width: 4),
-                  const Text('Verified', style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w700)),
+                  Text(Translation.t('verified'), style: const TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w700)),
                 ],
               ],
             ),
@@ -320,7 +321,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Read Official Source',
+                      Translation.t('read_official_source'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
