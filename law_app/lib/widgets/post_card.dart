@@ -237,13 +237,13 @@ class PostCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'report',
                       child: Row(
                         children: [
-                          Icon(Icons.flag_outlined, size: 18, color: AppColors.danger),
-                          SizedBox(width: 8),
-                          Text(Translation.t('report_content'), style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w500)),
+                          const Icon(Icons.flag_outlined, size: 18, color: AppColors.danger),
+                          const SizedBox(width: 8),
+                          Text(Translation.t('report_content'), style: const TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),
