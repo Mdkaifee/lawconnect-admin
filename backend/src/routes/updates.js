@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { LegalUpdate } from "../models/index.js";
+import { LegalUpdate, AppNotification } from "../models/index.js";
 import { auth, requireAdmin, asyncHandler } from "../middleware/auth.js";
 import { validateSafeUrl } from "../utils/security.js";
 import { notifyAllUsers } from "../services/notifications.js";
@@ -55,10 +55,18 @@ router.post(
       ...req.body,
       verifiedAt: req.body.verificationStatus === "verified" ? new Date() : undefined,
     });
-    await notifyAllUsers({
-      title: "New legal update",
+    await AppNotification.create({
+      userId: null,
+      title: "New Legal Update",
       body: item.title,
-      data: { type: "legal_update", updateId: item._id.toString() },
+      type: "update",
+      refType: "update",
+      refId: item._id.toString(),
+    });
+    await notifyAllUsers({
+      title: "New Legal Update",
+      body: item.title,
+      data: { type: "update", refType: "update", refId: item._id.toString(), updateId: item._id.toString() },
     });
     res.status(201).json({ item });
   }),

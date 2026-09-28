@@ -276,7 +276,7 @@ router.post(
 
     const postAuthorId = post.authorId?.toString();
     const commenterId = req.auth.id?.toString();
-    if (postAuthorId && postAuthorId !== commenterId && post.authorModel === "User") {
+    if (postAuthorId && postAuthorId !== commenterId) {
       await AppNotification.create({
         userId: postAuthorId,
         title: "New comment on your post",
@@ -288,7 +288,7 @@ router.post(
       await notifyUsers([postAuthorId], {
         title: "New comment on your post",
         body: `${authorName} commented: ${content.trim().slice(0, 80)}`,
-        data: { type: "post_comment", postId: post._id.toString(), commentId: comment._id.toString() },
+        data: { type: "post_comment", refType: "post", refId: post._id.toString(), postId: post._id.toString(), commentId: comment._id.toString() },
       });
     }
 
@@ -350,10 +350,18 @@ router.post(
       likes: 0,
       commentsCount: 0,
     });
-    await notifyAllUsers({
-      title: "New post from admin",
+    await AppNotification.create({
+      userId: null,
+      title: "New Announcement from Admin",
       body: item.title,
-      data: { type: "admin_post", postId: item._id.toString() },
+      type: "community",
+      refType: "post",
+      refId: item._id.toString(),
+    });
+    await notifyAllUsers({
+      title: "New Announcement from Admin",
+      body: item.title,
+      data: { type: "admin_post", refType: "post", refId: item._id.toString(), postId: item._id.toString() },
     });
     res.status(201).json({ item });
   }),
