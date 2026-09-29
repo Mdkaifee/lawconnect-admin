@@ -588,15 +588,22 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     );
                   }
 
-                  return RefreshIndicator(
+                    return RefreshIndicator(
                     color: primaryOrGold,
                     onRefresh: () async => _fetchPosts(),
                     child: ListView.builder(
-                      key: const PageStorageKey<String>('community-post-feed'),
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.only(top: 8, bottom: 80),
                       itemCount: displayPosts.length + (state.hasMore && _selectedCategory != 'Friends' ? 1 : 0),
+                      findChildIndexCallback: (Key key) {
+                        if (key is ValueKey<String>) {
+                          final id = key.value.replaceFirst('post-row-', '');
+                          final idx = displayPosts.indexWhere((p) => p.id == id);
+                          return idx != -1 ? idx : null;
+                        }
+                        return null;
+                      },
                       itemBuilder: (context, idx) {
                         if (idx == displayPosts.length) {
                           return Padding(
@@ -620,33 +627,17 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               key: ValueKey<String>('post-row-${post.id}'),
                               child: PostCard(
                                 post: post,
-                              isSelf: isSelf,
-                              currentUserPhotoUrl: currentUserPhotoUrl,
-                              isFollowing: isFollowing,
-                              isBookmarked: isBookmarked,
-                              bookmarkBusy: _bookmarkBusyPostIds.contains(post.id),
-                              onFollow: () => _toggleFollow(post),
-                              onAuthorTap: () => _openAuthorProfile(post),
-                              onBookmark: () => _togglePostBookmark(post, isBookmarked),
-                              likeBusy: _likeBusyPostIds.contains(post.id),
-                              onLike: () async {
-                                if (_likeBusyPostIds.contains(post.id)) return;
-                                setState(() => _likeBusyPostIds.add(post.id));
-                                final completer = Completer<Map<String, dynamic>>();
-                                context.read<PostBloc>().add(ToggleLikePostEvent(post.id, completer: completer));
-                                try {
-                                  await completer.future;
-                                } catch (_) {
-                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to update like')));
-                                } finally {
-                                  if (mounted) {
-                                    setState(() => _likeBusyPostIds.remove(post.id));
-                                  }
-                                }
-                              },
-                              onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
-                              onReport: () => _showReportDialog(context, post.id),
-                              onDelete: isSelf ? () => _deletePost(post) : null,
+                                isSelf: isSelf,
+                                currentUserPhotoUrl: currentUserPhotoUrl,
+                                isFollowing: isFollowing,
+                                isBookmarked: isBookmarked,
+                                onFollow: () => _toggleFollow(post),
+                                onAuthorTap: () => _openAuthorProfile(post),
+                                onBookmark: () => _togglePostBookmark(post, isBookmarked),
+                                onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(post.id)),
+                                onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
+                                onReport: () => _showReportDialog(context, post.id),
+                                onDelete: isSelf ? () => _deletePost(post) : null,
                               ),
                             );
                           },

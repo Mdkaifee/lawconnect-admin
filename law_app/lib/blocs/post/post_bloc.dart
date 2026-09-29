@@ -192,28 +192,51 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     if (state is! PostLoaded) return;
     final currentState = state as PostLoaded;
 
+    // Optimistic update
+    final optimisticPosts = currentState.posts.map((p) {
+      if (p.id == event.postId) {
+        final newIsLiked = !p.isLiked;
+        return p.copyWith(
+          isLiked: newIsLiked,
+          likesCount: newIsLiked ? p.likesCount + 1 : (p.likesCount > 0 ? p.likesCount - 1 : 0),
+        );
+      }
+      return p;
+    }).toList();
+
+    emit(PostLoaded(
+      optimisticPosts,
+      selectedCategory: currentState.selectedCategory,
+      page: currentState.page,
+      total: currentState.total,
+      hasMore: currentState.hasMore,
+    ));
+
     try {
       final result = await _postRepository.toggleLike(event.postId);
-      // Sync confirmed state from server
-      final confirmedPosts = currentState.posts.map((p) {
-        if (p.id == event.postId) {
-          return p.copyWith(
-            isLiked: result['isLiked'] as bool,
-            likesCount: result['likesCount'] as int,
-          );
-        }
-        return p;
-      }).toList();
-      emit(PostLoaded(
-        confirmedPosts,
-        selectedCategory: currentState.selectedCategory,
-        page: currentState.page,
-        total: currentState.total,
-        hasMore: currentState.hasMore,
-      ));
+      // Sync confirmed state from server if state is still PostLoaded
+      if (state is PostLoaded) {
+        final activeState = state as PostLoaded;
+        final confirmedPosts = activeState.posts.map((p) {
+          if (p.id == event.postId) {
+            return p.copyWith(
+              isLiked: result['isLiked'] as bool,
+              likesCount: result['likesCount'] as int,
+            );
+          }
+          return p;
+        }).toList();
+        emit(PostLoaded(
+          confirmedPosts,
+          selectedCategory: activeState.selectedCategory,
+          page: activeState.page,
+          total: activeState.total,
+          hasMore: activeState.hasMore,
+        ));
+      }
       event.completer?.complete(result);
     } catch (_) {
-      // Revert on failure
+      // Revert to original state on failure
       emit(currentState);
       if (!(event.completer?.isCompleted ?? true)) event.completer!.completeError(Exception('Unable to update like'));
     }
