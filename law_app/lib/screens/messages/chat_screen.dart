@@ -39,8 +39,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(_load);
-    await _future;
+    if (!mounted) return;
+    setState(() {
+      _load();
+    });
+    try {
+      await _future;
+    } catch (_) {}
   }
 
   Future<void> _send() async {
