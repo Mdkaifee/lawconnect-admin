@@ -30,6 +30,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     final textPrimary = AppTheme.textPrimaryColor(context);
     final textSecondary = AppTheme.textSecondaryColor(context);
     final primary = AppTheme.primaryOrGold(context);
