@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
+import '../../repositories/auth_repository.dart';
 import '../main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -66,6 +67,49 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             ),
           );
     }
+  }
+
+  void _showForgotPassword() {
+    final emailController = TextEditingController(text: _loginEmailController.text.trim());
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Change password'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              TextFormField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email'), validator: (v) => v == null || !v.contains('@') ? 'Enter a valid email' : null),
+              TextFormField(controller: currentController, obscureText: true, decoration: const InputDecoration(labelText: 'Current password'), validator: (v) => v == null || v.isEmpty ? 'Required' : null),
+              TextFormField(controller: newController, obscureText: true, decoration: const InputDecoration(labelText: 'New password'), validator: (v) => v == null || v.length < 6 ? 'Minimum 6 characters' : null),
+              TextFormField(controller: confirmController, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm new password'), validator: (v) => v != newController.text ? 'Passwords do not match' : null),
+            ]),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              try {
+                await context.read<AuthRepository>().changePassword(email: emailController.text, currentPassword: currentController.text, newPassword: newController.text, confirmPassword: confirmController.text);
+                if (!dialogContext.mounted) return;
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password changed successfully')));
+              } catch (e) {
+                if (!dialogContext.mounted) return;
+                ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppColors.danger));
+              }
+            },
+            child: const Text('Change'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -201,6 +245,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     ),
                                   ),
                                   validator: (val) => val == null || val.length < 6 ? Translation.t('password_length_error') : null,
+                                ),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: _showForgotPassword,
+                                    child: Text('Forgot password?', style: TextStyle(color: AppTheme.primaryOrGold(context))),
+                                  ),
                                 ),
                                 const SizedBox(height: 24),
                                 BlocBuilder<AuthBloc, AuthState>(

@@ -64,7 +64,7 @@ router.get(
     const otherIds = conversations
       .map((c) => (c.participants || []).map((id) => id.toString()).find((id) => id !== req.auth.id))
       .filter(Boolean);
-    const users = await User.find({ _id: { $in: otherIds } }).select("-passwordHash").lean();
+    const users = await User.find({ _id: { $in: otherIds }, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("-passwordHash").lean();
     const userMap = Object.fromEntries(users.map((u) => [u._id.toString(), u]));
     const unreadCounts = await Message.aggregate([
       { $match: { conversationId: { $in: conversations.map((c) => c._id) }, receiverId: new mongoose.Types.ObjectId(req.auth.id), readAt: null } },
@@ -90,7 +90,8 @@ router.get(
     const conversation = await Conversation.findOne({ _id: req.params.id, participants: req.auth.id });
     if (!conversation) return res.status(404).json({ error: "Conversation not found" });
     const otherId = conversation.participants.map((id) => id.toString()).find((id) => id !== req.auth.id);
-    const otherUser = await User.findById(otherId).select("-passwordHash").lean();
+    const otherUser = await User.findOne({ _id: otherId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("-passwordHash").lean();
+    if (!otherUser) return res.status(404).json({ error: "Conversation participant is inactive" });
     const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 }).lean();
     res.json({
       conversation: serializeConversation(conversation, otherUser, req.auth.id),
@@ -119,8 +120,8 @@ router.post(
     if (body.length > 250) return res.status(400).json({ error: "Message request is limited to 250 characters" });
 
     const [sender, receiver] = await Promise.all([
-      User.findById(req.auth.id).select("name"),
-      User.findById(targetId).select("name"),
+      User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("name"),
+      User.findOne({ _id: targetId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("name"),
     ]);
     if (!sender || !receiver) return res.status(404).json({ error: "User not found" });
 
@@ -170,7 +171,9 @@ router.post(
     }
     if (friends && conversation.status !== "active") conversation.status = "active";
 
-    const sender = await User.findById(req.auth.id).select("name");
+    const sender = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("name");
+    const receiver = await User.findOne({ _id: otherId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("_id");
+    if (!sender || !receiver) return res.status(403).json({ error: "Inactive account cannot send messages" });
     const message = await Message.create({ conversationId: conversation._id, senderId: req.auth.id, receiverId: otherId, body });
     conversation.lastMessage = body;
     conversation.lastMessageAt = new Date();

@@ -14,6 +14,10 @@ router.get(
     const { scope, authorId, category, tag, q, page = 1, limit = 20, all } = req.query;
     const filter = {};
     if (!all) filter.status = "published";
+    filter.$and = [{ $or: [
+      { authorModel: { $ne: "User" } },
+      { authorId: { $in: await User.find({ blocked: { $ne: true }, deletionRequested: { $ne: true } }).distinct("_id") } },
+    ] }];
     if ((scope === "mine" || scope === "author") && authorId) filter.authorId = authorId;
     if (scope === "following") {
       let visibleAuthorIds = [];
@@ -29,7 +33,7 @@ router.get(
     if (tag) filter.tags = tag;
     if (q) {
       const rx = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-      filter.$or = [{ title: rx }, { content: rx }, { tags: rx }, { authorName: rx }];
+      filter.$and.push({ $or: [{ title: rx }, { content: rx }, { tags: rx }, { authorName: rx }] });
     }
 
     const pageNum = Math.max(1, Number(page) || 1);
@@ -74,6 +78,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const item = await Post.findById(req.params.id).lean();
     if (!item) return res.status(404).json({ error: "Post not found" });
+    if (item.authorModel === "User" && !(await User.exists({ _id: item.authorId, blocked: { $ne: true }, deletionRequested: { $ne: true } }))) return res.status(404).json({ error: "Post not found" });
     if (item.authorId) {
       const u = await User.findById(item.authorId).select("photoUrl").lean();
       if (u && u.photoUrl) item.authorPhotoUrl = u.photoUrl;
@@ -143,6 +148,7 @@ router.post(
     const userId = new mongoose.Types.ObjectId(req.auth.id);
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: "Post not found" });
+    if (post.authorModel === "User" && !(await User.exists({ _id: post.authorId, blocked: { $ne: true }, deletionRequested: { $ne: true } }))) return res.status(404).json({ error: "Post not found" });
 
     const isAlreadyLiked = (post.likedBy || []).some((id) => id.toString() === req.auth.id);
 
@@ -204,7 +210,13 @@ router.get(
     const pageNum = Math.max(1, Number(req.query.page) || 1);
     const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
     const skip = (pageNum - 1) * limitNum;
-    const filter = { postId: req.params.id, status: "published" };
+    const post = await Post.findOne({ _id: req.params.id, $or: [
+      { authorModel: { $ne: "User" } },
+      { authorId: { $in: await User.find({ blocked: { $ne: true }, deletionRequested: { $ne: true } }).distinct("_id") } },
+    ] }).select("_id").lean();
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    const activeCommentAuthors = await User.find({ blocked: { $ne: true }, deletionRequested: { $ne: true } }).distinct("_id");
+    const filter = { postId: req.params.id, status: "published", $or: [{ authorModel: "Admin" }, { authorId: { $in: activeCommentAuthors } }] };
     const [comments, total] = await Promise.all([
       Comment.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limitNum).lean(),
       Comment.countDocuments(filter),
@@ -254,7 +266,8 @@ router.post(
       authorModel = "Admin";
       authorName = "Rishikesh Yadav (Admin)";
     } else {
-      const user = await User.findById(req.auth.id);
+      const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
+      if (!user) return res.status(403).json({ error: "Inactive account cannot comment" });
       if (user) {
         authorName = user.name;
         authorPhotoUrl = user.photoUrl || "";

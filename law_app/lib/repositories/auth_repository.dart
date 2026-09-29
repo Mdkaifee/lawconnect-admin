@@ -50,6 +50,28 @@ class AuthRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String email,
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse(ApiConstants.changePassword),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email.trim(),
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      }),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(data['error'] ?? 'Unable to change password.');
+    }
+  }
+
   Future<UserModel> register(String name, String email, String password) async {
     final response = await http.post(
       Uri.parse(ApiConstants.register),

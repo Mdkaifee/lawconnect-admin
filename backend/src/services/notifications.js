@@ -37,7 +37,7 @@ export async function notifyUsers(userIds, { title, body, data = {} }) {
   const ids = [...new Set((userIds || []).map((id) => id?.toString()).filter(Boolean))];
   if (ids.length === 0) return;
 
-  const users = await User.find({ _id: { $in: ids } }).select("fcmTokens");
+  const users = await User.find({ _id: { $in: ids }, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("fcmTokens");
   const tokens = users.flatMap((user) => user.fcmTokens || []).filter(Boolean);
   if (tokens.length === 0) return;
 
@@ -56,7 +56,7 @@ export async function notifyUsers(userIds, { title, body, data = {} }) {
 
 export async function notifyAllUsers({ title, body, data = {} }) {
   if (!initFirebase()) return;
-  const users = await User.find({ blocked: { $ne: true } }).select("fcmTokens");
+  const users = await User.find({ blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("fcmTokens");
   const tokens = users.flatMap((user) => user.fcmTokens || []).filter(Boolean);
   if (tokens.length === 0) return;
 

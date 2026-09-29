@@ -4,6 +4,7 @@ class ApiConstants {
   
   // Auth endpoints
   static const String login = '$baseUrl/auth/login';
+  static const String changePassword = '$baseUrl/auth/change-password';
   static const String register = '$baseUrl/auth/register';
   static const String me = '$baseUrl/auth/me';
   static const String follow = '$baseUrl/auth/follow';

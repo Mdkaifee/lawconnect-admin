@@ -102,7 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openMoreCategories(List<CategoryModel> categories) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundColor(context),
+      surfaceTintColor: AppTheme.backgroundColor(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),

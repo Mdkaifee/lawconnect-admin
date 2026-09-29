@@ -142,30 +142,7 @@ router.post(
       return res.status(401).json({ error: "Invalid credentials" });
     }
     if (user.blocked) return res.status(403).json({ error: "Account blocked" });
-
-    // Handle 7-day grace period account deletion
-    let restored = false;
-    if (user.deletionRequested) {
-      const now = new Date();
-      if (user.deletionDueAt && now > user.deletionDueAt) {
-        // Grace period expired! Purge immediately
-        await purgeUserData(user._id);
-        return res.status(401).json({ error: "Account has been permanently deleted as the 7-day restore window expired." });
-      } else {
-        // User logged back in within 7 days -> Auto-cancel deletion & restore account!
-        user.deletionRequested = false;
-        user.deletionRequestedAt = undefined;
-        user.deletionDueAt = undefined;
-        user.deletionReason = undefined;
-        await user.save();
-
-        await DeletionRequest.updateMany(
-          { userId: user._id, status: "pending" },
-          { status: "cancelled" }
-        );
-        restored = true;
-      }
-    }
+    if (user.deletionRequested) return res.status(403).json({ error: "This account is inactive because deletion was requested." });
 
     const token = signToken({ type: "user", id: user._id.toString() });
     res.json({
@@ -178,11 +155,32 @@ router.post(
         headline: user.headline,
         college: user.college,
       },
-      restored,
-      message: restored
-        ? "Welcome back! Your scheduled account deletion was automatically cancelled, and your account has been restored."
-        : undefined,
+      restored: false,
     });
+  }),
+);
+
+router.post(
+  "/change-password",
+  asyncHandler(async (req, res) => {
+    const { email, currentPassword, newPassword, confirmPassword } = req.body || {};
+    const normalizedEmail = (email || "").trim().toLowerCase();
+    if (!normalizedEmail || !currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ error: "Email, current password, new password, and confirmation are required" });
+    }
+    if (newPassword.length < 6) return res.status(400).json({ error: "New password must be at least 6 characters" });
+    if (newPassword !== confirmPassword) return res.status(400).json({ error: "New passwords do not match" });
+
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ error: "Email or current password is incorrect" });
+    }
+    if (user.blocked || user.deletionRequested) return res.status(403).json({ error: "This account is inactive" });
+    if (await bcrypt.compare(newPassword, user.passwordHash)) return res.status(400).json({ error: "New password must be different" });
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ ok: true, message: "Password changed successfully" });
   }),
 );
 
