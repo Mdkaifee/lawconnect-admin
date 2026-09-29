@@ -28,6 +28,8 @@ import '../profile/bookmarks_screen.dart';
 import '../profile/history_screen.dart';
 import '../profile/notes_screen.dart';
 import '../profile/settings_screen.dart';
+import '../profile/users_screen.dart';
+import '../messages/messages_screen.dart';
 import '../../widgets/case_card.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../../widgets/legal_category_grid.dart';
@@ -374,6 +376,39 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     _buildDrawerMenuItem(
                       context,
+                      icon: Icons.people_outline_rounded,
+                      title: Translation.t('users'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const UsersScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.forum_outlined,
+                      title: Translation.t('messages'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.auto_awesome_rounded,
+                      title: 'AI Legal Chat',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AiChatScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
                       icon: Icons.notifications_none_rounded,
                       title: Translation.t('notifications'),
                       onTap: () {
@@ -423,17 +458,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.pop(context);
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const AboutUsScreen()),
-                        );
-                      },
-                    ),
-                    _buildDrawerMenuItem(
-                      context,
-                      icon: Icons.auto_awesome_rounded,
-                      title: 'AI Legal Chat',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AiChatScreen()),
                         );
                       },
                     ),

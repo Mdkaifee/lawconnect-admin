@@ -49,10 +49,13 @@ router.get(
     const authorIds = items.filter((p) => p.authorId).map((p) => p.authorId);
     let authorPhotoMap = {};
     if (authorIds.length > 0) {
-      const users = await User.find({ _id: { $in: authorIds } }).select("_id photoUrl").lean();
+      const users = await User.find({ _id: { $in: authorIds } }).select("_id photoUrl chatPaidUntil").lean();
+      const authorPremiumMap = {};
       users.forEach((u) => {
         if (u.photoUrl) authorPhotoMap[u._id.toString()] = u.photoUrl;
+        authorPremiumMap[u._id.toString()] = Boolean(u.chatPaidUntil && u.chatPaidUntil > new Date());
       });
+      res.locals.authorPremiumMap = authorPremiumMap;
     }
 
     res.json({
@@ -62,6 +65,7 @@ router.get(
         return {
           ...p,
           authorPhotoUrl: dynamicPhoto,
+          isAuthorPremium: p.authorModel === "User" && Boolean(res.locals.authorPremiumMap?.[authorIdStr]),
           likesCount: p.likedBy ? p.likedBy.length : p.likes || 0,
         };
       }),

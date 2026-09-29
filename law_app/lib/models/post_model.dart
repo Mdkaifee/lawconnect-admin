@@ -12,6 +12,7 @@ class PostModel extends Equatable {
   final String authorName;
   final String? authorPhotoUrl;
   final String authorType; // 'admin' | 'user'
+  final bool isAuthorPremium;
   final int likesCount;
   final int commentsCount;
   final bool isLiked;
@@ -27,6 +28,7 @@ class PostModel extends Equatable {
     required this.authorName,
     this.authorPhotoUrl,
     this.authorType = 'user',
+    this.isAuthorPremium = false,
     this.likesCount = 0,
     this.commentsCount = 0,
     this.isLiked = false,
@@ -59,6 +61,7 @@ class PostModel extends Equatable {
       authorName: json['authorName']?.toString() ?? 'Advocate',
       authorPhotoUrl: json['authorPhotoUrl']?.toString(),
       authorType: json['authorType']?.toString() ?? 'user',
+      isAuthorPremium: json['isAuthorPremium'] == true,
       likesCount: (json['likesCount'] as num?)?.toInt() ?? (json['likes'] as num?)?.toInt() ?? 0,
       commentsCount: (json['commentsCount'] as num?)?.toInt() ?? 0,
       isLiked: liked,
@@ -81,6 +84,7 @@ class PostModel extends Equatable {
       authorName: authorName,
       authorPhotoUrl: authorPhotoUrl,
       authorType: authorType,
+      isAuthorPremium: isAuthorPremium,
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
