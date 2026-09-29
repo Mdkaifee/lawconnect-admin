@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { AppNotification, Category, Note, Bookmark, History, User, Case, Act, Post, LegalUpdate, Report, Comment } from "../models/index.js";
+import { AppNotification, Category, Note, Bookmark, History, User, Case, Act, Post, LegalUpdate, Report, Comment, AiChatMessage } from "../models/index.js";
 import { auth, requireAdmin, requireUser, asyncHandler } from "../middleware/auth.js";
 import mongoose from "mongoose";
 import { notifyUsers } from "../services/notifications.js";
@@ -575,6 +575,7 @@ users.delete(
   auth(),
   requireAdmin,
   asyncHandler(async (req, res) => {
+    await AiChatMessage.deleteMany({ userId: req.params.id });
     await User.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
   }),

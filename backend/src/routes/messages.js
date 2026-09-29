@@ -261,7 +261,7 @@ router.post(
     const attempt = (user.chatPaymentOrders || []).find((item) => item.orderId === razorpayOrderId);
     if (!attempt) return res.status(400).json({ error: "Payment order does not belong to this account or chat" });
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
+    if (!process.env.RAZORPAY_KEY_ID || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
     const expected = crypto.createHmac("sha256", keySecret).update(`${razorpayOrderId}|${razorpayPaymentId}`).digest();
     let supplied;
     try {

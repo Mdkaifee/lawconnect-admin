@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { Admin, AppNotification, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report, Conversation, Message } from "../models/index.js";
+import { Admin, AppNotification, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report, Conversation, Message, AiChatMessage } from "../models/index.js";
 import { signToken, auth, asyncHandler } from "../middleware/auth.js";
 import { notifyUsers } from "../services/notifications.js";
 
@@ -33,6 +33,9 @@ export async function purgeUserData(userId) {
 
   // 6. Delete reading history
   await History.deleteMany({ userId });
+
+  // 6a. Delete AI chat history
+  await AiChatMessage.deleteMany({ userId });
 
   // 7. Delete reports filed by user
   await Report.deleteMany({ reporterId: userId });
