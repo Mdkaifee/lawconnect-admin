@@ -1,9 +1,9 @@
 import { Router } from "express";
 import mongoose from "mongoose";
-import crypto from "node:crypto";
 import { auth, requireUser, asyncHandler } from "../middleware/auth.js";
-import { AppNotification, Conversation, Message, User } from "../models/index.js";
+import { AppNotification, Conversation, Message, PaymentAttempt, User } from "../models/index.js";
 import { notifyUsers } from "../services/notifications.js";
+import { markPaidIfCaptured, verifyRazorpayPaymentSignature } from "../services/chatPayments.js";
 
 const router = Router();
 router.use(auth(), requireUser);
@@ -27,62 +27,73 @@ async function getChatAccess(conversation, userId) {
   return { sentCount, freeLimit: freeMessageLimit, unlockAmount: chatUnlockAmount, isPaid, paidUntil, canSend: Boolean(user) && (isPaid || sentCount < freeMessageLimit) };
 }
 
-function addCalendarMonths(date, months) {
-  const result = new Date(date);
-  const originalDay = result.getUTCDate();
-  result.setUTCDate(1);
-  result.setUTCMonth(result.getUTCMonth() + months);
-  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
-  result.setUTCDate(Math.min(originalDay, lastDay));
-  return result;
+const paymentDurationMonths = Math.max(1, Number.parseInt(process.env.PAID_CHAT_MONTHS || process.env.CHAT_PAID_DURATION_MONTHS || "3", 10) || 3);
+
+function razorpayHeaders() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) return null;
+  return { keyId, Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}` };
 }
 
-async function inspectRazorpayOrder(orderId, expectedAmount, keyId, keySecret) {
-  const response = await fetch(`https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}`, {
-    headers: { Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}` },
-  });
-  const order = await response.json().catch(() => ({}));
-  if (!response.ok || order.id !== orderId) {
-    console.error("Razorpay order status lookup failed:", {
-      status: response.status,
-      code: order.error?.code || "unknown",
-      description: order.error?.description || "No provider description",
-    });
-    return { error: true };
+async function razorpayGet(path) {
+  const credentials = razorpayHeaders();
+  if (!credentials) throw Object.assign(new Error("Chat payments are not configured"), { status: 503 });
+  const response = await fetch(`https://api.razorpay.com/v1${path}`, { headers: { Authorization: credentials.Authorization } });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error("Razorpay API lookup failed", { status: response.status, code: data.error?.code || "unknown", description: data.error?.description || "No provider description" });
+    throw Object.assign(new Error("Could not confirm payment with Razorpay yet. Please try again shortly."), { status: 503 });
   }
-  if (order.amount !== expectedAmount || order.currency !== "INR") return { invalid: true };
-  const amountPaid = Number(order.amount_paid || 0);
-  return { paid: order.status === "paid" && amountPaid >= expectedAmount, status: order.status };
+  return data;
 }
 
-async function recoverPaidChatOrder(user, attempt, result) {
-  if (result.error || result.invalid) return result;
-  if (!result.paid) return { paid: false, status: result.status };
+async function capturedPaymentForOrder(orderId) {
+  const result = await razorpayGet(`/orders/${encodeURIComponent(orderId)}/payments`);
+  return (result.items || []).find((payment) => payment.status === "captured" && payment.captured === true) || null;
+}
 
-  const now = new Date();
-  const currentUser = await User.findById(user._id).select("chatPaidUntil").lean();
-  const startsAt = currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now ? currentUser.chatPaidUntil : now;
-  const chatPaidUntil = addCalendarMonths(startsAt, chatPaidDurationMonths);
-  const update = await User.updateOne(
-    { _id: user._id, chatPaymentOrders: { $elemMatch: { orderId: attempt.orderId, status: { $in: ["created", "cancelled"] } } } },
-    {
-      $set: {
-        "chatPaymentOrders.$.status": "paid",
-        "chatPaymentOrders.$.paymentId": `recovered:${attempt.orderId}`,
-        chatPaidUntil,
+async function migrateLegacyPaymentAttempts(user) {
+  const legacy = user.chatPaymentOrders || [];
+  if (!legacy.length) return;
+  const operations = legacy.filter((item) => item.orderId).map((item) => {
+    const paymentId = item.paymentId && !String(item.paymentId).startsWith("recovered:") ? item.paymentId : undefined;
+    return {
+      updateOne: {
+        filter: { razorpayOrderId: item.orderId },
+        update: { $setOnInsert: {
+          userId: user._id,
+          razorpayOrderId: item.orderId,
+          ...(paymentId ? { razorpayPaymentId: paymentId } : {}),
+          amount: item.amountPaise,
+          currency: "INR",
+          status: ["paid", "failed", "cancelled"].includes(item.status) ? item.status : "created",
+          accessGrantedAt: null,
+        } },
+        upsert: true,
       },
-    },
-  );
-  const latestUser = update.modifiedCount > 0
-    ? null
-    : await User.findById(user._id).select("chatPaidUntil chatPaymentOrders").lean();
-  const orderWasRecordedPaid = latestUser?.chatPaymentOrders?.some(
-    (item) => item.orderId === attempt.orderId && item.status === "paid",
-  );
-  return {
-    paid: update.modifiedCount > 0 || Boolean(orderWasRecordedPaid) || Boolean(currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now),
-    chatPaidUntil: update.modifiedCount > 0 ? chatPaidUntil : latestUser?.chatPaidUntil || currentUser?.chatPaidUntil,
-  };
+    };
+  });
+  if (operations.length) await PaymentAttempt.bulkWrite(operations, { ordered: false });
+}
+
+async function applyCapturedPayment(payment) {
+  return markPaidIfCaptured(payment, { PaymentAttempt, User, durationMonths: paymentDurationMonths });
+}
+
+async function reconcileAttempt(attempt, { checkoutClosed = false, cancelled = false } = {}) {
+  const payment = await capturedPaymentForOrder(attempt.razorpayOrderId);
+  if (payment) {
+    const result = await applyCapturedPayment(payment);
+    if (result.error) throw Object.assign(new Error(result.error), { status: 409 });
+    return { paid: result.paid, cancelled: false, chatPaidUntil: result.chatPaidUntil || null };
+  }
+  if (checkoutClosed && attempt.status !== "paid") {
+    const status = cancelled ? "cancelled" : "failed";
+    await PaymentAttempt.updateOne({ _id: attempt._id, status: { $ne: "paid" } }, { $set: { status } });
+  }
+  const user = await User.findById(attempt.userId).select("chatPaidUntil").lean();
+  return { paid: false, cancelled: checkoutClosed && cancelled, chatPaidUntil: user?.chatPaidUntil || null };
 }
 
 async function loadActiveConversation(req, res) {
