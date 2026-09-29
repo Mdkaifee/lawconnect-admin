@@ -161,6 +161,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
   Future<void> _togglePostBookmark(PostModel post, bool isBookmarked) async {
     if (_bookmarkBusyPostIds.contains(post.id)) return;
+    final savedOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
     setState(() => _bookmarkBusyPostIds.add(post.id));
     try {
       final repository = context.read<UserDataRepository>();
@@ -180,6 +181,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(isBookmarked ? Translation.t('removed_from_bookmarks') : Translation.t('bookmarked_successfully'))),
         );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) _scrollController.jumpTo(savedOffset.clamp(0.0, _scrollController.position.maxScrollExtent));
+        });
       }
     } catch (_) {
       if (mounted) {
@@ -487,12 +491,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                              ? (isDark ? const Color(0xFF9A4F16) : AppColors.danger)
                               : (isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
-                                ? (isDark ? AppColors.goldAccent : AppColors.primaryNavy)
+                                ? (isDark ? const Color(0xFF9A4F16) : AppColors.danger)
                                 : (isDark ? AppColors.borderDark : const Color(0xFFE2E8F0)),
                             width: 1,
                           ),
@@ -630,6 +634,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               likeBusy: _likeBusyPostIds.contains(post.id),
                               onLike: () async {
                                 if (_likeBusyPostIds.contains(post.id)) return;
+                                final savedOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
                                 setState(() => _likeBusyPostIds.add(post.id));
                                 final completer = Completer<Map<String, dynamic>>();
                                 context.read<PostBloc>().add(ToggleLikePostEvent(post.id, completer: completer));
@@ -638,7 +643,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                                 } catch (_) {
                                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to update like')));
                                 } finally {
-                                  if (mounted) setState(() => _likeBusyPostIds.remove(post.id));
+                                  if (mounted) {
+                                    setState(() => _likeBusyPostIds.remove(post.id));
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      if (_scrollController.hasClients) _scrollController.jumpTo(savedOffset.clamp(0.0, _scrollController.position.maxScrollExtent));
+                                    });
+                                  }
                                 }
                               },
                               onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
