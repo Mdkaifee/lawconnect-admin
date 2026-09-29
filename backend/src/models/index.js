@@ -37,7 +37,7 @@ const userSchema = new Schema(
     chatPaymentOrders: [{
       orderId: { type: String, required: true },
       amountPaise: { type: Number, required: true },
-      status: { type: String, enum: ["created", "paid"], default: "created" },
+      status: { type: String, enum: ["created", "paid", "cancelled"], default: "created" },
       paymentId: { type: String, default: "" },
     }],
   },

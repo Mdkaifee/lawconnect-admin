@@ -107,6 +107,7 @@ async function findConversation(userA, userB) {
 }
 
 function serializeUser(user) {
+  const chatPaidUntil = user.chatPaidUntil || null;
   return {
     id: user._id.toString(),
     name: user.name || "",
@@ -116,6 +117,8 @@ function serializeUser(user) {
     college: user.college || "",
     lastActiveAt: user.lastActiveAt,
     isOnline: isOnline(user.lastActiveAt),
+    chatPaidUntil,
+    isChatPaid: Boolean(chatPaidUntil && new Date(chatPaidUntil).getTime() > Date.now()),
   };
 }
 
@@ -244,6 +247,36 @@ router.post(
     user.chatPaymentOrders.push({ orderId: order.id, amountPaise, status: "created" });
     await user.save();
     res.status(201).json({ orderId: order.id, amount: amountPaise, currency: "INR", keyId });
+  }),
+);
+
+router.post(
+  "/conversations/:id/payment/cancel",
+  asyncHandler(async (req, res) => {
+    const conversation = await loadActiveConversation(req, res);
+    if (!conversation) return;
+    const orderId = (req.body?.razorpayOrderId || "").toString();
+    if (!orderId) return res.status(400).json({ error: "Payment order is required" });
+    const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
+    if (!user) return res.status(403).json({ error: "Active account required" });
+    const attempt = (user.chatPaymentOrders || []).find((item) => item.orderId === orderId);
+    if (!attempt) return res.status(404).json({ error: "Payment order not found" });
+    if (attempt.status === "paid") return res.json({ ok: true, cancelled: false, paid: true, chatPaidUntil: user.chatPaidUntil });
+
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
+    const orderStatus = await inspectRazorpayOrder(orderId, attempt.amountPaise, keyId, keySecret);
+    if (orderStatus.error) return res.status(503).json({ error: "Could not confirm payment status yet" });
+    if (orderStatus.invalid) return res.status(409).json({ error: "Payment order details do not match" });
+    if (orderStatus.paid) {
+      const recovered = await recoverPaidChatOrder(user, attempt, orderStatus);
+      return res.json({ ok: true, cancelled: false, paid: recovered.paid, chatPaidUntil: recovered.chatPaidUntil || user.chatPaidUntil });
+    }
+
+    attempt.status = "cancelled";
+    await user.save();
+    res.json({ ok: true, cancelled: true, paid: false });
   }),
 );
 
