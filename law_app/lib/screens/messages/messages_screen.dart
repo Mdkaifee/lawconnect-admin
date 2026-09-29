@@ -122,7 +122,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             const SizedBox(height: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(999)),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFFEA580C) : const Color(0xFFEF4444),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
                               child: Text(conversation.unreadCount.toString(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
                             ),
                           ],
