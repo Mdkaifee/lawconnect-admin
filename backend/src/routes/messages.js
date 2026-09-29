@@ -227,20 +227,17 @@ router.post(
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
     if (!Number.isFinite(chatUnlockAmount) || chatUnlockAmount <= 0) return res.status(503).json({ error: "Chat unlock amount is not configured" });
-    const paymentAttempts = [...(user.chatPaymentOrders || [])].reverse().filter((item) => item.status !== "paid");
-    for (const pendingOrder of paymentAttempts) {
-      const orderStatus = await inspectRazorpayOrder(pendingOrder.orderId, pendingOrder.amountPaise, keyId, keySecret);
-      if (orderStatus.error) return res.status(503).json({ error: "Could not verify your previous payment yet. Please try again shortly." });
-      if (orderStatus.invalid) return res.status(409).json({ error: "Previous payment order details do not match. Please contact support." });
-      if (orderStatus.paid) {
-        const recovered = await recoverPaidChatOrder(user, pendingOrder, orderStatus);
-        const access = await getChatAccess(conversation, req.auth.id);
-        if (recovered.paid || access.isPaid) return res.json({ paid: true, chatPaidUntil: access.paidUntil || recovered.chatPaidUntil });
-        return res.status(503).json({ error: "Payment was found, but chat access could not be updated. Please try again." });
-      }
-      if (pendingOrder.status === "created") pendingOrder.status = "cancelled";
+    await migrateLegacyPaymentAttempts(user);
+
+    // Reconcile recent attempts before creating anything. A successful capture can arrive
+    // after checkout closed or after the app lost its callback.
+    const recentAttempts = await PaymentAttempt.find({ userId: user._id }).sort({ createdAt: -1 }).limit(10);
+    for (const prior of recentAttempts) {
+      const status = await reconcileAttempt(prior);
+      if (status.paid) return res.json({ paid: true, chatPaidUntil: status.chatPaidUntil });
     }
-    if (paymentAttempts.some((item) => item.status === "created")) await user.save();
+    const reusable = recentAttempts.find((item) => item.status === "created");
+    if (reusable) return res.json({ orderId: reusable.razorpayOrderId, amount: reusable.amount, currency: reusable.currency, keyId });
 
     const amountPaise = Math.round(chatUnlockAmount * 100);
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
@@ -266,39 +263,28 @@ router.post(
       });
       return res.status(502).json({ error: "Payment provider rejected the order. Please check the Razorpay server credentials and payment setup." });
     }
-    user.chatPaymentOrders.push({ orderId: order.id, amountPaise, status: "created" });
-    await user.save();
+    await PaymentAttempt.create({ userId: user._id, razorpayOrderId: order.id, amount: amountPaise, currency: "INR", status: "created" });
     res.status(201).json({ orderId: order.id, amount: amountPaise, currency: "INR", keyId });
   }),
 );
 
 router.post(
-  "/conversations/:id/payment/cancel",
+  ["/conversations/:id/payment/reconcile", "/conversations/:id/payment/cancel"],
   asyncHandler(async (req, res) => {
     const conversation = await loadActiveConversation(req, res);
     if (!conversation) return;
-    const orderId = (req.body?.razorpayOrderId || "").toString();
+    const orderId = (req.body?.orderId || req.body?.razorpayOrderId || "").toString();
     if (!orderId) return res.status(400).json({ error: "Payment order is required" });
     const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
     if (!user) return res.status(403).json({ error: "Active account required" });
-    const attempt = (user.chatPaymentOrders || []).find((item) => item.orderId === orderId);
+    await migrateLegacyPaymentAttempts(user);
+    const attempt = await PaymentAttempt.findOne({ razorpayOrderId: orderId, userId: user._id });
     if (!attempt) return res.status(404).json({ error: "Payment order not found" });
-    if (attempt.status === "paid") return res.json({ ok: true, cancelled: false, paid: true, chatPaidUntil: user.chatPaidUntil });
-
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
-    const orderStatus = await inspectRazorpayOrder(orderId, attempt.amountPaise, keyId, keySecret);
-    if (orderStatus.error) return res.status(503).json({ error: "Could not confirm payment status yet" });
-    if (orderStatus.invalid) return res.status(409).json({ error: "Payment order details do not match" });
-    if (orderStatus.paid) {
-      const recovered = await recoverPaidChatOrder(user, attempt, orderStatus);
-      return res.json({ ok: true, cancelled: false, paid: recovered.paid, chatPaidUntil: recovered.chatPaidUntil || user.chatPaidUntil });
-    }
-
-    attempt.status = "cancelled";
-    await user.save();
-    res.json({ ok: true, cancelled: true, paid: false });
+    const result = await reconcileAttempt(attempt, {
+      checkoutClosed: req.body?.checkoutClosed === true || req.body?.cancelled === true,
+      cancelled: req.body?.cancelled === true,
+    });
+    res.json({ ok: true, ...result });
   }),
 );
 
@@ -307,40 +293,30 @@ router.post(
   asyncHandler(async (req, res) => {
     const conversation = await loadActiveConversation(req, res);
     if (!conversation) return;
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body || {};
+    const razorpayOrderId = req.body?.razorpay_order_id || req.body?.razorpayOrderId;
+    const razorpayPaymentId = req.body?.razorpay_payment_id || req.body?.razorpayPaymentId;
+    const razorpaySignature = req.body?.razorpay_signature || req.body?.razorpaySignature;
     if (![razorpayOrderId, razorpayPaymentId, razorpaySignature].every((value) => typeof value === "string" && value.length > 0)) {
       return res.status(400).json({ error: "Payment details are incomplete" });
     }
     const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
     if (!user) return res.status(403).json({ error: "Active account required" });
-    const attempt = (user.chatPaymentOrders || []).find((item) => item.orderId === razorpayOrderId);
+    await migrateLegacyPaymentAttempts(user);
+    const attempt = await PaymentAttempt.findOne({ razorpayOrderId, userId: user._id });
     if (!attempt) return res.status(400).json({ error: "Payment order does not belong to this account or chat" });
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!process.env.RAZORPAY_KEY_ID || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
-    const expected = crypto.createHmac("sha256", keySecret).update(`${razorpayOrderId}|${razorpayPaymentId}`).digest();
-    let supplied;
-    try {
-      supplied = Buffer.from(razorpaySignature, "hex");
-    } catch (_) {
-      supplied = Buffer.alloc(0);
-    }
-    if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
+    if (!verifyRazorpayPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature, keySecret)) {
       return res.status(400).json({ error: "Payment verification failed" });
     }
-    if (attempt.status === "paid") {
-      return res.json({ ok: true, paid: Boolean(user.chatPaidUntil && user.chatPaidUntil > new Date()), chatPaidUntil: user.chatPaidUntil });
+    const payment = await razorpayGet(`/payments/${encodeURIComponent(razorpayPaymentId)}`);
+    if (payment.order_id !== razorpayOrderId) return res.status(400).json({ error: "Payment does not belong to this order" });
+    if (payment.status !== "captured" || payment.captured !== true) {
+      return res.status(409).json({ error: "Payment has not been captured yet. Chat access unlocks after capture confirmation." });
     }
-    const orderStatus = await inspectRazorpayOrder(razorpayOrderId, attempt.amountPaise, process.env.RAZORPAY_KEY_ID, keySecret);
-    if (orderStatus.error) return res.status(503).json({ error: "Could not confirm payment with Razorpay yet. Please try again shortly." });
-    if (orderStatus.invalid) return res.status(400).json({ error: "Razorpay order amount does not match this chat plan." });
-    if (!orderStatus.paid) return res.status(409).json({ error: "Payment has not been captured yet. Chat access will unlock after confirmation." });
-    attempt.status = "paid";
-    attempt.paymentId = razorpayPaymentId;
-    const now = new Date();
-    const periodStartsAt = user.chatPaidUntil && user.chatPaidUntil > now ? user.chatPaidUntil : now;
-    user.chatPaidUntil = addCalendarMonths(periodStartsAt, chatPaidDurationMonths);
-    await user.save();
-    res.json({ ok: true, paid: true, chatPaidUntil: user.chatPaidUntil, chatAccess: await getChatAccess(conversation, req.auth.id) });
+    const result = await applyCapturedPayment(payment);
+    if (!result.paid) return res.status(409).json({ error: result.error || "Captured payment could not be confirmed" });
+    res.json({ ok: true, paid: true, chatPaidUntil: result.chatPaidUntil, chatAccess: await getChatAccess(conversation, req.auth.id) });
   }),
 );
 
