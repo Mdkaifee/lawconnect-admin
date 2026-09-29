@@ -12,6 +12,7 @@ import updateRoutes from "./routes/updates.js";
 import postRoutes from "./routes/posts.js";
 import notificationRoutes from "./routes/notifications.js";
 import messageRoutes from "./routes/messages.js";
+import razorpayWebhookRoutes from "./routes/razorpay_webhooks.js";
 import aiRoutes from "./routes/ai.js";
 import { categories, notes, bookmarks, history, users, stats, reports } from "./routes/misc.js";
 import { sanitizeLogOutput } from "./utils/security.js";
@@ -30,6 +31,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({ origin: "*" }));
+app.use("/api/webhooks/razorpay", express.raw({ type: "application/json" }), razorpayWebhookRoutes);
 app.use(express.json({ limit: "5mb" }));
 app.use(morgan("tiny"));
 

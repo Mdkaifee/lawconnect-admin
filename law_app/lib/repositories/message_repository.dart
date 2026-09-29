@@ -112,19 +112,38 @@ class MessageRepository {
     }
   }
 
-  Future<bool> cancelChatUnlockOrder(String conversationId, String orderId) async {
+  Future<Map<String, dynamic>> reconcileChatUnlockOrder(
+    String conversationId,
+    String orderId, {
+    bool checkoutClosed = false,
+    bool cancelled = false,
+  }) async {
     debugPrint('[CHAT_PAYMENT] POST reconcile orderId=$orderId');
     final response = await _client.post(
-      Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/cancel'),
+      Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/reconcile'),
       headers: _authRepo.authHeaders,
-      body: jsonEncode({'razorpayOrderId': orderId}),
+      body: jsonEncode({
+        'orderId': orderId,
+        'checkoutClosed': checkoutClosed,
+        'cancelled': cancelled,
+      }),
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
     debugPrint('[CHAT_PAYMENT] reconcile HTTP ${response.statusCode} paid=${data['paid'] == true} cancelled=${data['cancelled'] == true} chatPaidUntil=${data['chatPaidUntil'] ?? '(none)'} error=${data['error'] ?? '(none)'}');
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(data['error'] ?? 'Could not confirm payment status');
     }
-    return data['paid'] == true;
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  Future<bool> cancelChatUnlockOrder(String conversationId, String orderId) async {
+    final result = await reconcileChatUnlockOrder(
+      conversationId,
+      orderId,
+      checkoutClosed: true,
+      cancelled: true,
+    );
+    return result['paid'] == true;
   }
 
   Future<void> acceptRequest(String conversationId) async {

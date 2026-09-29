@@ -231,7 +231,7 @@ router.post(
 
     // Reconcile recent attempts before creating anything. A successful capture can arrive
     // after checkout closed or after the app lost its callback.
-    const recentAttempts = await PaymentAttempt.find({ userId: user._id }).sort({ createdAt: -1 }).limit(10);
+    const recentAttempts = await PaymentAttempt.find({ userId: user._id, status: { $ne: "paid" } }).sort({ createdAt: -1 }).limit(10);
     for (const prior of recentAttempts) {
       const status = await reconcileAttempt(prior);
       if (status.paid) return res.json({ paid: true, chatPaidUntil: status.chatPaidUntil });
