@@ -1,5 +1,6 @@
 import { Router } from "express";
 import mongoose from "mongoose";
+import crypto from "node:crypto";
 import { auth, requireUser, asyncHandler } from "../middleware/auth.js";
 import { AppNotification, Conversation, Message, PaymentAttempt, User } from "../models/index.js";
 import { notifyUsers } from "../services/notifications.js";
@@ -11,10 +12,6 @@ router.use(auth(), requireUser);
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 const freeMessageLimit = Math.max(0, Number.parseInt(process.env.CHAT_MESSAGE_FREE_LIMIT || "5", 10) || 5);
 const chatUnlockAmount = Number(process.env.CHAT_UNLOCK_AMOUNT || "11");
-const chatPaidDurationMonths = Math.max(
-  1,
-  Number.parseInt(process.env.PAID_CHAT_MONTHS || process.env.CHAT_PAID_DURATION_MONTHS || "3", 10) || 3,
-);
 const isOnline = (lastActiveAt) => lastActiveAt && Date.now() - new Date(lastActiveAt).getTime() <= 5 * 60 * 1000;
 
 async function getChatAccess(conversation, userId) {
