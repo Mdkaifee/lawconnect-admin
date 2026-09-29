@@ -631,7 +631,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               likeBusy: _likeBusyPostIds.contains(post.id),
                               onLike: () async {
                                 if (_likeBusyPostIds.contains(post.id)) return;
-                                final savedOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
                                 setState(() => _likeBusyPostIds.add(post.id));
                                 final completer = Completer<Map<String, dynamic>>();
                                 context.read<PostBloc>().add(ToggleLikePostEvent(post.id, completer: completer));
@@ -642,9 +641,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                                 } finally {
                                   if (mounted) {
                                     setState(() => _likeBusyPostIds.remove(post.id));
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (_scrollController.hasClients) _scrollController.jumpTo(savedOffset.clamp(0.0, _scrollController.position.maxScrollExtent));
-                                    });
                                   }
                                 }
                               },
