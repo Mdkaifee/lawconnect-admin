@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type { AppUser } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +53,8 @@ function UsersAdmin() {
   const [college, setCollege] = useState("");
   const [headline, setHeadline] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [chatPlanEnabled, setChatPlanEnabled] = useState(false);
+  const [chatPlanDurationMonths, setChatPlanDurationMonths] = useState(3);
 
   function load(nextPage = page) {
     if (!ready) return;
@@ -59,11 +62,12 @@ function UsersAdmin() {
     setError(null);
     const params = new URLSearchParams({ page: String(nextPage), limit: String(limit) });
     if (query) params.set("q", query);
-    api<{ items: AppUser[]; total: number; page: number }>(`/api/users?${params.toString()}`)
+    api<{ items: AppUser[]; total: number; page: number; chatPlanDurationMonths?: number }>(`/api/users?${params.toString()}`)
       .then((res) => {
         setItems(res.items || []);
         setTotal(res.total || 0);
         setPage(res.page || nextPage);
+        setChatPlanDurationMonths(res.chatPlanDurationMonths || 3);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -80,6 +84,7 @@ function UsersAdmin() {
     setCollege(u.college || "");
     setHeadline(u.headline || "");
     setNewPassword("");
+    setChatPlanEnabled(Boolean(u.isChatPaid));
   }
 
   async function saveUser() {
@@ -92,6 +97,9 @@ function UsersAdmin() {
         college: college.trim(),
         headline: headline.trim(),
       };
+      if (chatPlanEnabled !== Boolean(editingUser.isChatPaid)) {
+        payload.chatPlanEnabled = chatPlanEnabled;
+      }
       if (newPassword.trim()) {
         payload["password"] = newPassword.trim();
       }
@@ -289,6 +297,28 @@ function UsersAdmin() {
               <div>
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Headline / Bio</label>
                 <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Advocate, High Court" className="mt-1" />
+              </div>
+
+              <div className="flex items-start gap-3 rounded-md border border-border p-3">
+                <Checkbox
+                  id="chat-plan-enabled"
+                  checked={chatPlanEnabled}
+                  onCheckedChange={(checked) => setChatPlanEnabled(checked === true)}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <label htmlFor="chat-plan-enabled" className="cursor-pointer font-medium">Paid chat plan</label>
+                  <p className="text-xs text-muted-foreground">
+                    {chatPlanEnabled
+                      ? `Enables unlimited outgoing chat for ${chatPlanDurationMonths} months from the current expiry.`
+                      : "Unchecking removes paid chat access immediately."}
+                  </p>
+                  {editingUser.isChatPaid && editingUser.chatPaidUntil && (
+                    <p className="text-xs text-muted-foreground">
+                      Current expiry: {new Date(editingUser.chatPaidUntil).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div>

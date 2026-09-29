@@ -5,6 +5,18 @@ import { auth, requireAdmin, requireUser, asyncHandler } from "../middleware/aut
 import mongoose from "mongoose";
 import { notifyUsers } from "../services/notifications.js";
 
+const paidChatMonths = Math.max(1, Number.parseInt(process.env.PAID_CHAT_MONTHS || process.env.CHAT_PAID_DURATION_MONTHS || "3", 10) || 3);
+
+function addCalendarMonths(date, months) {
+  const result = new Date(date);
+  const originalDay = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(originalDay, lastDay));
+  return result;
+}
+
 /* ---------------- 1. Categories ---------------- */
 export const categories = Router();
 
@@ -523,6 +535,7 @@ users.get(
       total,
       page: pageNum,
       limit: limitNum,
+      chatPlanDurationMonths: paidChatMonths,
     });
   }),
 );
@@ -532,14 +545,28 @@ users.put(
   auth(),
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const patch = { ...req.body };
-    if (patch.password) {
-      patch.passwordHash = await bcrypt.hash(patch.password, 10);
-      delete patch.password;
+    const patch = {};
+    for (const field of ["name", "email", "college", "headline", "blocked"]) {
+      if (req.body?.[field] !== undefined) patch[field] = req.body[field];
     }
-    const item = await User.findByIdAndUpdate(req.params.id, patch, { new: true }).select("-passwordHash");
+    if (typeof req.body?.password === "string" && req.body.password) {
+      patch.passwordHash = await bcrypt.hash(req.body.password, 10);
+    }
+    const item = await User.findById(req.params.id);
     if (!item) return res.status(404).json({ error: "User not found" });
-    res.json({ item });
+    Object.assign(item, patch);
+    if (typeof req.body?.chatPlanEnabled === "boolean") {
+      if (req.body.chatPlanEnabled) {
+        const now = new Date();
+        const startAt = item.chatPaidUntil && item.chatPaidUntil > now ? item.chatPaidUntil : now;
+        item.chatPaidUntil = addCalendarMonths(startAt, paidChatMonths);
+      } else {
+        item.chatPaidUntil = null;
+      }
+    }
+    await item.save();
+    const safeItem = await User.findById(item._id).select("-passwordHash -chatPaymentOrders -fcmTokens -photoData").lean();
+    res.json({ item: safeItem, isChatPaid: Boolean(item.chatPaidUntil && item.chatPaidUntil > new Date()) });
   }),
 );
 
