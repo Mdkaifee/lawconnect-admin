@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_manager.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
+import '../../widgets/premium_member_badge.dart';
 import '../community/community_feed_screen.dart';
 import 'about_us_screen.dart';
 import 'bookmarks_screen.dart';
@@ -128,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                                             ),
                                             if (user?.isChatPaid == true) ...[
                                               const SizedBox(width: 5),
-                                              const Icon(Icons.verified_rounded, size: 18, color: Color(0xFF14B8A6)),
+                                              const PremiumMemberBadge(),
                                             ],
                                           ],
                                         ),
@@ -142,6 +144,14 @@ class ProfileScreen extends StatelessWidget {
                                         ),
                                     ],
                                   ),
+                                  if (user?.isChatPaid == true)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 3),
+                                      child: Text(
+                                        'Expires ${DateFormat('dd MMM yyyy').format(user!.chatPaidUntil!.toLocal())}',
+                                        style: const TextStyle(color: Color(0xFF0F9F8F), fontSize: 11, fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
                                   if (headline.isNotEmpty)
                                     Text(
                                       headline,

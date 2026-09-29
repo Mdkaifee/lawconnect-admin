@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/case/case_bloc.dart';
 import '../../blocs/act/act_bloc.dart';
@@ -30,6 +31,7 @@ import '../profile/settings_screen.dart';
 import '../../widgets/case_card.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../../widgets/legal_category_grid.dart';
+import '../../widgets/premium_member_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -268,15 +270,34 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      userName,
-                                      style: TextStyle(
-                                        fontSize: 16.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: textColor,
-                                        letterSpacing: -0.2,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            userName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 16.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: textColor,
+                                            ),
+                                          ),
+                                        ),
+                                        if (user?.isChatPaid == true) ...[
+                                          const SizedBox(width: 6),
+                                          const PremiumMemberBadge(compact: true),
+                                        ],
+                                      ],
                                     ),
+                                    if (user?.isChatPaid == true)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 3),
+                                        child: Text(
+                                          'Chat plan expires ${DateFormat('dd MMM yyyy').format(user!.chatPaidUntil!.toLocal())}',
+                                          style: const TextStyle(color: Color(0xFF0F9F8F), fontSize: 10.5, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
                                     const SizedBox(height: 2),
                                     if (headline.isNotEmpty)
                                       Text(
@@ -462,7 +483,18 @@ class _HomeScreenState extends State<HomeScreen> {
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(_timeBasedGreeting(), style: TextStyle(fontSize: 11, color: textMuted)),
                 Row(children: [
-                  Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor)),
+                  if (state is Authenticated && state.user.isChatPaid) ...[
+                    const PremiumMemberBadge(compact: true),
+                    const SizedBox(width: 5),
+                  ],
+                  Flexible(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor),
+                    ),
+                  ),
                   const SizedBox(width: 3),
                   const Icon(Icons.waving_hand_rounded, size: 13, color: AppColors.goldAccent),
                 ]),
