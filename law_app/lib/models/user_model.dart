@@ -75,7 +75,6 @@ class UserModel extends Equatable {
     };
   }
 
-  @override
   bool get isChatPaid => chatPaidUntil?.isAfter(DateTime.now()) ?? false;
 
   @override
