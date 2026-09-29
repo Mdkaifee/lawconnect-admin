@@ -30,6 +30,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   final List<String> _categories = ['All', 'My Posts', 'Friends'];
   final Set<String> _followedAuthorIds = {};
   bool _loadingMorePosts = false;
+  int _activeMutations = 0;
   int _lastRenderedPage = 0;
 
   @override
@@ -81,13 +82,17 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    final completer = Completer<void>();
+    setState(() => _activeMutations++);
     try {
-      await context.read<PostRepository>().deletePost(post.id);
+      context.read<PostBloc>().add(DeletePostEvent(post.id, completer: completer));
+      await completer.future;
       if (!mounted) return;
-      _fetchPosts();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppColors.danger));
+    } finally {
+      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999));
     }
   }
 
@@ -159,6 +164,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   }
 
   Future<void> _togglePostBookmark(PostModel post, bool isBookmarked) async {
+    if (_activeMutations > 0) return;
+    setState(() => _activeMutations++);
     try {
       final repository = context.read<UserDataRepository>();
       if (isBookmarked) {
@@ -183,6 +190,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('unable_update_bookmark'))));
       }
+    } finally {
+      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999));
     }
   }
 
@@ -454,7 +463,9 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         ),
         child: Icon(Icons.add, color: isDark ? AppColors.primaryNavyDark : Colors.white),
       ),
-      body: Column(
+      body: Stack(
+        children: [
+          Column(
         children: [
           // Top Category Tabs with Equal Width
           Container(
@@ -650,7 +661,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                                     onFollow: () => _toggleFollow(currentPost),
                                     onAuthorTap: () => _openAuthorProfile(currentPost),
                                     onBookmark: () => _togglePostBookmark(currentPost, isBookmarked),
-                                    onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(currentPost.id)),
+                                    onLike: () => _togglePostLike(currentPost.id),
                                     onComment: () => CommentsSheet.show(context, postId: currentPost.id, postTitle: currentPost.title),
                                     onReport: () => _showReportDialog(context, currentPost.id),
                                     onDelete: isSelf ? () => _deletePost(currentPost) : null,
@@ -672,6 +683,37 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           ),
         ],
       ),
+          if (_activeMutations > 0)
+            Positioned.fill(
+              child: AbsorbPointer(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.24),
+                  child: Center(
+                    child: CircularProgressIndicator(color: primaryOrGold),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _togglePostLike(String postId) async {
+    if (_activeMutations > 0) return;
+    final completer = Completer<Map<String, dynamic>>();
+    setState(() => _activeMutations++);
+    try {
+      context.read<PostBloc>().add(ToggleLikePostEvent(postId, completer: completer));
+      await completer.future;
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999));
+    }
   }
 }

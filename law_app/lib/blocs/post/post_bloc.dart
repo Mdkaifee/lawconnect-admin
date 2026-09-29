@@ -53,6 +53,14 @@ class ToggleLikePostEvent extends PostEvent {
   List<Object?> get props => [postId];
 }
 
+class DeletePostEvent extends PostEvent {
+  final String postId;
+  final Completer<void>? completer;
+  const DeletePostEvent(this.postId, {this.completer});
+  @override
+  List<Object?> get props => [postId];
+}
+
 class LoadCommentsEvent extends PostEvent {
   final String postId;
   const LoadCommentsEvent(this.postId);
@@ -128,6 +136,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<LoadPostsEvent>(_onLoadPosts);
     on<CreatePostEvent>(_onCreatePost);
     on<ToggleLikePostEvent>(_onToggleLike);
+    on<DeletePostEvent>(_onDeletePost);
     on<AddCommentEvent>(_onAddComment);
     on<CommentAddedLocallyEvent>(_onCommentAddedLocally);
     on<ReportPostEvent>(_onReportPost);
@@ -227,19 +236,39 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           }
           return p;
         }).toList();
-        emit(PostLoaded(
-          confirmedPosts,
-          selectedCategory: activeState.selectedCategory,
-          page: activeState.page,
-          total: activeState.total,
-          hasMore: activeState.hasMore,
-        ));
+        if (confirmedPosts.toString() != activeState.posts.toString()) {
+          emit(PostLoaded(confirmedPosts,
+            selectedCategory: activeState.selectedCategory,
+            page: activeState.page,
+            total: activeState.total,
+            hasMore: activeState.hasMore,
+          ));
+        }
       }
       event.completer?.complete(result);
     } catch (_) {
       // Revert to original state on failure
       emit(currentState);
       if (!(event.completer?.isCompleted ?? true)) event.completer!.completeError(Exception('Unable to update like'));
+    }
+  }
+
+  Future<void> _onDeletePost(DeletePostEvent event, Emitter<PostState> emit) async {
+    try {
+      await _postRepository.deletePost(event.postId);
+      if (state is PostLoaded) {
+        final current = state as PostLoaded;
+        emit(PostLoaded(
+          current.posts.where((post) => post.id != event.postId).toList(),
+          selectedCategory: current.selectedCategory,
+          page: current.page,
+          total: current.total > 0 ? current.total - 1 : 0,
+          hasMore: current.hasMore,
+        ));
+      }
+      event.completer?.complete();
+    } catch (error) {
+      if (!(event.completer?.isCompleted ?? true)) event.completer!.completeError(error);
     }
   }
 
