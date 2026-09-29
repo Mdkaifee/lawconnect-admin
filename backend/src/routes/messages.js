@@ -37,6 +37,44 @@ function addCalendarMonths(date, months) {
   return result;
 }
 
+async function inspectRazorpayOrder(orderId, expectedAmount, keyId, keySecret) {
+  const response = await fetch(`https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}`, {
+    headers: { Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}` },
+  });
+  const order = await response.json().catch(() => ({}));
+  if (!response.ok || order.id !== orderId) {
+    console.error("Razorpay order status lookup failed:", {
+      status: response.status,
+      code: order.error?.code || "unknown",
+      description: order.error?.description || "No provider description",
+    });
+    return { error: true };
+  }
+  if (order.amount !== expectedAmount || order.currency !== "INR") return { invalid: true };
+  return { paid: order.status === "paid" && order.amount_paid >= expectedAmount, status: order.status };
+}
+
+async function recoverPaidChatOrder(user, attempt, result) {
+  if (result.error || result.invalid) return result;
+  if (!result.paid) return { paid: false, status: result.status };
+
+  const now = new Date();
+  const currentUser = await User.findById(user._id).select("chatPaidUntil").lean();
+  const startsAt = currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now ? currentUser.chatPaidUntil : now;
+  const chatPaidUntil = addCalendarMonths(startsAt, chatPaidDurationMonths);
+  const update = await User.updateOne(
+    { _id: user._id, chatPaymentOrders: { $elemMatch: { orderId: attempt.orderId, status: "created" } } },
+    {
+      $set: {
+        "chatPaymentOrders.$.status": "paid",
+        "chatPaymentOrders.$.paymentId": `recovered:${attempt.orderId}`,
+        chatPaidUntil,
+      },
+    },
+  );
+  return { paid: update.modifiedCount > 0 || Boolean(currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now), chatPaidUntil };
+}
+
 async function loadActiveConversation(req, res) {
   if (!isValidId(req.params.id)) {
     res.status(400).json({ error: "Invalid conversation id" });
@@ -155,17 +193,29 @@ router.post(
   asyncHandler(async (req, res) => {
     const conversation = await loadActiveConversation(req, res);
     if (!conversation) return;
+    const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
+    if (!user) return res.status(403).json({ error: "Active account required" });
     const access = await getChatAccess(conversation, req.auth.id);
     if (access.isPaid) return res.json({ paid: true, chatPaidUntil: access.paidUntil });
     if (access.sentCount < freeMessageLimit) return res.status(400).json({ error: "Free messages remain", chatAccess: access });
+
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
     if (!Number.isFinite(chatUnlockAmount) || chatUnlockAmount <= 0) return res.status(503).json({ error: "Chat unlock amount is not configured" });
-    const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
-    if (!user) return res.status(403).json({ error: "Active account required" });
     const pendingOrder = [...(user.chatPaymentOrders || [])].reverse().find((item) => item.status === "created");
-    if (pendingOrder) return res.json({ orderId: pendingOrder.orderId, amount: pendingOrder.amountPaise, currency: "INR", keyId });
+    if (pendingOrder) {
+      const orderStatus = await inspectRazorpayOrder(pendingOrder.orderId, pendingOrder.amountPaise, keyId, keySecret);
+      if (orderStatus.error) return res.status(503).json({ error: "Could not verify your previous payment yet. Please try again shortly." });
+      if (orderStatus.invalid) return res.status(409).json({ error: "Previous payment order details do not match. Please contact support." });
+      if (orderStatus.paid) {
+        const recovered = await recoverPaidChatOrder(user, pendingOrder, orderStatus);
+        const access = await getChatAccess(conversation, req.auth.id);
+        if (recovered.paid || access.isPaid) return res.json({ paid: true, chatPaidUntil: access.paidUntil || recovered.chatPaidUntil });
+        return res.status(503).json({ error: "Payment was found, but chat access could not be updated. Please try again." });
+      }
+      return res.json({ orderId: pendingOrder.orderId, amount: pendingOrder.amountPaise, currency: "INR", keyId });
+    }
 
     const amountPaise = Math.round(chatUnlockAmount * 100);
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {

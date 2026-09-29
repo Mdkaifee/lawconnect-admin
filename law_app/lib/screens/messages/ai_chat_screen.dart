@@ -40,6 +40,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _scrollToBottom();
     } catch (error) {
       if (mounted) {
+        setState(() {
+          if (_messages.isNotEmpty && _messages.last['role'] == 'user' && _messages.last['content'] == text) {
+            _messages.removeLast();
+          }
+        });
+        _controller.value = TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
       }
     } finally {

@@ -5,6 +5,8 @@ import { User } from "../models/index.js";
 const router = Router();
 router.use(auth(), requireUser);
 
+const greetingReply = "Hello! I can help with Indian law, legal research, and using Law Hub's legal features. What would you like to know?";
+
 router.post(
   "/chat",
   asyncHandler(async (req, res) => {
@@ -22,6 +24,11 @@ router.post(
       safeMessages.push({ role: message.role, content: message.content.trim() });
     }
     if (safeMessages[safeMessages.length - 1].role !== "user") return res.status(400).json({ error: "The latest message must be from the user" });
+
+    const latestRequest = safeMessages[safeMessages.length - 1].content.toLowerCase().trim();
+    if (/^(hi+|hello+|hey+|good\s+morning|good\s+afternoon|good\s+evening|namaste|howdy)(\s+there)?[!.\s]*$/.test(latestRequest)) {
+      return res.json({ reply: greetingReply, localReply: true });
+    }
 
     const apiKey = process.env.AI_API_KEY;
     if (!apiKey) return res.status(503).json({ error: "AI chat is not configured yet" });
@@ -62,6 +69,10 @@ router.post(
         message: scopeData.error?.message || "No provider message",
         model,
       });
+      const providerMessage = scopeData.error?.message || "";
+      if (/credit balance is too low|insufficient credits/i.test(providerMessage)) {
+        return res.status(503).json({ error: "Law Hub AI is temporarily unavailable because its AI service needs more credits. Please try again later." });
+      }
       return res.status(502).json({ error: "AI could not answer right now. Please try again." });
     }
     const scope = (scopeData.content || []).filter((part) => part.type === "text").map((part) => part.text).join("").trim().toUpperCase();
@@ -81,6 +92,10 @@ router.post(
         message: data.error?.message || "No provider message",
         model,
       });
+      const providerMessage = data.error?.message || "";
+      if (/credit balance is too low|insufficient credits/i.test(providerMessage)) {
+        return res.status(503).json({ error: "Law Hub AI is temporarily unavailable because its AI service needs more credits. Please try again later." });
+      }
       return res.status(502).json({ error: "AI could not answer right now. Please try again." });
     }
     const answer = (data.content || []).filter((part) => part.type === "text").map((part) => part.text).join("\n").trim();
