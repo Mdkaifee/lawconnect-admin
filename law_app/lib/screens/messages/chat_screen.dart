@@ -185,8 +185,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         'currency': order.currency,
         'name': 'Rishikesh Law Hub',
         'description': 'Unlock this chat',
-        // Checkout retries reuse this order ID. Retry from the app so the
-        // backend can reconcile the attempt and issue a fresh order.
+        // Checkout retries reuse the pending order; the backend reconciles it
+        // before deciding whether a new order is safe to create.
         'retry': {'enabled': false},
         'prefill': {'email': context.read<AuthRepository>().currentUser?.email ?? ''},
       });
