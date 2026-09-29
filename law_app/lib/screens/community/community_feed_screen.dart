@@ -161,7 +161,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
 
   Future<void> _togglePostBookmark(PostModel post, bool isBookmarked) async {
     if (_bookmarkBusyPostIds.contains(post.id)) return;
-    final savedOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
     setState(() => _bookmarkBusyPostIds.add(post.id));
     try {
       final repository = context.read<UserDataRepository>();
@@ -178,12 +177,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       }
       if (mounted) {
         context.read<UserDataBloc>().add(RefreshUserDataSilentlyEvent());
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(isBookmarked ? Translation.t('removed_from_bookmarks') : Translation.t('bookmarked_successfully'))),
         );
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) _scrollController.jumpTo(savedOffset.clamp(0.0, _scrollController.position.maxScrollExtent));
-        });
       }
     } catch (_) {
       if (mounted) {
