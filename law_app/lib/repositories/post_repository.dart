@@ -181,6 +181,14 @@ class PostRepository {
     }
   }
 
+  Future<void> deletePost(String postId) async {
+    final response = await _client.delete(Uri.parse('${ApiConstants.posts}/$postId'), headers: _authRepo.authHeaders);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['error'] ?? 'Failed to delete post');
+    }
+  }
+
   Future<CommentPageResult> getComments(String postId, {int page = 1, int limit = 20}) async {
     final uri = Uri.parse('${ApiConstants.posts}/$postId/comments').replace(
       queryParameters: {

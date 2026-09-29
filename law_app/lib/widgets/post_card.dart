@@ -19,6 +19,8 @@ class PostCard extends StatelessWidget {
   final bool isFollowing;
   final bool isSelf;
   final String? currentUserPhotoUrl;
+  final bool likeBusy;
+  final VoidCallback? onDelete;
 
   const PostCard({
     super.key,
@@ -34,6 +36,8 @@ class PostCard extends StatelessWidget {
     this.isFollowing = false,
     this.isSelf = false,
     this.currentUserPhotoUrl,
+    this.likeBusy = false,
+    this.onDelete,
   });
 
   String _formatDateTime(String rawDate) {
@@ -162,22 +166,12 @@ class PostCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Flexible(
-                            child: Text(
-                              post.category,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: primaryOrGold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
+                          const SizedBox.shrink(),
                           if (formattedTime.isNotEmpty) ...[
                             const SizedBox(width: 6),
                             const Text(
                               '•',
-                              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                              style: TextStyle(fontSize: 11, color: Colors.transparent),
                             ),
                             const SizedBox(width: 6),
                             Flexible(
@@ -204,8 +198,14 @@ class PostCard extends StatelessWidget {
                     if (val == 'share') {
                       Share.share('${post.title}\n\n${post.content}\n\n- Shared from Rishikesh Law Hub');
                     }
+                    if (val == 'delete') onDelete?.call();
                   },
                   itemBuilder: (ctx) => [
+                    if (isSelf && onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(children: [const Icon(Icons.delete_outline, size: 18, color: AppColors.danger), const SizedBox(width: 8), Text('Delete post', style: const TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w600))]),
+                      ),
                     if (!isSelf)
                       PopupMenuItem(
                         value: 'follow',
@@ -254,17 +254,7 @@ class PostCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Post Title & Content
-            if (post.title.isNotEmpty) Text(
-              post.title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-                height: 1.35,
-              ),
-            ),
-            if (post.title.isNotEmpty && post.content.isNotEmpty) const SizedBox(height: 6),
+            // Post content
             if (post.content.isNotEmpty) Text(
               post.content,
               style: TextStyle(
@@ -317,17 +307,19 @@ class PostCard extends StatelessWidget {
             Row(
               children: [
                 InkWell(
-                  onTap: onLike,
+                  onTap: likeBusy ? null : onLike,
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Row(
                       children: [
-                        Icon(
-                          post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          size: 19,
-                          color: post.isLiked ? AppColors.danger : primaryOrGold,
-                        ),
+                        likeBusy
+                            ? SizedBox(width: 19, height: 19, child: CircularProgressIndicator(strokeWidth: 2, color: primaryOrGold))
+                            : Icon(
+                                post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                size: 19,
+                                color: post.isLiked ? AppColors.danger : primaryOrGold,
+                              ),
                         const SizedBox(width: 6),
                         Text(
                           '${post.likesCount}',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
@@ -28,6 +29,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   final List<String> _categories = ['All', 'My Posts', 'Friends'];
   final Set<String> _bookmarkBusyPostIds = {};
   final Set<String> _followedAuthorIds = {};
+  final Set<String> _likeBusyPostIds = {};
 
   @override
   void initState() {
@@ -63,6 +65,29 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             following: _selectedCategory == 'Friends',
           ),
         );
+  }
+
+  Future<void> _deletePost(PostModel post) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete post?'),
+        content: const Text('This post and its comments will be permanently removed.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger), onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await context.read<PostRepository>().deletePost(post.id);
+      if (!mounted) return;
+      _fetchPosts();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppColors.danger));
+    }
   }
 
   Future<void> _toggleFollow(PostModel post) async {
@@ -179,54 +204,106 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   }
 
   void _showCreatePostDialog(BuildContext context) {
-    final titleController = TextEditingController();
     final contentController = TextEditingController();
-    String category = 'General Law';
     String? imageData;
     String? imageMimeType;
+    bool isPublishing = false;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(Translation.t('new_legal_discussion'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          content: SingleChildScrollView(
-            child: Column(
+          insetPadding: EdgeInsets.symmetric(horizontal: MediaQuery.of(ctx).size.width * 0.05, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          titlePadding: const EdgeInsets.fromLTRB(22, 20, 18, 8),
+          contentPadding: const EdgeInsets.fromLTRB(22, 8, 22, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(color: AppTheme.primaryOrGold(ctx).withValues(alpha: 0.14), shape: BoxShape.circle),
+                child: Icon(Icons.edit_note_rounded, color: AppTheme.primaryOrGold(ctx)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(Translation.t('new_legal_discussion'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.textPrimaryColor(ctx)))),
+            ],
+          ),
+          content: SizedBox(
+            width: MediaQuery.of(ctx).size.width * 0.80,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.58),
+              child: SingleChildScrollView(
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                DropdownButtonFormField<String>(
-                  value: category,
-                  decoration: InputDecoration(labelText: Translation.t('category')),
-                  items: ['Constitution', 'Supreme Court', 'Criminal Law', 'Civil Law', 'General Law']
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) setDialogState(() => category = val);
-                  },
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(labelText: Translation.t('title_subject')),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 82, maxWidth: 1600);
-                    if (image == null) return;
-                    final bytes = await image.readAsBytes();
-                    setDialogState(() {
-                      imageData = base64Encode(bytes);
-                      imageMimeType = image.mimeType ?? 'image/jpeg';
-                    });
-                  },
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: Text(imageData == null ? 'Add photo' : 'Photo selected'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 82, maxWidth: 1600);
+                          if (image == null || !ctx.mounted) return;
+                          final bytes = await image.readAsBytes();
+                          setDialogState(() {
+                            imageData = base64Encode(bytes);
+                            imageMimeType = image.mimeType ?? 'image/jpeg';
+                          });
+                        },
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Gallery'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final image = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 82, maxWidth: 1600);
+                          if (image == null || !ctx.mounted) return;
+                          final bytes = await image.readAsBytes();
+                          setDialogState(() {
+                            imageData = base64Encode(bytes);
+                            imageMimeType = image.mimeType ?? 'image/jpeg';
+                          });
+                        },
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Camera'),
+                      ),
+                    ),
+                  ],
                 ),
                 if (imageData != null) ...[
-                  const SizedBox(height: 8),
-                  const Text('Photo attached', textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          height: 150,
+                          width: double.infinity,
+                          child: Image.memory(
+                            base64Decode(imageData!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Center(child: Icon(Icons.broken_image_outlined, color: AppTheme.textSecondaryColor(ctx), size: 36)),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton.filled(
+                            tooltip: 'Remove photo',
+                            style: IconButton.styleFrom(backgroundColor: Colors.black54, foregroundColor: Colors.white),
+                            onPressed: () => setDialogState(() {
+                              imageData = null;
+                              imageMimeType = null;
+                            }),
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 14),
                 TextField(
@@ -235,6 +312,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   decoration: InputDecoration(labelText: Translation.t('write_post_hint')),
                 ),
               ],
+                ),
+              ),
             ),
           ),
           actions: [
@@ -243,24 +322,36 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               child: Text(Translation.t('cancel')),
             ),
             ElevatedButton(
-              onPressed: () {
-                if ((titleController.text.trim().isNotEmpty || contentController.text.trim().isNotEmpty || imageData != null)) {
-                  context.read<PostBloc>().add(
+              onPressed: isPublishing
+                  ? null
+                  : () async {
+                      if (!(contentController.text.trim().isNotEmpty || imageData != null)) return;
+                      final completer = Completer<PostModel>();
+                      setDialogState(() => isPublishing = true);
+                      context.read<PostBloc>().add(
                         CreatePostEvent(
-                          title: titleController.text.trim(),
+                          title: '',
                           content: contentController.text.trim(),
-                          category: category,
+                          category: '',
                           imageData: imageData,
                           imageMimeType: imageMimeType,
+                          completer: completer,
                         ),
                       );
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(Translation.t('post_published')), backgroundColor: AppColors.success),
-                  );
-                }
-              },
-              child: Text(Translation.t('publish')),
+                      try {
+                        await completer.future;
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('post_published')), backgroundColor: AppColors.success));
+                      } catch (error) {
+                        if (!ctx.mounted) return;
+                        setDialogState(() => isPublishing = false);
+                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', '')), backgroundColor: AppColors.danger));
+                      }
+                    },
+              child: isPublishing
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(Translation.t('publish')),
             ),
           ],
         ),
@@ -524,9 +615,23 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               onFollow: () => _toggleFollow(post),
                               onAuthorTap: () => _openAuthorProfile(post),
                               onBookmark: () => _togglePostBookmark(post, isBookmarked),
-                              onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(post.id)),
+                              likeBusy: _likeBusyPostIds.contains(post.id),
+                              onLike: () async {
+                                if (_likeBusyPostIds.contains(post.id)) return;
+                                setState(() => _likeBusyPostIds.add(post.id));
+                                final completer = Completer<Map<String, dynamic>>();
+                                context.read<PostBloc>().add(ToggleLikePostEvent(post.id, completer: completer));
+                                try {
+                                  await completer.future;
+                                } catch (_) {
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to update like')));
+                                } finally {
+                                  if (mounted) setState(() => _likeBusyPostIds.remove(post.id));
+                                }
+                              },
                               onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
                               onReport: () => _showReportDialog(context, post.id),
+                              onDelete: isSelf ? () => _deletePost(post) : null,
                             );
                           },
                         );

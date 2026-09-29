@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 import '../../models/post_model.dart';
 import '../../repositories/post_repository.dart';
 
@@ -38,14 +39,16 @@ class CreatePostEvent extends PostEvent {
   final List<String> tags;
   final String? imageData;
   final String? imageMimeType;
-  const CreatePostEvent({required this.title, required this.content, required this.category, this.tags = const [], this.imageData, this.imageMimeType});
+  final Completer<PostModel>? completer;
+  const CreatePostEvent({required this.title, required this.content, required this.category, this.tags = const [], this.imageData, this.imageMimeType, this.completer});
   @override
   List<Object?> get props => [title, content, category, tags, imageData, imageMimeType];
 }
 
 class ToggleLikePostEvent extends PostEvent {
   final String postId;
-  const ToggleLikePostEvent(this.postId);
+  final Completer<Map<String, dynamic>>? completer;
+  const ToggleLikePostEvent(this.postId, {this.completer});
   @override
   List<Object?> get props => [postId];
 }
@@ -178,8 +181,10 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       } else {
         add(const LoadPostsEvent());
       }
+      event.completer?.complete(newPost);
     } catch (e) {
       emit(PostError(e.toString().replaceAll('Exception: ', '')));
+      if (!(event.completer?.isCompleted ?? true)) event.completer!.completeError(e);
     }
   }
 
@@ -224,9 +229,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         total: currentState.total,
         hasMore: currentState.hasMore,
       ));
+      event.completer?.complete(result);
     } catch (_) {
       // Revert on failure
       emit(currentState);
+      if (!(event.completer?.isCompleted ?? true)) event.completer!.completeError(Exception('Unable to update like'));
     }
   }
 

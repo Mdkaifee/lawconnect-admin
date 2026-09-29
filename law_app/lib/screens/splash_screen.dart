@@ -50,9 +50,11 @@ class _SplashScreenState extends State<SplashScreen> {
       child: Scaffold(
         backgroundColor: AppColors.primaryNavy,
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: SafeArea(
+            child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              const SizedBox(height: 56),
               const SizedBox(
                 width: 150,
                 height: 150,
@@ -78,16 +80,18 @@ class _SplashScreenState extends State<SplashScreen> {
               const Text('“Justice delayed is justice denied.”', style: TextStyle(color: Colors.white70, fontSize: 13, fontStyle: FontStyle.italic)),
               const SizedBox(height: 8),
               const Text('— Lord Acton', style: TextStyle(color: Colors.white, fontSize: 12)),
-              const SizedBox(height: 48),
+              const Spacer(),
               SizedBox(
-                height: 105,
+                height: 160,
                 child: Icon(
                   Icons.account_balance_outlined,
-                  size: 96,
+                  size: 145,
                   color: AppColors.goldAccent.withValues(alpha: 0.9),
                 ),
               ),
+              const SizedBox(height: 24),
             ],
+            ),
           ),
         ),
       ),

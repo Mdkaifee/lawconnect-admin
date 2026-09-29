@@ -100,19 +100,18 @@ router.post(
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.auth.id);
     if (!user) return res.status(401).json({ error: "User not found" });
-    const title = (req.body.title || "").toString().trim();
     const content = (req.body.content || "").toString().trim();
     const imageData = (req.body.imageData || "").toString();
     const imageMimeType = (req.body.imageMimeType || "").toString();
-    if (!title && !content && !imageData) return res.status(400).json({ error: "Add text or choose an image" });
+    if (!content && !imageData) return res.status(400).json({ error: "Add text or choose an image" });
     if (imageData.length > 4 * 1024 * 1024) return res.status(400).json({ error: "Image is too large" });
 
     const item = await Post.create({
-      title,
+      title: "",
       content,
       imageData,
       imageMimeType,
-      category: req.body.category || "General Law",
+      category: "",
       tags: Array.isArray(req.body.tags) ? req.body.tags : [],
       authorType: "user",
       authorModel: "User",
@@ -127,7 +126,7 @@ router.post(
 
     await notifyUsers(user.following || [], {
       title: `${user.name} posted`,
-      body: item.title,
+      body: content || "Shared a photo",
       data: { type: "friend_post", postId: item._id.toString(), authorId: user._id.toString() },
     });
     if (Array.isArray(user.following) && user.following.length > 0) {
@@ -135,7 +134,7 @@ router.post(
         user.following.map((userId) => ({
           userId,
           title: `${user.name} posted`,
-          body: item.title,
+          body: content || "Shared a photo",
           type: "community",
           refType: "post",
           refId: item._id.toString(),
