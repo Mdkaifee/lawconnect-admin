@@ -51,7 +51,8 @@ async function inspectRazorpayOrder(orderId, expectedAmount, keyId, keySecret) {
     return { error: true };
   }
   if (order.amount !== expectedAmount || order.currency !== "INR") return { invalid: true };
-  return { paid: order.status === "paid" && order.amount_paid >= expectedAmount, status: order.status };
+  const amountPaid = order.amount_paid == null ? expectedAmount : Number(order.amount_paid);
+  return { paid: order.status === "paid" && amountPaid >= expectedAmount, status: order.status };
 }
 
 async function recoverPaidChatOrder(user, attempt, result) {
@@ -63,7 +64,7 @@ async function recoverPaidChatOrder(user, attempt, result) {
   const startsAt = currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now ? currentUser.chatPaidUntil : now;
   const chatPaidUntil = addCalendarMonths(startsAt, chatPaidDurationMonths);
   const update = await User.updateOne(
-    { _id: user._id, chatPaymentOrders: { $elemMatch: { orderId: attempt.orderId, status: "created" } } },
+    { _id: user._id, chatPaymentOrders: { $elemMatch: { orderId: attempt.orderId, status: { $in: ["created", "cancelled"] } } } },
     {
       $set: {
         "chatPaymentOrders.$.status": "paid",
@@ -72,7 +73,16 @@ async function recoverPaidChatOrder(user, attempt, result) {
       },
     },
   );
-  return { paid: update.modifiedCount > 0 || Boolean(currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now), chatPaidUntil };
+  const latestUser = update.modifiedCount > 0
+    ? null
+    : await User.findById(user._id).select("chatPaidUntil chatPaymentOrders").lean();
+  const orderWasRecordedPaid = latestUser?.chatPaymentOrders?.some(
+    (item) => item.orderId === attempt.orderId && item.status === "paid",
+  );
+  return {
+    paid: update.modifiedCount > 0 || Boolean(orderWasRecordedPaid) || Boolean(currentUser?.chatPaidUntil && currentUser.chatPaidUntil > now),
+    chatPaidUntil: update.modifiedCount > 0 ? chatPaidUntil : latestUser?.chatPaidUntil || currentUser?.chatPaidUntil,
+  };
 }
 
 async function loadActiveConversation(req, res) {
@@ -206,8 +216,8 @@ router.post(
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
     if (!Number.isFinite(chatUnlockAmount) || chatUnlockAmount <= 0) return res.status(503).json({ error: "Chat unlock amount is not configured" });
-    const pendingOrder = [...(user.chatPaymentOrders || [])].reverse().find((item) => item.status === "created");
-    if (pendingOrder) {
+    const paymentAttempts = [...(user.chatPaymentOrders || [])].reverse().filter((item) => item.status !== "paid");
+    for (const pendingOrder of paymentAttempts) {
       const orderStatus = await inspectRazorpayOrder(pendingOrder.orderId, pendingOrder.amountPaise, keyId, keySecret);
       if (orderStatus.error) return res.status(503).json({ error: "Could not verify your previous payment yet. Please try again shortly." });
       if (orderStatus.invalid) return res.status(409).json({ error: "Previous payment order details do not match. Please contact support." });
@@ -217,8 +227,9 @@ router.post(
         if (recovered.paid || access.isPaid) return res.json({ paid: true, chatPaidUntil: access.paidUntil || recovered.chatPaidUntil });
         return res.status(503).json({ error: "Payment was found, but chat access could not be updated. Please try again." });
       }
-      return res.json({ orderId: pendingOrder.orderId, amount: pendingOrder.amountPaise, currency: "INR", keyId });
+      if (pendingOrder.status === "created") pendingOrder.status = "cancelled";
     }
+    if (paymentAttempts.some((item) => item.status === "created")) await user.save();
 
     const amountPaise = Math.round(chatUnlockAmount * 100);
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {

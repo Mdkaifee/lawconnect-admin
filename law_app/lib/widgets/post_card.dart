@@ -483,6 +483,16 @@ class _PostImageState extends State<_PostImage> {
     );
   }
 
+  Widget _imageLoadingPlaceholder(BuildContext context) {
+    return Container(
+      height: 280,
+      width: double.infinity,
+      color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+      alignment: Alignment.center,
+      child: CircularProgressIndicator(color: AppTheme.primaryOrGold(context)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
@@ -510,6 +520,9 @@ class _PostImageState extends State<_PostImage> {
                   fit: BoxFit.cover,
                   width: double.infinity,
                   gaplessPlayback: true,
+                  loadingBuilder: (context, child, progress) => progress == null
+                      ? child
+                      : _imageLoadingPlaceholder(context),
                   errorBuilder: (_, __, ___) => Container(
                     height: 120,
                     color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
@@ -522,6 +535,10 @@ class _PostImageState extends State<_PostImage> {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       gaplessPlayback: true,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) =>
+                          wasSynchronouslyLoaded || frame != null
+                              ? child
+                              : _imageLoadingPlaceholder(context),
                       errorBuilder: (_, __, ___) => Container(
                         height: 120,
                         color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),

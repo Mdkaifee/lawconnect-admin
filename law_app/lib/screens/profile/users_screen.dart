@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
 import '../../repositories/user_repository.dart';
+import '../../widgets/premium_member_badge.dart';
 import 'public_user_profile_screen.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -266,15 +267,22 @@ class _UsersScreenState extends State<UsersScreen> {
     ),
   ),
 
- title: Text(
-  user.name,
-  maxLines: 1,
-  overflow: TextOverflow.ellipsis,
-  softWrap: false,
-  style: TextStyle(
-    fontWeight: FontWeight.w800,
-    color: textPrimary,
-  ),
+ title: Row(
+  children: [
+    Flexible(
+      child: Text(
+        user.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        softWrap: false,
+        style: TextStyle(fontWeight: FontWeight.w800, color: textPrimary),
+      ),
+    ),
+    if (user.isChatPaid) ...[
+      const SizedBox(width: 6),
+      const PremiumMemberBadge(compact: true),
+    ],
+  ],
 ),
 
 

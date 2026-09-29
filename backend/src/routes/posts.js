@@ -128,13 +128,13 @@ router.post(
       status: "published",
     });
 
-    await notifyUsers(user.following || [], {
+    void notifyUsers(user.following || [], {
       title: `${user.name} posted`,
       body: content || "Shared a photo",
       data: { type: "friend_post", postId: item._id.toString(), authorId: user._id.toString() },
-    });
+    }).catch((error) => console.error("Post push notification failed:", error));
     if (Array.isArray(user.following) && user.following.length > 0) {
-      await AppNotification.insertMany(
+      void AppNotification.insertMany(
         user.following.map((userId) => ({
           userId,
           title: `${user.name} posted`,
@@ -143,7 +143,7 @@ router.post(
           refType: "post",
           refId: item._id.toString(),
         })),
-      );
+      ).catch((error) => console.error("Post notification record creation failed:", error));
     }
 
     res.status(201).json({ item });

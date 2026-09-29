@@ -8,6 +8,7 @@ import '../../core/utils/date_formatter.dart';
 import '../../models/message_model.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/message_repository.dart';
+import '../../widgets/premium_member_badge.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -90,15 +91,30 @@ class _ChatScreenState extends State<ChatScreen> {
       final order = await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
       if (!mounted) return;
       if (order.orderId.isEmpty) {
+        context.read<AuthBloc>().add(CheckAuthEvent());
         final pendingMessage = _pendingPaidMessage;
         if (pendingMessage != null && pendingMessage.isNotEmpty) {
-          await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
-          if (_controller.text.trim() == pendingMessage) _controller.clear();
+          try {
+            await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
+            if (_controller.text.trim() == pendingMessage) _controller.clear();
+          } catch (error) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Payment confirmed, but the message could not be sent: ${error.toString().replaceFirst('Exception: ', '')}')),
+              );
+            }
+          }
         }
         _pendingPaidMessage = null;
+        _pendingPaymentOrderId = null;
         _paymentInProgress = false;
         await _refresh();
-        if (mounted) setState(() {});
+        if (mounted) {
+          setState(() {});
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment confirmed. Chat is unlocked.')),
+          );
+        }
         return;
       }
       _pendingPaymentOrderId = order.orderId;
@@ -150,14 +166,51 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _onPaymentError(PaymentFailureResponse response) {
+  Future<void> _onPaymentError(PaymentFailureResponse response) async {
+    final orderId = _pendingPaymentOrderId;
+    final pendingMessage = _pendingPaidMessage;
+    var paymentWasCaptured = false;
+    var paymentStatusChecked = false;
+    if (orderId != null && orderId.isNotEmpty) {
+      try {
+        paymentWasCaptured = await context
+            .read<MessageRepository>()
+            .cancelChatUnlockOrder(widget.conversationId, orderId);
+        paymentStatusChecked = true;
+      } catch (_) {}
+    }
+
     _paymentInProgress = false;
     _pendingPaymentOrderId = null;
     _pendingPaidMessage = null;
-    if (mounted) {
-      setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.message ?? 'Payment was not completed')));
+    if (!mounted) return;
+
+    if (paymentWasCaptured) {
+      context.read<AuthBloc>().add(CheckAuthEvent());
+      if (pendingMessage != null && pendingMessage.isNotEmpty) {
+        try {
+          await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
+          if (_controller.text.trim() == pendingMessage) _controller.clear();
+        } catch (_) {}
+      }
+      await _refresh();
     }
+
+    if (!mounted) return;
+    setState(() {});
+    final message = response.message?.trim() ?? '';
+    final detail = response.error?['description']?.toString().trim() ?? '';
+    final wasCancelled = response.code == 2 ||
+        message.toLowerCase().contains('cancel') ||
+        message.toLowerCase() == 'undefined';
+    final notice = paymentWasCaptured
+        ? 'Payment confirmed. Chat is unlocked.'
+        : !paymentStatusChecked && orderId != null
+            ? 'Payment status could not be confirmed. Please refresh before trying again.'
+        : wasCancelled
+            ? 'Payment cancelled. No amount was charged.'
+            : 'Payment failed${detail.isNotEmpty ? ': $detail' : message.isNotEmpty && message != 'undefined' ? ': $message' : '. Please try again.'}';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(notice)));
   }
 
   Future<void> _accept() async {
@@ -208,7 +261,17 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(otherUser.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: textPrimary)),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(otherUser.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: textPrimary)),
+                                    ),
+                                    if (otherUser.isChatPaid) ...[
+                                      const SizedBox(width: 6),
+                                      const PremiumMemberBadge(compact: true),
+                                    ],
+                                  ],
+                                ),
                                 Text(
                                   otherUser.isOnline ? Translation.t('online') : '${Translation.t('last_seen')} ${DateFormatter.timeAgo(otherUser.lastActiveAt)}',
                                   style: TextStyle(fontSize: 11, color: otherUser.isOnline ? Colors.green : textSecondary),

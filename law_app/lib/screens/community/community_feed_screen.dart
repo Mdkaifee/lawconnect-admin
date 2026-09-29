@@ -29,6 +29,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   final PageStorageBucket _feedPageStorageBucket = PageStorageBucket();
   final List<String> _categories = ['All', 'My Posts', 'Friends'];
   final Set<String> _followedAuthorIds = {};
+  final Set<String> _deletedPostIds = {};
   bool _loadingMorePosts = false;
   int _activeMutations = 0;
   int _lastRenderedPage = 0;
@@ -88,6 +89,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       context.read<PostBloc>().add(DeletePostEvent(post.id, completer: completer));
       await completer.future;
       if (!mounted) return;
+      setState(() => _deletedPostIds.add(post.id));
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppColors.danger));
@@ -428,25 +430,27 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     final cardBg = AppTheme.cardColor(context);
     final primaryOrGold = AppTheme.primaryOrGold(context);
     final textPrimary = AppTheme.textPrimaryColor(context);
+    final headerBg = isDark ? AppColors.goldAccent : AppColors.primaryNavy;
+    final headerFg = isDark ? AppColors.primaryNavyDark : Colors.white;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.appBarColor(context),
-        foregroundColor: textPrimary,
-        surfaceTintColor: AppTheme.appBarColor(context),
+        backgroundColor: headerBg,
+        foregroundColor: headerFg,
+        surfaceTintColor: headerBg,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: widget.showBackButton
             ? IconButton(
-                icon: Icon(Icons.arrow_back, color: textPrimary),
+                icon: Icon(Icons.arrow_back, color: headerFg),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: Text(Translation.t('law_posts'), style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800)),
+        title: Text(Translation.t('law_posts'), style: TextStyle(color: headerFg, fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: primaryOrGold),
+            icon: Icon(Icons.refresh, color: headerFg),
             onPressed: _activeMutations > 0 ? null : _fetchPosts,
           ),
         ],
@@ -457,7 +461,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _activeMutations > 0 ? null : () => _showCreatePostDialog(context),
-        backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
+        backgroundColor: headerBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
         ),
@@ -565,7 +569,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     _lastRenderedPage = state.page;
                     _loadingMorePosts = false;
                   }
-                  final allPosts = state.posts;
+                  final allPosts = state.posts.where((post) => !_deletedPostIds.contains(post.id)).toList();
                   final displayPosts = _selectedCategory == 'Friends'
                       ? allPosts
                           .where((p) =>

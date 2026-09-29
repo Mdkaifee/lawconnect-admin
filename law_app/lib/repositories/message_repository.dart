@@ -101,6 +101,19 @@ class MessageRepository {
     }
   }
 
+  Future<bool> cancelChatUnlockOrder(String conversationId, String orderId) async {
+    final response = await _client.post(
+      Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/cancel'),
+      headers: _authRepo.authHeaders,
+      body: jsonEncode({'razorpayOrderId': orderId}),
+    );
+    final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(data['error'] ?? 'Could not confirm payment status');
+    }
+    return data['paid'] == true;
+  }
+
   Future<void> acceptRequest(String conversationId) async {
     final response = await _client.post(Uri.parse('${ApiConstants.messages}/conversations/$conversationId/accept'), headers: _authRepo.authHeaders);
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
