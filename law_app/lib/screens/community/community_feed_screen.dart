@@ -430,27 +430,25 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     final cardBg = AppTheme.cardColor(context);
     final primaryOrGold = AppTheme.primaryOrGold(context);
     final textPrimary = AppTheme.textPrimaryColor(context);
-    final headerBg = isDark ? AppColors.goldAccent : AppColors.primaryNavy;
-    final headerFg = isDark ? AppColors.primaryNavyDark : Colors.white;
-
+    final selectedTabColor = isDark ? AppColors.primaryNavyLight : AppColors.primaryNavy;
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: headerBg,
-        foregroundColor: headerFg,
-        surfaceTintColor: headerBg,
+        backgroundColor: AppTheme.appBarColor(context),
+        foregroundColor: textPrimary,
+        surfaceTintColor: AppTheme.appBarColor(context),
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: widget.showBackButton
             ? IconButton(
-                icon: Icon(Icons.arrow_back, color: headerFg),
+                icon: Icon(Icons.arrow_back, color: textPrimary),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: Text(Translation.t('law_posts'), style: TextStyle(color: headerFg, fontWeight: FontWeight.w800)),
+        title: Text(Translation.t('law_posts'), style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: headerFg),
+            icon: Icon(Icons.refresh, color: primaryOrGold),
             onPressed: _activeMutations > 0 ? null : _fetchPosts,
           ),
         ],
@@ -461,7 +459,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _activeMutations > 0 ? null : () => _showCreatePostDialog(context),
-        backgroundColor: headerBg,
+        backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
         ),
@@ -499,12 +497,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? (isDark ? const Color(0xFF9A4F16) : AppColors.danger)
+                              ? selectedTabColor
                               : (isDark ? AppColors.surfaceDarkElevated : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
-                                ? (isDark ? const Color(0xFF9A4F16) : AppColors.danger)
+                                ? selectedTabColor
                                 : (isDark ? AppColors.borderDark : const Color(0xFFE2E8F0)),
                             width: 1,
                           ),
@@ -520,7 +518,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                               color: isSelected
-                                  ? (isDark ? AppColors.primaryNavyDark : Colors.white)
+                                  ? Colors.white
                                   : textPrimary,
                             ),
                           ),

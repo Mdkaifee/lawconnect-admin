@@ -466,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.logout_rounded,
                       title: Translation.t('log_out'),
                       onTap: () {
-                        Navigator.pop(context);
+                        final authBloc = context.read<AuthBloc>();
                         CustomConfirmationDialog.show(
                           context,
                           title: Translation.t('confirm_sign_out'),
@@ -476,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: Icons.logout_rounded,
                           iconColor: const Color(0xFFEF4444),
                           onConfirm: () {
-                            context.read<AuthBloc>().add(LogoutEvent());
+                            authBloc.add(LogoutEvent());
                           },
                         );
                       },

@@ -5,6 +5,7 @@ import '../../core/translations/translation.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../models/message_model.dart';
 import '../../repositories/message_repository.dart';
+import '../../widgets/premium_member_badge.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
@@ -111,7 +112,22 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           ),
                         ],
                       ),
-                      title: Text(user.name, style: TextStyle(fontWeight: FontWeight.w800, color: textPrimary)),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              user.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontWeight: FontWeight.w800, color: textPrimary),
+                            ),
+                          ),
+                          if (user.isChatPaid) ...[
+                            const SizedBox(width: 6),
+                            const PremiumMemberBadge(compact: true),
+                          ],
+                        ],
+                      ),
                       subtitle: Text(
                         conversation.isRequested
                             ? (conversation.isRequester ? Translation.t('message_request_sent') : Translation.t('new_message_request'))

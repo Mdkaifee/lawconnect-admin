@@ -51,7 +51,7 @@ async function inspectRazorpayOrder(orderId, expectedAmount, keyId, keySecret) {
     return { error: true };
   }
   if (order.amount !== expectedAmount || order.currency !== "INR") return { invalid: true };
-  const amountPaid = order.amount_paid == null ? expectedAmount : Number(order.amount_paid);
+  const amountPaid = Number(order.amount_paid || 0);
   return { paid: order.status === "paid" && amountPaid >= expectedAmount, status: order.status };
 }
 

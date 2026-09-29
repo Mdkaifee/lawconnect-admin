@@ -28,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
   late final Razorpay _razorpay;
   String? _pendingPaymentOrderId;
   String? _pendingPaidMessage;
+  ChatPaymentOrder? _preparedRetryOrder;
 
   @override
   void initState() {
@@ -88,7 +89,9 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _paymentInProgress = true);
     _pendingPaidMessage = messageToSend;
     try {
-      final order = await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
+      final order = _preparedRetryOrder ??
+          await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
+      _preparedRetryOrder = null;
       if (!mounted) return;
       if (order.orderId.isEmpty) {
         context.read<AuthBloc>().add(CheckAuthEvent());
@@ -125,6 +128,9 @@ class _ChatScreenState extends State<ChatScreen> {
         'currency': order.currency,
         'name': 'Rishikesh Law Hub',
         'description': 'Unlock this chat',
+        // Checkout retries reuse this order ID. Retry from the app so the
+        // backend can reconcile the attempt and issue a fresh order.
+        'retry': {'enabled': false},
         'prefill': {'email': context.read<AuthRepository>().currentUser?.email ?? ''},
       });
     } catch (error) {
@@ -169,6 +175,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _onPaymentError(PaymentFailureResponse response) async {
     final orderId = _pendingPaymentOrderId;
     final pendingMessage = _pendingPaidMessage;
+    _paymentInProgress = false;
+    _pendingPaymentOrderId = null;
+    _pendingPaidMessage = null;
+    if (mounted) setState(() {});
+
     var paymentWasCaptured = false;
     var paymentStatusChecked = false;
     if (orderId != null && orderId.isNotEmpty) {
@@ -180,9 +191,6 @@ class _ChatScreenState extends State<ChatScreen> {
       } catch (_) {}
     }
 
-    _paymentInProgress = false;
-    _pendingPaymentOrderId = null;
-    _pendingPaidMessage = null;
     if (!mounted) return;
 
     if (paymentWasCaptured) {
@@ -200,11 +208,34 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {});
     final message = response.message?.trim() ?? '';
     final detail = response.error?['description']?.toString().trim() ?? '';
+    if (!paymentWasCaptured && paymentStatusChecked) {
+      try {
+        final replacement = await context
+            .read<MessageRepository>()
+            .createChatUnlockOrder(widget.conversationId);
+        if (replacement.orderId.isEmpty) {
+          paymentWasCaptured = true;
+          context.read<AuthBloc>().add(CheckAuthEvent());
+          if (pendingMessage != null && pendingMessage.isNotEmpty) {
+            try {
+              await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
+              if (_controller.text.trim() == pendingMessage) _controller.clear();
+            } catch (_) {}
+          }
+          await _refresh();
+        } else {
+          _preparedRetryOrder = replacement;
+        }
+      } catch (_) {}
+    }
+    if (!mounted) return;
     final wasCancelled = response.code == 2 ||
         message.toLowerCase().contains('cancel') ||
         message.toLowerCase() == 'undefined';
     final notice = paymentWasCaptured
         ? 'Payment confirmed. Chat is unlocked.'
+        : _preparedRetryOrder != null
+            ? 'Payment was not completed. Tap Unlock to try again with a fresh checkout.'
         : !paymentStatusChecked && orderId != null
             ? 'Payment status could not be confirmed. Please refresh before trying again.'
         : wasCancelled
