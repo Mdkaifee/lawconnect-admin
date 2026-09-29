@@ -284,6 +284,16 @@ const messageSchema = new Schema(
   { timestamps: true },
 );
 
+const aiChatMessageSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    role: { type: String, enum: ["user", "assistant"], required: true },
+    content: { type: String, required: true, trim: true, maxlength: 8000 },
+  },
+  { timestamps: true },
+);
+aiChatMessageSchema.index({ userId: 1, createdAt: -1 });
+
 export const Admin = model("Admin", adminSchema);
 export const User = model("User", userSchema);
 export const Category = model("Category", categorySchema);
@@ -300,3 +310,4 @@ export const DeletionRequest = model("DeletionRequest", deletionRequestSchema);
 export const AppNotification = model("AppNotification", notificationSchema);
 export const Conversation = model("Conversation", conversationSchema);
 export const Message = model("Message", messageSchema);
+export const AiChatMessage = model("AiChatMessage", aiChatMessageSchema);

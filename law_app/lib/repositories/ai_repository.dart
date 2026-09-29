@@ -11,11 +11,26 @@ class AiRepository {
       : _authRepository = authRepository,
         _client = client ?? http.Client();
 
-  Future<String> send(List<Map<String, String>> messages) async {
+  Future<List<Map<String, String>>> loadHistory() async {
+    final response = await _client.get(Uri.parse(ApiConstants.aiHistory), headers: _authRepository.authHeaders);
+    final data = response.body.isNotEmpty ? jsonDecode(response.body) as Map<String, dynamic> : <String, dynamic>{};
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(data['error']?.toString() ?? 'AI chat history is unavailable');
+    }
+    return ((data['messages'] as List<dynamic>?) ?? []).map((item) {
+      final message = item as Map<String, dynamic>;
+      return <String, String>{
+        'role': message['role']?.toString() ?? 'assistant',
+        'content': message['content']?.toString() ?? '',
+      };
+    }).where((message) => message['content']!.isNotEmpty).toList();
+  }
+
+  Future<String> send(String message) async {
     final response = await _client.post(
       Uri.parse(ApiConstants.aiChat),
       headers: _authRepository.authHeaders,
-      body: jsonEncode({'messages': messages}),
+      body: jsonEncode({'message': message}),
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) as Map<String, dynamic> : <String, dynamic>{};
     if (response.statusCode < 200 || response.statusCode >= 300) {

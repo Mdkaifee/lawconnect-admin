@@ -16,6 +16,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final _scrollController = ScrollController();
   final List<Map<String, String>> _messages = [];
   bool _sending = false;
+  bool _loadingHistory = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
 
   @override
   void dispose() {
@@ -24,9 +31,28 @@ class _AiChatScreenState extends State<AiChatScreen> {
     super.dispose();
   }
 
+  Future<void> _loadHistory() async {
+    try {
+      final history = await context.read<AiRepository>().loadHistory();
+      if (!mounted) return;
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(history);
+      });
+      _scrollToBottom(jump: true);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingHistory = false);
+    }
+  }
+
   Future<void> _send() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _sending) return;
+    if (text.isEmpty || _sending || _loadingHistory) return;
     _controller.clear();
     setState(() {
       _messages.add({'role': 'user', 'content': text});
@@ -34,7 +60,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     });
     _scrollToBottom();
     try {
-      final reply = await context.read<AiRepository>().send(_messages.skip((_messages.length - 24).clamp(0, _messages.length).toInt()).toList());
+      final reply = await context.read<AiRepository>().send(text);
       if (!mounted) return;
       setState(() => _messages.add({'role': 'assistant', 'content': reply}));
       _scrollToBottom();
@@ -56,10 +82,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
     }
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool jump = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+        final bottom = _scrollController.position.maxScrollExtent;
+        if (jump) {
+          _scrollController.jumpTo(bottom);
+        } else {
+          _scrollController.animateTo(bottom, duration: const Duration(milliseconds: 220), curve: Curves.easeOut).then((_) {
+            if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > _scrollController.position.pixels) {
+              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            }
+          });
+        }
       }
     });
   }
@@ -81,7 +116,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
         body: Column(
           children: [
             Expanded(
-              child: _messages.isEmpty
+              child: _loadingHistory
+                  ? Center(child: CircularProgressIndicator(color: primary))
+                  : _messages.isEmpty
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(28),

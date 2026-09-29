@@ -275,6 +275,10 @@ router.post(
     if (attempt.status === "paid") {
       return res.json({ ok: true, paid: Boolean(user.chatPaidUntil && user.chatPaidUntil > new Date()), chatPaidUntil: user.chatPaidUntil });
     }
+    const orderStatus = await inspectRazorpayOrder(razorpayOrderId, attempt.amountPaise, process.env.RAZORPAY_KEY_ID, keySecret);
+    if (orderStatus.error) return res.status(503).json({ error: "Could not confirm payment with Razorpay yet. Please try again shortly." });
+    if (orderStatus.invalid) return res.status(400).json({ error: "Razorpay order amount does not match this chat plan." });
+    if (!orderStatus.paid) return res.status(409).json({ error: "Payment has not been captured yet. Chat access will unlock after confirmation." });
     attempt.status = "paid";
     attempt.paymentId = razorpayPaymentId;
     const now = new Date();
