@@ -227,7 +227,7 @@ users.get(
     const currentFollowing = new Set((currentUser.following || []).map((id) => id.toString()));
 
     const items = await User.find({ _id: { $ne: req.auth.id }, blocked: { $ne: true } })
-      .select("name email photoUrl headline college following followRequests createdAt lastActiveAt")
+      .select("name email photoUrl headline college following followRequests createdAt lastActiveAt chatPaidUntil")
       .sort({ name: 1 })
       .lean();
 
@@ -253,6 +253,8 @@ users.get(
               : getConnectionStatus(currentUser, u._id),
         lastActiveAt: u.lastActiveAt,
         isOnline: isOnline(u.lastActiveAt),
+        isChatPaid: Boolean(u.chatPaidUntil && new Date(u.chatPaidUntil).getTime() > Date.now()),
+        chatPaidUntil: u.chatPaidUntil || null,
       })),
     });
   }),
@@ -460,7 +462,7 @@ users.get(
   auth(false),
   asyncHandler(async (req, res) => {
     if (req.auth?.type === "user") await User.findByIdAndUpdate(req.auth.id, { lastActiveAt: new Date() });
-    const user = await User.findById(req.params.id).select("-passwordHash").lean();
+    const user = await User.findById(req.params.id).select("name email photoUrl headline college chatPaidUntil createdAt lastActiveAt following").lean();
     if (!user) return res.status(404).json({ error: "User not found" });
     const viewer = req.auth?.type === "user" ? await User.findById(req.auth.id).select("following").lean() : null;
     const userFollowing = (user.following || []).map((id) => id.toString());
@@ -478,7 +480,14 @@ users.get(
 
     res.json({
       user: {
-        ...user,
+        id: user._id.toString(),
+        name: user.name || "",
+        email: user.email || "",
+        photoUrl: user.photoUrl || "",
+        headline: user.headline || "",
+        college: user.college || "",
+        chatPaidUntil: user.chatPaidUntil || null,
+        isChatPaid: Boolean(user.chatPaidUntil && new Date(user.chatPaidUntil).getTime() > Date.now()),
         postsCount,
         followersCount,
         followingCount: user.following ? user.following.length : 0,
@@ -503,10 +512,18 @@ users.get(
     const limitNum = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
     const skip = (pageNum - 1) * limitNum;
     const [items, total] = await Promise.all([
-      User.find(filter).select("-passwordHash").sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      User.find(filter).select("name email college headline photoUrl blocked createdAt chatPaidUntil").sort({ createdAt: -1 }).skip(skip).limit(limitNum),
       User.countDocuments(filter),
     ]);
-    res.json({ items, total, page: pageNum, limit: limitNum });
+    res.json({
+      items: items.map((user) => ({
+        ...user.toObject(),
+        isChatPaid: Boolean(user.chatPaidUntil && user.chatPaidUntil > new Date()),
+      })),
+      total,
+      page: pageNum,
+      limit: limitNum,
+    });
   }),
 );
 

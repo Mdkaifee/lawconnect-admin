@@ -151,6 +151,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogout(LogoutEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
+    await NotificationService.instance.unregisterCurrentToken(_authRepository);
     await _authRepository.logout();
     emit(Unauthenticated());
   }

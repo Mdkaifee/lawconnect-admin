@@ -7,7 +7,6 @@ import '../../core/theme/theme_manager.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
-import '../auth/login_screen.dart';
 import '../community/community_feed_screen.dart';
 import 'about_us_screen.dart';
 import 'bookmarks_screen.dart';
@@ -64,15 +63,7 @@ class ProfileScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: bgColor,
-          body: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is Unauthenticated) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
+          body: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               final user = state is Authenticated ? state.user : null;
               final userName = user?.name.isNotEmpty == true ? user!.name : 'User';
@@ -126,14 +117,20 @@ class ProfileScreen extends StatelessWidget {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: Text(
-                                          userName,
-                                          style: TextStyle(
-                                            fontSize: 17.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: textColor,
-                                            letterSpacing: -0.2,
-                                          ),
+                                        child: Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                userName,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(fontSize: 17.5, fontWeight: FontWeight.w800, color: textColor),
+                                              ),
+                                            ),
+                                            if (user?.isChatPaid == true) ...[
+                                              const SizedBox(width: 5),
+                                              const Icon(Icons.verified_rounded, size: 18, color: Color(0xFF14B8A6)),
+                                            ],
+                                          ],
                                         ),
                                       ),
                                       if (user != null)

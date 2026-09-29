@@ -20,6 +20,7 @@ import '../acts/act_detail_screen.dart';
 import '../acts/acts_list_screen.dart';
 import '../community/community_feed_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../messages/ai_chat_screen.dart';
 import 'legal_category_screen.dart';
 import '../profile/about_us_screen.dart';
 import '../profile/bookmarks_screen.dart';
@@ -401,6 +402,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.pop(context);
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const AboutUsScreen()),
+                        );
+                      },
+                    ),
+                    _buildDrawerMenuItem(
+                      context,
+                      icon: Icons.auto_awesome_rounded,
+                      title: 'AI Legal Chat',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AiChatScreen()),
                         );
                       },
                     ),

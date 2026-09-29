@@ -11,15 +11,27 @@ router.use(auth(), requireUser);
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 const freeMessageLimit = Math.max(0, Number.parseInt(process.env.CHAT_MESSAGE_FREE_LIMIT || "5", 10) || 5);
 const chatUnlockAmount = Number(process.env.CHAT_UNLOCK_AMOUNT || "11");
+const chatPaidDurationMonths = Math.max(1, Number.parseInt(process.env.CHAT_PAID_DURATION_MONTHS || "1", 10) || 1);
 const isOnline = (lastActiveAt) => lastActiveAt && Date.now() - new Date(lastActiveAt).getTime() <= 5 * 60 * 1000;
 
 async function getChatAccess(conversation, userId) {
   const [sentCount, user] = await Promise.all([
     Message.countDocuments({ conversationId: conversation._id, senderId: userId, kind: "message" }),
-    User.findOne({ _id: userId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("_id"),
+    User.findOne({ _id: userId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("chatPaidUntil"),
   ]);
-  const unlocked = conversation.paidUnlocks?.some((item) => item.userId.toString() === userId.toString()) || false;
-  return { sentCount, freeLimit: freeMessageLimit, unlockAmount: chatUnlockAmount, unlocked, canSend: Boolean(user) && (unlocked || sentCount < freeMessageLimit) };
+  const paidUntil = user?.chatPaidUntil || null;
+  const isPaid = Boolean(paidUntil && new Date(paidUntil).getTime() > Date.now());
+  return { sentCount, freeLimit: freeMessageLimit, unlockAmount: chatUnlockAmount, isPaid, paidUntil, canSend: Boolean(user) && (isPaid || sentCount < freeMessageLimit) };
+}
+
+function addCalendarMonths(date, months) {
+  const result = new Date(date);
+  const originalDay = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(originalDay, lastDay));
+  return result;
 }
 
 async function loadActiveConversation(req, res) {
@@ -141,12 +153,16 @@ router.post(
     const conversation = await loadActiveConversation(req, res);
     if (!conversation) return;
     const access = await getChatAccess(conversation, req.auth.id);
-    if (access.unlocked) return res.json({ unlocked: true });
+    if (access.isPaid) return res.json({ paid: true, chatPaidUntil: access.paidUntil });
     if (access.sentCount < freeMessageLimit) return res.status(400).json({ error: "Free messages remain", chatAccess: access });
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
     if (!Number.isFinite(chatUnlockAmount) || chatUnlockAmount <= 0) return res.status(503).json({ error: "Chat unlock amount is not configured" });
+    const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
+    if (!user) return res.status(403).json({ error: "Active account required" });
+    const pendingOrder = [...(user.chatPaymentOrders || [])].reverse().find((item) => item.status === "created");
+    if (pendingOrder) return res.json({ orderId: pendingOrder.orderId, amount: pendingOrder.amountPaise, currency: "INR", keyId });
 
     const amountPaise = Math.round(chatUnlockAmount * 100);
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
@@ -158,7 +174,7 @@ router.post(
       body: JSON.stringify({
         amount: amountPaise,
         currency: "INR",
-        receipt: `chat_${conversation._id}_${req.auth.id}_${Date.now()}`,
+        receipt: `chat_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
         notes: { conversationId: conversation._id.toString(), userId: req.auth.id, purpose: "chat_unlock" },
       }),
     });
@@ -167,8 +183,8 @@ router.post(
       console.error("Razorpay order creation failed:", order.error?.code || razorpayResponse.status);
       return res.status(502).json({ error: "Unable to start payment. Please try again." });
     }
-    conversation.paymentOrders.push({ userId: req.auth.id, orderId: order.id, amountPaise, status: "created" });
-    await conversation.save();
+    user.chatPaymentOrders.push({ orderId: order.id, amountPaise, status: "created" });
+    await user.save();
     res.status(201).json({ orderId: order.id, amount: amountPaise, currency: "INR", keyId });
   }),
 );
@@ -182,7 +198,9 @@ router.post(
     if (![razorpayOrderId, razorpayPaymentId, razorpaySignature].every((value) => typeof value === "string" && value.length > 0)) {
       return res.status(400).json({ error: "Payment details are incomplete" });
     }
-    const attempt = conversation.paymentOrders.find((item) => item.orderId === razorpayOrderId && item.userId.toString() === req.auth.id);
+    const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
+    if (!user) return res.status(403).json({ error: "Active account required" });
+    const attempt = (user.chatPaymentOrders || []).find((item) => item.orderId === razorpayOrderId);
     if (!attempt) return res.status(400).json({ error: "Payment order does not belong to this account or chat" });
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
@@ -196,12 +214,16 @@ router.post(
     if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
       return res.status(400).json({ error: "Payment verification failed" });
     }
+    if (attempt.status === "paid") {
+      return res.json({ ok: true, paid: Boolean(user.chatPaidUntil && user.chatPaidUntil > new Date()), chatPaidUntil: user.chatPaidUntil });
+    }
     attempt.status = "paid";
     attempt.paymentId = razorpayPaymentId;
-    const alreadyUnlocked = conversation.paidUnlocks.some((item) => item.userId.toString() === req.auth.id);
-    if (!alreadyUnlocked) conversation.paidUnlocks.push({ userId: req.auth.id, unlockedAt: new Date() });
-    await conversation.save();
-    res.json({ ok: true, unlocked: true, chatAccess: await getChatAccess(conversation, req.auth.id) });
+    const now = new Date();
+    const periodStartsAt = user.chatPaidUntil && user.chatPaidUntil > now ? user.chatPaidUntil : now;
+    user.chatPaidUntil = addCalendarMonths(periodStartsAt, chatPaidDurationMonths);
+    await user.save();
+    res.json({ ok: true, paid: true, chatPaidUntil: user.chatPaidUntil, chatAccess: await getChatAccess(conversation, req.auth.id) });
   }),
 );
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/date_formatter.dart';
@@ -89,7 +90,15 @@ class _ChatScreenState extends State<ChatScreen> {
       final order = await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
       if (!mounted) return;
       if (order.orderId.isEmpty) {
+        final pendingMessage = _pendingPaidMessage;
+        if (pendingMessage != null && pendingMessage.isNotEmpty) {
+          await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
+          if (_controller.text.trim() == pendingMessage) _controller.clear();
+        }
+        _pendingPaidMessage = null;
+        _paymentInProgress = false;
         await _refresh();
+        if (mounted) setState(() {});
         return;
       }
       _pendingPaymentOrderId = order.orderId;
@@ -124,6 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
             paymentId: paymentId,
             signature: signature,
           );
+      context.read<AuthBloc>().add(CheckAuthEvent());
       final pendingMessage = _pendingPaidMessage;
       if (pendingMessage != null && pendingMessage.isNotEmpty) {
         await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);

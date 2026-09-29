@@ -58,6 +58,15 @@ class NotificationService {
     await refreshToken(authRepository);
   }
 
+  Future<void> unregisterCurrentToken(AuthRepository authRepository) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      await _removeToken(authRepository, token);
+    } catch (_) {
+      // Sign-out should still complete if Firebase is unavailable.
+    }
+  }
+
   Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_enabledKey) ?? true;

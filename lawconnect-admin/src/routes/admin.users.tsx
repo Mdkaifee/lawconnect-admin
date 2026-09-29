@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Ban, CheckCircle2, Edit, Search, Trash2 } from "lucide-react";
+import { Ban, BadgeCheck, CheckCircle2, Edit, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin/users")({
@@ -174,6 +174,7 @@ function UsersAdmin() {
                   <th className="px-5 py-3.5">Email</th>
                   <th className="px-5 py-3.5">Designation / College</th>
                   <th className="px-5 py-3.5">Joined Date</th>
+                  <th className="px-5 py-3.5">Chat Plan</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -216,6 +217,16 @@ function UsersAdmin() {
                     </td>
                     <td className="px-5 py-4 text-xs text-muted-foreground">
                       {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
+                    </td>
+                    <td className="px-5 py-4 text-xs">
+                      {user.isChatPaid ? (
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-teal-600">
+                          <BadgeCheck className="size-4" />
+                          Paid{user.chatPaidUntil ? ` until ${new Date(user.chatPaidUntil).toLocaleDateString()}` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Free</span>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">

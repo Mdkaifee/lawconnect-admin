@@ -80,7 +80,7 @@ class MessageRepository {
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
     if (response.statusCode < 200 || response.statusCode >= 300) throw Exception(data['error'] ?? 'Unable to start payment');
-    if (data['unlocked'] == true) return const ChatPaymentOrder(orderId: '', amountPaise: 0, currency: 'INR', keyId: '');
+    if (data['paid'] == true) return const ChatPaymentOrder(orderId: '', amountPaise: 0, currency: 'INR', keyId: '');
     return ChatPaymentOrder(
       orderId: data['orderId']?.toString() ?? '',
       amountPaise: (data['amount'] as num?)?.toInt() ?? 0,
@@ -96,7 +96,7 @@ class MessageRepository {
       body: jsonEncode({'razorpayOrderId': orderId, 'razorpayPaymentId': paymentId, 'razorpaySignature': signature}),
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
-    if (response.statusCode < 200 || response.statusCode >= 300 || data['unlocked'] != true) {
+    if (response.statusCode < 200 || response.statusCode >= 300 || data['paid'] != true) {
       throw Exception(data['error'] ?? 'Payment verification failed');
     }
   }

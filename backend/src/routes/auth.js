@@ -189,7 +189,7 @@ router.get(
   auth(),
   asyncHandler(async (req, res) => {
     if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
-    const user = await User.findByIdAndUpdate(req.auth.id, { lastActiveAt: new Date() }, { new: true }).select("-passwordHash");
+    const user = await User.findByIdAndUpdate(req.auth.id, { lastActiveAt: new Date() }, { new: true }).select("-passwordHash -chatPaymentOrders -fcmTokens -photoData");
     res.json({ user });
   }),
 );

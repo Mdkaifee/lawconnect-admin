@@ -73,6 +73,8 @@ export type AppUser = {
   photoUrl?: string;
   blocked?: boolean;
   createdAt?: string;
+  isChatPaid?: boolean;
+  chatPaidUntil?: string | null;
 };
 
 export type Stats = {

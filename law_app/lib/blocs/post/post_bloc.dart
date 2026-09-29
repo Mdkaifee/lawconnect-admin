@@ -134,7 +134,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   }
 
   Future<void> _onLoadPosts(LoadPostsEvent event, Emitter<PostState> emit) async {
-    if (event.isNewLoad) emit(PostLoading());
+    // Keep the current feed mounted during refreshes to preserve its scroll position.
+    if (event.isNewLoad && state is! PostLoaded) emit(PostLoading());
     try {
       final result = await _postRepository.getPosts(
         category: event.category,

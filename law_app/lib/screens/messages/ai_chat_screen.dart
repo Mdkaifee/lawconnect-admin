@@ -34,7 +34,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     });
     _scrollToBottom();
     try {
-      final reply = await context.read<AiRepository>().send(_messages.take(24).toList());
+      final reply = await context.read<AiRepository>().send(_messages.skip((_messages.length - 24).clamp(0, _messages.length).toInt()).toList());
       if (!mounted) return;
       setState(() => _messages.add({'role': 'assistant', 'content': reply}));
       _scrollToBottom();

@@ -26,6 +26,7 @@ class CommunityFeedScreen extends StatefulWidget {
 class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
+  final PageStorageBucket _feedPageStorageBucket = PageStorageBucket();
   final List<String> _categories = ['All', 'My Posts', 'Friends'];
   final Set<String> _followedAuthorIds = {};
   bool _loadingMorePosts = false;
@@ -590,10 +591,13 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     );
                   }
 
-                  return RefreshIndicator(
-                    color: primaryOrGold,
-                    onRefresh: () async => _fetchPosts(),
-                    child: ListView.builder(
+                  return PageStorage(
+                    bucket: _feedPageStorageBucket,
+                    child: RefreshIndicator(
+                      color: primaryOrGold,
+                      onRefresh: () async => _fetchPosts(),
+                      child: ListView.builder(
+                      key: PageStorageKey<String>('community-posts-$_selectedCategory'),
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.only(top: 8, bottom: 80),
@@ -657,6 +661,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                           },
                         );
                       },
+                      ),
                     ),
                   );
                 }

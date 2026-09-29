@@ -16,6 +16,8 @@ services:
         value: "5"
       - key: CHAT_UNLOCK_AMOUNT
         value: "11"
+      - key: CHAT_PAID_DURATION_MONTHS
+        value: "1"
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET

@@ -158,7 +158,16 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
                                 ),
                         ),
                         const SizedBox(height: 12),
-                        Text(user.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textPrimary)),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(child: Text(user.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textPrimary), overflow: TextOverflow.ellipsis)),
+                            if (user.isChatPaid) ...[
+                              const SizedBox(width: 6),
+                              const Icon(Icons.verified_rounded, size: 20, color: Color(0xFF14B8A6)),
+                            ],
+                          ],
+                        ),
                         if (user.email.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(user.email, style: TextStyle(fontSize: 13, color: textSecondary)),

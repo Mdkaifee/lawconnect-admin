@@ -104,12 +104,12 @@ class ChatAccess {
   final int sentCount;
   final int freeLimit;
   final double unlockAmount;
-  final bool unlocked;
+  final bool isPaid;
   final bool canSend;
 
-  const ChatAccess({required this.sentCount, required this.freeLimit, required this.unlockAmount, required this.unlocked, required this.canSend});
+  const ChatAccess({required this.sentCount, required this.freeLimit, required this.unlockAmount, required this.isPaid, required this.canSend});
 
-  bool get isLocked => !canSend && !unlocked;
+  bool get isLocked => !canSend && !isPaid;
 
   factory ChatAccess.fromJson(Map<String, dynamic>? json) {
     final value = json ?? const <String, dynamic>{};
@@ -117,7 +117,7 @@ class ChatAccess {
       sentCount: (value['sentCount'] as num?)?.toInt() ?? 0,
       freeLimit: (value['freeLimit'] as num?)?.toInt() ?? 5,
       unlockAmount: (value['unlockAmount'] as num?)?.toDouble() ?? 11,
-      unlocked: value['unlocked'] == true,
+      isPaid: value['isPaid'] == true,
       canSend: value['canSend'] != false,
     );
   }

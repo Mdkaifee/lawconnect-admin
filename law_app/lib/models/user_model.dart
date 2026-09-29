@@ -13,6 +13,7 @@ class UserModel extends Equatable {
   final bool isFriend;
   final bool isOnline;
   final DateTime? lastActiveAt;
+  final DateTime? chatPaidUntil;
 
   const UserModel({
     required this.id,
@@ -27,13 +28,20 @@ class UserModel extends Equatable {
     this.isFriend = false,
     this.isOnline = false,
     this.lastActiveAt,
+    this.chatPaidUntil,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     DateTime? parsedLastActive;
+    DateTime? parsedChatPaidUntil;
     if (json['lastActiveAt'] != null) {
       try {
         parsedLastActive = DateTime.parse(json['lastActiveAt'].toString());
+      } catch (_) {}
+    }
+    if (json['chatPaidUntil'] != null) {
+      try {
+        parsedChatPaidUntil = DateTime.parse(json['chatPaidUntil'].toString());
       } catch (_) {}
     }
     return UserModel(
@@ -49,6 +57,7 @@ class UserModel extends Equatable {
       isFriend: json['isFriend'] == true,
       isOnline: json['isOnline'] == true,
       lastActiveAt: parsedLastActive,
+      chatPaidUntil: parsedChatPaidUntil,
     );
   }
 
@@ -62,10 +71,14 @@ class UserModel extends Equatable {
       'college': college,
       'isOnline': isOnline,
       'lastActiveAt': lastActiveAt?.toIso8601String(),
+      'chatPaidUntil': chatPaidUntil?.toIso8601String(),
     };
   }
 
   @override
-  List<Object?> get props => [id, name, email, photoUrl, headline, college, postsCount, followersCount, followingCount, isFriend, isOnline, lastActiveAt];
+  bool get isChatPaid => chatPaidUntil?.isAfter(DateTime.now()) ?? false;
+
+  @override
+  List<Object?> get props => [id, name, email, photoUrl, headline, college, postsCount, followersCount, followingCount, isFriend, isOnline, lastActiveAt, chatPaidUntil];
 }
 
