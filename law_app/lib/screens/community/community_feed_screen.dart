@@ -27,9 +27,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
   final List<String> _categories = ['All', 'My Posts', 'Friends'];
-  final Set<String> _bookmarkBusyPostIds = {};
   final Set<String> _followedAuthorIds = {};
-  final Set<String> _likeBusyPostIds = {};
   bool _loadingMorePosts = false;
   int _lastRenderedPage = 0;
 
