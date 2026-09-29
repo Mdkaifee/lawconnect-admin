@@ -478,29 +478,37 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         title: SizedBox(
           width: MediaQuery.sizeOf(context).width * 0.55,
-          child: BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
+          child: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
               final name = state is Authenticated ? state.user.name : 'Advocate';
-              return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(_timeBasedGreeting(), style: TextStyle(fontSize: 11, color: textMuted)),
-                Row(mainAxisSize: MainAxisSize.max, children: [
-                  if (state is Authenticated && state.user.isChatPaid) ...[
-                    const PremiumMemberBadge(compact: true),
-                    const SizedBox(width: 5),
-                  ],
-                  Flexible(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor),
-                    ),
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_timeBasedGreeting(), style: TextStyle(fontSize: 11, color: textMuted)),
+                  Row(
+                    children: [
+                      if (state is Authenticated && state.user.isChatPaid) ...[
+                        const PremiumMemberBadge(compact: true),
+                        const SizedBox(width: 5),
+                      ],
+                      Flexible(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor),
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Icon(Icons.waving_hand_rounded, size: 13, color: AppColors.goldAccent),
+                    ],
                   ),
-                  const SizedBox(width: 3),
-                  const Icon(Icons.waving_hand_rounded, size: 13, color: AppColors.goldAccent),
-                ]),
-                Text(Translation.t('learn_explore_grow'), style: TextStyle(fontSize: 9, color: textMuted)),
-              ]);
-            }),
+                  Text(Translation.t('learn_explore_grow'), style: TextStyle(fontSize: 9, color: textMuted)),
+                ],
+              );
+            },
+          ),
         ),
         actions: [
           BlocBuilder<NotificationBloc, NotificationState>(
