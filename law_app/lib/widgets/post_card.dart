@@ -197,7 +197,13 @@ class PostCard extends StatelessWidget {
                     if (val == 'follow') onFollow?.call();
                     if (val == 'report') onReport();
                     if (val == 'share') {
-                      Share.share('${post.title}\n\n${post.content}\n\n- Shared from Rishikesh Law Hub');
+                      final shareParts = [
+                        if (post.title.trim().isNotEmpty) post.title.trim(),
+                        if (post.content.trim().isNotEmpty) post.content.trim(),
+                        if (post.content.trim().isEmpty && post.imageData != null) 'Shared a photo',
+                        '- Shared from Rishikesh Law Hub',
+                      ];
+                      Share.share(shareParts.join('\n\n'));
                     }
                     if (val == 'delete') onDelete?.call();
                   },
@@ -255,21 +261,21 @@ class PostCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Post content
-            if (post.content.isNotEmpty) Text(
-              post.content,
-              style: TextStyle(
-                fontSize: 13.5,
-                color: textSecondary,
-                height: 1.5,
+            // Post content (Text only / Photo + text)
+            if (post.content.trim().isNotEmpty)
+              Text(
+                post.content.trim(),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: textSecondary,
+                  height: 1.5,
+                ),
               ),
-            ),
-            if (post.imageData != null) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.memory(base64Decode(post.imageData!), fit: BoxFit.cover, width: double.infinity),
-              ),
+
+            // Post Image (Photo only / Photo + text)
+            if (post.imageData != null && post.imageData!.isNotEmpty) ...[
+              if (post.content.trim().isNotEmpty) const SizedBox(height: 12),
+              _PostImage(imageData: post.imageData!),
             ],
 
             // Tags / Categories pills
@@ -379,3 +385,147 @@ class PostCard extends StatelessWidget {
     );
   }
 }
+
+class _PostImage extends StatefulWidget {
+  final String imageData;
+
+  const _PostImage({required this.imageData});
+
+  @override
+  State<_PostImage> createState() => _PostImageState();
+}
+
+class _PostImageState extends State<_PostImage> {
+  static final Map<int, Uint8List> _decodedCache = {};
+  Uint8List? _bytes;
+  bool _isNetwork = false;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _processImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PostImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageData != widget.imageData) {
+      _processImage();
+    }
+  }
+
+  void _processImage() {
+    final raw = widget.imageData.trim();
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      _isNetwork = true;
+      _bytes = null;
+      _hasError = false;
+      return;
+    }
+
+    _isNetwork = false;
+    final hash = raw.hashCode;
+    if (_decodedCache.containsKey(hash)) {
+      _bytes = _decodedCache[hash];
+      _hasError = false;
+      return;
+    }
+
+    try {
+      String cleanBase64 = raw;
+      if (cleanBase64.contains(',')) {
+        cleanBase64 = cleanBase64.split(',').last;
+      }
+      cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
+      final decoded = base64Decode(cleanBase64);
+      if (_decodedCache.length > 50) {
+        _decodedCache.remove(_decodedCache.keys.first);
+      }
+      _decodedCache[hash] = decoded;
+      _bytes = decoded;
+      _hasError = false;
+    } catch (_) {
+      _hasError = true;
+      _bytes = null;
+    }
+  }
+
+  void _openFullScreenViewer(BuildContext context) {
+    if (_hasError || (_bytes == null && !_isNetwork)) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            elevation: 0,
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              panEnabled: true,
+              minScale: 0.8,
+              maxScale: 4.0,
+              child: _isNetwork
+                  ? Image.network(widget.imageData.trim(), fit: BoxFit.contain)
+                  : Image.memory(_bytes!, fit: BoxFit.contain, gaplessPlayback: true),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) {
+      return Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Center(
+          child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted, size: 36),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => _openFullScreenViewer(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 450, minHeight: 100),
+          child: _isNetwork
+              ? Image.network(
+                  widget.imageData.trim(),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  gaplessPlayback: true,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 120,
+                    color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    child: const Center(child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted, size: 36)),
+                  ),
+                )
+              : (_bytes != null
+                  ? Image.memory(
+                      _bytes!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 120,
+                        color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        child: const Center(child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted, size: 36)),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+        ),
+      ),
+    );
+  }
+}
+

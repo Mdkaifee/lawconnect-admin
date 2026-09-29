@@ -376,6 +376,15 @@ class _PostsTab extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
             final post = posts[index];
+            final titleText = post.title.trim().isNotEmpty
+                ? post.title.trim()
+                : (post.content.trim().isNotEmpty
+                    ? post.content.trim().split('\n').first
+                    : (post.imageData != null ? 'Photo Post' : 'Post'));
+            final subtitleText = post.content.trim().isNotEmpty
+                ? post.content.trim()
+                : (post.imageData != null ? 'Shared a photo' : '');
+
             return Card(
               elevation: 0,
               color: AppTheme.cardColor(context),
@@ -384,13 +393,26 @@ class _PostsTab extends StatelessWidget {
                 side: BorderSide(color: AppTheme.borderColor(context)),
               ),
               child: ListTile(
-                title: Text(post.title, style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.textPrimaryColor(context))),
-                subtitle: Text(
-                  post.content,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppTheme.textSecondaryColor(context)),
-                ),
+                leading: post.imageData != null
+                    ? Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryOrGold(context).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.image_outlined, color: AppTheme.primaryOrGold(context), size: 20),
+                      )
+                    : null,
+                title: Text(titleText, style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimaryColor(context))),
+                subtitle: subtitleText.isNotEmpty
+                    ? Text(
+                        subtitleText,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: AppTheme.textSecondaryColor(context)),
+                      )
+                    : null,
               ),
             );
           },
