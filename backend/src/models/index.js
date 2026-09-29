@@ -44,6 +44,22 @@ const userSchema = new Schema(
   { timestamps: true },
 );
 
+const paymentAttemptSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    razorpayOrderId: { type: String, required: true, unique: true },
+    razorpayPaymentId: { type: String, default: undefined },
+    amount: { type: Number, required: true },
+    currency: { type: String, required: true, default: "INR" },
+    status: { type: String, enum: ["created", "paid", "failed", "cancelled"], default: "created", index: true },
+    accessGrantedAt: { type: Date, default: null },
+    duplicatePaymentIds: [{ type: String }],
+  },
+  { timestamps: true },
+);
+paymentAttemptSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
+paymentAttemptSchema.index({ userId: 1, status: 1, createdAt: -1 });
+
 /* ---------------- 3. Categories (Constitution, Criminal...) -------- */
 const categorySchema = new Schema(
   {
@@ -296,6 +312,7 @@ aiChatMessageSchema.index({ userId: 1, createdAt: -1 });
 
 export const Admin = model("Admin", adminSchema);
 export const User = model("User", userSchema);
+export const PaymentAttempt = model("PaymentAttempt", paymentAttemptSchema);
 export const Category = model("Category", categorySchema);
 export const Case = model("Case", caseSchema);
 export const Act = model("Act", actSchema);
