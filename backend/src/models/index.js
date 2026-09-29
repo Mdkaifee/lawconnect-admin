@@ -260,6 +260,14 @@ const conversationSchema = new Schema(
     lastMessageAt: { type: Date },
     lastSenderId: { type: Schema.Types.ObjectId, ref: "User" },
     readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    paidUnlocks: [{ userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, unlockedAt: { type: Date, default: Date.now } }],
+    paymentOrders: [{
+      userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+      orderId: { type: String, required: true },
+      amountPaise: { type: Number, required: true },
+      status: { type: String, enum: ["created", "paid"], default: "created" },
+      paymentId: { type: String, default: "" },
+    }],
   },
   { timestamps: true },
 );
