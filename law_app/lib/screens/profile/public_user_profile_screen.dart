@@ -8,7 +8,6 @@ import '../../repositories/auth_repository.dart';
 import '../../repositories/message_repository.dart';
 import '../../repositories/post_repository.dart';
 import '../../repositories/user_repository.dart';
-import '../../widgets/premium_member_badge.dart';
 import '../messages/chat_screen.dart';
 
 class PublicUserProfileScreen extends StatefulWidget {
@@ -165,7 +164,10 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
                             Flexible(child: Text(user.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textPrimary), overflow: TextOverflow.ellipsis)),
                             if (user.isChatPaid) ...[
                               const SizedBox(width: 6),
-                              const PremiumMemberBadge(),
+                              const Tooltip(
+                                message: 'Premium member',
+                                child: Icon(Icons.workspace_premium_rounded, size: 17, color: Color(0xFF0F9F8F)),
+                              ),
                             ],
                           ],
                         ),

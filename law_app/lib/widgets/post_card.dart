@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import '../core/theme/app_theme.dart';
 import '../core/translations/translation.dart';
 import '../models/post_model.dart';
-import 'premium_member_badge.dart';
 
 class PostCard extends StatelessWidget {
   final PostModel post;
@@ -166,7 +165,10 @@ class PostCard extends StatelessWidget {
                           ],
                           if (post.isAuthorPremium) ...[
                             const SizedBox(width: 5),
-                            const PremiumMemberBadge(compact: true),
+                            const Tooltip(
+                              message: 'Premium member',
+                              child: Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF0F9F8F)),
+                            ),
                           ],
                         ],
                       ),

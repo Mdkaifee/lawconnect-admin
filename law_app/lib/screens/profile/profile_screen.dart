@@ -8,7 +8,6 @@ import '../../core/theme/theme_manager.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/url_helper.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
-import '../../widgets/premium_member_badge.dart';
 import '../community/community_feed_screen.dart';
 import 'about_us_screen.dart';
 import 'bookmarks_screen.dart';
@@ -130,7 +129,10 @@ class ProfileScreen extends StatelessWidget {
                                             ),
                                             if (user?.isChatPaid == true) ...[
                                               const SizedBox(width: 5),
-                                              const PremiumMemberBadge(),
+                                              const Tooltip(
+                                                message: 'Premium member',
+                                                child: Icon(Icons.workspace_premium_rounded, size: 17, color: Color(0xFF0F9F8F)),
+                                              ),
                                             ],
                                           ],
                                         ),

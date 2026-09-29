@@ -128,8 +128,9 @@ class ChatPaymentOrder {
   final int amountPaise;
   final String currency;
   final String keyId;
+  final bool alreadyPaid;
 
-  const ChatPaymentOrder({required this.orderId, required this.amountPaise, required this.currency, required this.keyId});
+  const ChatPaymentOrder({required this.orderId, required this.amountPaise, required this.currency, required this.keyId, this.alreadyPaid = false});
 }
 
 class ChatPaymentRequiredException implements Exception {

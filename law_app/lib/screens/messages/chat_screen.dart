@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../blocs/auth/auth_bloc.dart';
@@ -8,7 +9,6 @@ import '../../core/utils/date_formatter.dart';
 import '../../models/message_model.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/message_repository.dart';
-import '../../widgets/premium_member_badge.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -86,6 +86,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _startPayment([String? messageToSend]) async {
     if (_paymentInProgress) return;
+    debugPrint('[CHAT_PAYMENT] start conversation=${widget.conversationId} retryPrepared=${_preparedRetryOrder != null}');
     setState(() => _paymentInProgress = true);
     _pendingPaidMessage = messageToSend;
     try {
@@ -93,7 +94,8 @@ class _ChatScreenState extends State<ChatScreen> {
           await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
       _preparedRetryOrder = null;
       if (!mounted) return;
-      if (order.orderId.isEmpty) {
+      debugPrint('[CHAT_PAYMENT] order response paid=${order.alreadyPaid} orderId=${order.orderId.isEmpty ? '(none)' : order.orderId} amountPaise=${order.amountPaise} currency=${order.currency}');
+      if (order.alreadyPaid) {
         context.read<AuthBloc>().add(CheckAuthEvent());
         final pendingMessage = _pendingPaidMessage;
         if (pendingMessage != null && pendingMessage.isNotEmpty) {
@@ -121,6 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
       _pendingPaymentOrderId = order.orderId;
+      debugPrint('[CHAT_PAYMENT] opening checkout orderId=${order.orderId}');
       _razorpay.open({
         'key': order.keyId,
         'order_id': order.orderId,
@@ -134,6 +137,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'prefill': {'email': context.read<AuthRepository>().currentUser?.email ?? ''},
       });
     } catch (error) {
+      debugPrint('[CHAT_PAYMENT] order/checkout start failed error=$error');
       _paymentInProgress = false;
       _pendingPaidMessage = null;
       if (mounted) {
@@ -147,6 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final orderId = response.orderId ?? _pendingPaymentOrderId;
     final paymentId = response.paymentId;
     final signature = response.signature;
+    debugPrint('[CHAT_PAYMENT] checkout success orderId=${orderId ?? '(missing)'} paymentId=${paymentId ?? '(missing)'} signaturePresent=${signature?.isNotEmpty == true}');
     try {
       if (orderId == null || paymentId == null || signature == null) throw Exception('Razorpay returned incomplete payment details');
       await context.read<MessageRepository>().verifyChatUnlockPayment(
@@ -155,6 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
             paymentId: paymentId,
             signature: signature,
           );
+      debugPrint('[CHAT_PAYMENT] verify succeeded orderId=$orderId');
       context.read<AuthBloc>().add(CheckAuthEvent());
       final pendingMessage = _pendingPaidMessage;
       if (pendingMessage != null && pendingMessage.isNotEmpty) {
@@ -164,6 +170,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _pendingPaidMessage = null;
       await _refresh();
     } catch (error) {
+      debugPrint('[CHAT_PAYMENT] success callback verification failed orderId=${orderId ?? '(missing)'} error=$error');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
     } finally {
       _paymentInProgress = false;
@@ -178,6 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _paymentInProgress = false;
     _pendingPaymentOrderId = null;
     _pendingPaidMessage = null;
+    debugPrint('[CHAT_PAYMENT] checkout error orderId=${orderId ?? '(missing)'} code=${response.code} message=${response.message} description=${response.error?['description']}');
     if (mounted) setState(() {});
 
     var paymentWasCaptured = false;
@@ -188,8 +196,12 @@ class _ChatScreenState extends State<ChatScreen> {
             .read<MessageRepository>()
             .cancelChatUnlockOrder(widget.conversationId, orderId);
         paymentStatusChecked = true;
-      } catch (_) {}
+        debugPrint('[CHAT_PAYMENT] reconciliation response orderId=$orderId paid=$paymentWasCaptured');
+      } catch (error) {
+        debugPrint('[CHAT_PAYMENT] reconciliation request failed orderId=$orderId error=$error');
+      }
     }
+    if (!paymentStatusChecked) debugPrint('[CHAT_PAYMENT] reconciliation failed/unavailable orderId=${orderId ?? '(missing)'}');
 
     if (!mounted) return;
 
@@ -213,7 +225,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final replacement = await context
             .read<MessageRepository>()
             .createChatUnlockOrder(widget.conversationId);
-        if (replacement.orderId.isEmpty) {
+        if (replacement.alreadyPaid) {
           paymentWasCaptured = true;
           context.read<AuthBloc>().add(CheckAuthEvent());
           if (pendingMessage != null && pendingMessage.isNotEmpty) {
@@ -225,8 +237,11 @@ class _ChatScreenState extends State<ChatScreen> {
           await _refresh();
         } else {
           _preparedRetryOrder = replacement;
+          debugPrint('[CHAT_PAYMENT] replacement order ready orderId=${replacement.orderId}');
         }
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('[CHAT_PAYMENT] replacement order request failed error=$error');
+      }
     }
     if (!mounted) return;
     final wasCancelled = response.code == 2 ||
@@ -299,7 +314,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ),
                                     if (otherUser.isChatPaid) ...[
                                       const SizedBox(width: 6),
-                                      const PremiumMemberBadge(compact: true),
+                                      const Tooltip(
+                                        message: 'Premium member',
+                                        child: Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF0F9F8F)),
+                                      ),
                                     ],
                                   ],
                                 ),

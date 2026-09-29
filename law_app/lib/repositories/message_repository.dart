@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 import '../models/message_model.dart';
@@ -74,15 +75,23 @@ class MessageRepository {
   }
 
   Future<ChatPaymentOrder> createChatUnlockOrder(String conversationId) async {
+    debugPrint('[CHAT_PAYMENT] POST create-order conversation=$conversationId');
     final response = await _client.post(
       Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/order'),
       headers: _authRepo.authHeaders,
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    debugPrint('[CHAT_PAYMENT] create-order HTTP ${response.statusCode} paid=${data['paid'] == true} orderId=${data['orderId'] ?? '(none)'} error=${data['error'] ?? '(none)'}');
     if (response.statusCode < 200 || response.statusCode >= 300) throw Exception(data['error'] ?? 'Unable to start payment');
-    if (data['paid'] == true) return const ChatPaymentOrder(orderId: '', amountPaise: 0, currency: 'INR', keyId: '');
+    if (data['paid'] == true) {
+      return const ChatPaymentOrder(orderId: '', amountPaise: 0, currency: 'INR', keyId: '', alreadyPaid: true);
+    }
+    final orderId = data['orderId']?.toString() ?? '';
+    if (orderId.isEmpty) {
+      throw Exception('Payment provider returned no order. Please try again.');
+    }
     return ChatPaymentOrder(
-      orderId: data['orderId']?.toString() ?? '',
+      orderId: orderId,
       amountPaise: (data['amount'] as num?)?.toInt() ?? 0,
       currency: data['currency']?.toString() ?? 'INR',
       keyId: data['keyId']?.toString() ?? '',
@@ -90,24 +99,28 @@ class MessageRepository {
   }
 
   Future<void> verifyChatUnlockPayment({required String conversationId, required String orderId, required String paymentId, required String signature}) async {
+    debugPrint('[CHAT_PAYMENT] POST verify orderId=$orderId paymentId=$paymentId');
     final response = await _client.post(
       Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/verify'),
       headers: _authRepo.authHeaders,
       body: jsonEncode({'razorpayOrderId': orderId, 'razorpayPaymentId': paymentId, 'razorpaySignature': signature}),
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    debugPrint('[CHAT_PAYMENT] verify HTTP ${response.statusCode} paid=${data['paid'] == true} chatPaidUntil=${data['chatPaidUntil'] ?? '(none)'} error=${data['error'] ?? '(none)'}');
     if (response.statusCode < 200 || response.statusCode >= 300 || data['paid'] != true) {
       throw Exception(data['error'] ?? 'Payment verification failed');
     }
   }
 
   Future<bool> cancelChatUnlockOrder(String conversationId, String orderId) async {
+    debugPrint('[CHAT_PAYMENT] POST reconcile orderId=$orderId');
     final response = await _client.post(
       Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/cancel'),
       headers: _authRepo.authHeaders,
       body: jsonEncode({'razorpayOrderId': orderId}),
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    debugPrint('[CHAT_PAYMENT] reconcile HTTP ${response.statusCode} paid=${data['paid'] == true} cancelled=${data['cancelled'] == true} chatPaidUntil=${data['chatPaidUntil'] ?? '(none)'} error=${data['error'] ?? '(none)'}');
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(data['error'] ?? 'Could not confirm payment status');
     }

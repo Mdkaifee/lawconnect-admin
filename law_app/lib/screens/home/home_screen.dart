@@ -33,7 +33,6 @@ import '../messages/messages_screen.dart';
 import '../../widgets/case_card.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../../widgets/legal_category_grid.dart';
-import '../../widgets/premium_member_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -288,7 +287,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                         if (user?.isChatPaid == true) ...[
                                           const SizedBox(width: 6),
-                                          const PremiumMemberBadge(compact: true),
+                                          const Tooltip(
+                                            message: 'Premium member',
+                                            child: Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF0F9F8F)),
+                                          ),
                                         ],
                                       ],
                                     ),
@@ -513,7 +515,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       if (state is Authenticated && state.user.isChatPaid) ...[
-                        const PremiumMemberBadge(compact: true),
+                        const Tooltip(
+                          message: 'Premium member',
+                          child: Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF0F9F8F)),
+                        ),
                         const SizedBox(width: 5),
                       ],
                       Flexible(

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
 import '../../repositories/user_repository.dart';
-import '../../widgets/premium_member_badge.dart';
 import 'public_user_profile_screen.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -280,7 +279,10 @@ class _UsersScreenState extends State<UsersScreen> {
     ),
     if (user.isChatPaid) ...[
       const SizedBox(width: 6),
-      const PremiumMemberBadge(compact: true),
+      const Tooltip(
+        message: 'Premium member',
+        child: Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF0F9F8F)),
+      ),
     ],
   ],
 ),

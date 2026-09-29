@@ -5,7 +5,6 @@ import '../../core/translations/translation.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../models/message_model.dart';
 import '../../repositories/message_repository.dart';
-import '../../widgets/premium_member_badge.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
@@ -124,7 +123,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           ),
                           if (user.isChatPaid) ...[
                             const SizedBox(width: 6),
-                            const PremiumMemberBadge(compact: true),
+                            const Tooltip(
+                              message: 'Premium member',
+                              child: Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF0F9F8F)),
+                            ),
                           ],
                         ],
                       ),
