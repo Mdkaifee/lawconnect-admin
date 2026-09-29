@@ -16,8 +16,8 @@ services:
         value: "5"
       - key: CHAT_UNLOCK_AMOUNT
         value: "11"
-      - key: CHAT_PAID_DURATION_MONTHS
-        value: "1"
+      - key: PAID_CHAT_MONTHS
+        value: "3"
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
@@ -25,6 +25,6 @@ services:
       - key: AI_API_KEY
         sync: false
       - key: AI_MODEL
-        value: claude-sonnet-4-6
+        value: claude-haiku-4-5-20251001
       - key: AI_PROVIDER
         value: claude

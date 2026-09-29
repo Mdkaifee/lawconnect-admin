@@ -11,7 +11,10 @@ router.use(auth(), requireUser);
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 const freeMessageLimit = Math.max(0, Number.parseInt(process.env.CHAT_MESSAGE_FREE_LIMIT || "5", 10) || 5);
 const chatUnlockAmount = Number(process.env.CHAT_UNLOCK_AMOUNT || "11");
-const chatPaidDurationMonths = Math.max(1, Number.parseInt(process.env.CHAT_PAID_DURATION_MONTHS || "1", 10) || 1);
+const chatPaidDurationMonths = Math.max(
+  1,
+  Number.parseInt(process.env.PAID_CHAT_MONTHS || process.env.CHAT_PAID_DURATION_MONTHS || "3", 10) || 3,
+);
 const isOnline = (lastActiveAt) => lastActiveAt && Date.now() - new Date(lastActiveAt).getTime() <= 5 * 60 * 1000;
 
 async function getChatAccess(conversation, userId) {
@@ -180,8 +183,13 @@ router.post(
     });
     const order = await razorpayResponse.json().catch(() => ({}));
     if (!razorpayResponse.ok || !order.id) {
-      console.error("Razorpay order creation failed:", order.error?.code || razorpayResponse.status);
-      return res.status(502).json({ error: "Unable to start payment. Please try again." });
+      console.error("Razorpay order creation failed:", {
+        status: razorpayResponse.status,
+        code: order.error?.code || "unknown",
+        description: order.error?.description || "No provider description",
+        field: order.error?.field || null,
+      });
+      return res.status(502).json({ error: "Payment provider rejected the order. Please check the Razorpay server credentials and payment setup." });
     }
     user.chatPaymentOrders.push({ orderId: order.id, amountPaise, status: "created" });
     await user.save();

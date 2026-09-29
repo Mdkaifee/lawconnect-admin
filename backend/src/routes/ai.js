@@ -27,7 +27,14 @@ router.post(
     if (!apiKey) return res.status(503).json({ error: "AI chat is not configured yet" });
     const provider = (process.env.AI_PROVIDER || "claude").toLowerCase();
     if (provider !== "claude") return res.status(503).json({ error: `AI provider '${provider}' is not supported by this backend` });
-    const model = process.env.AI_MODEL || "claude-sonnet-4-6";
+    const configuredModel = (process.env.AI_MODEL || "claude-haiku-4-5-20251001").trim();
+    const haikuAliases = new Set([
+      "haiku",
+      "claude-haiku",
+      "claude-3-haiku-20240307",
+      "claude-3-5-haiku-20241022",
+    ]);
+    const model = haikuAliases.has(configuredModel.toLowerCase()) ? "claude-haiku-4-5-20251001" : configuredModel;
     const requestClaude = (system, contents, maxTokens) => fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -49,7 +56,12 @@ router.post(
     );
     const scopeData = await scopeCheck.json().catch(() => ({}));
     if (!scopeCheck.ok) {
-      console.error("Claude scope check failed:", scopeData.error?.type || scopeCheck.status);
+      console.error("Claude scope check failed:", {
+        status: scopeCheck.status,
+        type: scopeData.error?.type || "unknown",
+        message: scopeData.error?.message || "No provider message",
+        model,
+      });
       return res.status(502).json({ error: "AI could not answer right now. Please try again." });
     }
     const scope = (scopeData.content || []).filter((part) => part.type === "text").map((part) => part.text).join("").trim().toUpperCase();
@@ -63,12 +75,17 @@ router.post(
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      console.error("Claude request failed:", data.error?.type || response.status);
+      console.error("Claude request failed:", {
+        status: response.status,
+        type: data.error?.type || "unknown",
+        message: data.error?.message || "No provider message",
+        model,
+      });
       return res.status(502).json({ error: "AI could not answer right now. Please try again." });
     }
     const answer = (data.content || []).filter((part) => part.type === "text").map((part) => part.text).join("\n").trim();
     if (!answer) return res.status(502).json({ error: "AI returned an empty response. Please try again." });
-    res.json({ reply: answer, model: data.model || process.env.AI_MODEL || "claude-sonnet-4-6" });
+    res.json({ reply: answer, model: data.model || process.env.AI_MODEL || "claude-haiku-4-5-20251001" });
   }),
 );
 
