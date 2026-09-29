@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../widgets/custom_confirmation_dialog.dart';
 import '../cases/case_detail_screen.dart';
 
@@ -37,7 +38,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Reading History',
+          Translation.t('reading_history'),
           style: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         actions: [
@@ -46,9 +47,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             onPressed: () {
               CustomConfirmationDialog.show(
                 context,
-                title: 'Clear History',
-                message: 'Are you sure you want to clear your entire reading history?',
-                confirmText: 'Clear All',
+                title: Translation.t('clear_history'),
+                message: Translation.t('clear_history_confirm'),
+                confirmText: Translation.t('clear_all'),
                 onConfirm: () {
                   context.read<UserDataBloc>().add(ClearHistoryEvent());
                 },
@@ -71,7 +72,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             if (state.history.isEmpty) {
               return Center(
                 child: Text(
-                  'No reading history recorded yet.',
+                  Translation.t('no_reading_history'),
                   style: TextStyle(color: AppTheme.textSecondaryColor(context)),
                 ),
               );
@@ -82,7 +83,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               itemCount: state.history.length,
               itemBuilder: (context, idx) {
                 final h = state.history[idx];
-                final title = h['title']?.toString() ?? 'Untitled Case';
+                final title = h['title']?.toString() ?? Translation.t('untitled_case');
                 final refId = h['refId']?.toString() ?? '';
                 final viewedAt = h['viewedAt']?.toString() ?? '';
 

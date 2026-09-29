@@ -11,6 +11,7 @@ import actRoutes from "./routes/acts.js";
 import updateRoutes from "./routes/updates.js";
 import postRoutes from "./routes/posts.js";
 import notificationRoutes from "./routes/notifications.js";
+import messageRoutes from "./routes/messages.js";
 import { categories, notes, bookmarks, history, users, stats, reports } from "./routes/misc.js";
 import { sanitizeLogOutput } from "./utils/security.js";
 
@@ -44,6 +45,7 @@ app.use("/api/acts", actRoutes);
 app.use("/api/updates", updateRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
 app.use("/api/categories", categories);
 app.use("/api/notes", notes);
 app.use("/api/bookmarks", bookmarks);

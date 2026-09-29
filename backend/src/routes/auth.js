@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { Admin, AppNotification, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report } from "../models/index.js";
+import { Admin, AppNotification, User, DeletionRequest, Post, Comment, Note, Bookmark, History, Report, Conversation, Message } from "../models/index.js";
 import { signToken, auth, asyncHandler } from "../middleware/auth.js";
 import { notifyUsers } from "../services/notifications.js";
 
@@ -37,10 +37,15 @@ export async function purgeUserData(userId) {
   // 7. Delete reports filed by user
   await Report.deleteMany({ reporterId: userId });
 
-  // 8. Remove userId from other users' following lists
+  // 8. Delete conversations and messages involving user
+  const conversations = await Conversation.find({ participants: userId }).select("_id");
+  await Message.deleteMany({ $or: [{ senderId: userId }, { receiverId: userId }, { conversationId: { $in: conversations.map((c) => c._id) } }] });
+  await Conversation.deleteMany({ participants: userId });
+
+  // 9. Remove userId from other users' following lists
   await User.updateMany({ following: userId }, { $pull: { following: userId } });
 
-  // 9. Mark all pending DeletionRequests as completed
+  // 10. Mark all pending DeletionRequests as completed
   if (userEmail) {
     await DeletionRequest.updateMany(
       { $or: [{ userId }, { email: userEmail.toLowerCase() }], status: "pending" },
@@ -53,7 +58,7 @@ export async function purgeUserData(userId) {
     );
   }
 
-  // 10. Permanently remove the user document
+  // 11. Permanently remove the user document
   await User.findByIdAndDelete(userId);
 }
 
@@ -111,6 +116,8 @@ router.post(
     const exists = await User.findOne({ email: email.toLowerCase() });
     if (exists) return res.status(409).json({ error: "Email already registered" });
     const user = await User.create({ name, email, passwordHash: await bcrypt.hash(password, 10) });
+    user.lastActiveAt = new Date();
+    await user.save();
     const token = signToken({ type: "user", id: user._id.toString() });
     res.status(201).json({
       token,
@@ -184,7 +191,7 @@ router.get(
   auth(),
   asyncHandler(async (req, res) => {
     if (req.auth.type !== "user") return res.status(403).json({ error: "User only" });
-    const user = await User.findById(req.auth.id).select("-passwordHash");
+    const user = await User.findByIdAndUpdate(req.auth.id, { lastActiveAt: new Date() }, { new: true }).select("-passwordHash");
     res.json({ user });
   }),
 );

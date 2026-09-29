@@ -119,7 +119,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> with SingleTickerPr
               setDialogState(() => saving = true);
               try {
                 await context.read<UserDataRepository>().saveNote(
-                  title: 'Note: ${HtmlSanitizer.truncate(caseItem.title, 35)}',
+                  title: '${Translation.t('note_prefix')}: ${HtmlSanitizer.truncate(caseItem.title, 35)}',
                   content: _noteController.text.trim(),
                   refType: 'case',
                   refId: caseItem.id,

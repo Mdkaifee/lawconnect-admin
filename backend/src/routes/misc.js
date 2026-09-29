@@ -208,12 +208,16 @@ function getConnectionStatus(currentUser, targetUserId) {
   return "none";
 }
 
+function isOnline(lastActiveAt) {
+  return lastActiveAt && Date.now() - new Date(lastActiveAt).getTime() <= 5 * 60 * 1000;
+}
+
 users.get(
   "/app/list",
   auth(),
   requireUser,
   asyncHandler(async (req, res) => {
-    const currentUser = await User.findById(req.auth.id).select("following followRequests");
+    const currentUser = await User.findByIdAndUpdate(req.auth.id, { lastActiveAt: new Date() }, { new: true }).select("following followRequests");
     if (!currentUser) return res.status(404).json({ error: "User not found" });
 
     const outgoingUsers = await User.find({ followRequests: req.auth.id }).select("_id");
@@ -223,7 +227,7 @@ users.get(
     const currentFollowing = new Set((currentUser.following || []).map((id) => id.toString()));
 
     const items = await User.find({ _id: { $ne: req.auth.id }, blocked: { $ne: true } })
-      .select("name email photoUrl headline college following followRequests createdAt")
+      .select("name email photoUrl headline college following followRequests createdAt lastActiveAt")
       .sort({ name: 1 })
       .lean();
 
@@ -247,6 +251,8 @@ users.get(
             : followerIds.has(u._id.toString())
               ? "follower"
               : getConnectionStatus(currentUser, u._id),
+        lastActiveAt: u.lastActiveAt,
+        isOnline: isOnline(u.lastActiveAt),
       })),
     });
   }),
@@ -453,6 +459,7 @@ users.get(
   "/:id/profile",
   auth(false),
   asyncHandler(async (req, res) => {
+    if (req.auth?.type === "user") await User.findByIdAndUpdate(req.auth.id, { lastActiveAt: new Date() });
     const user = await User.findById(req.params.id).select("-passwordHash").lean();
     if (!user) return res.status(404).json({ error: "User not found" });
     const viewer = req.auth?.type === "user" ? await User.findById(req.auth.id).select("following").lean() : null;
@@ -476,6 +483,8 @@ users.get(
         followersCount,
         followingCount: user.following ? user.following.length : 0,
         isFriend,
+        lastActiveAt: user.lastActiveAt,
+        isOnline: isOnline(user.lastActiveAt),
       },
     });
   }),

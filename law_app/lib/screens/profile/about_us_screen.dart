@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/translations/translation.dart';
 import '../../widgets/app_version_text.dart';
 
 class AboutUsScreen extends StatelessWidget {
@@ -23,8 +24,8 @@ class AboutUsScreen extends StatelessWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Contact: rishikesh4287@gmail.com'),
+          SnackBar(
+            content: Text(Translation.t('contact_support_email')),
             backgroundColor: Color(0xFF0F1E36),
           ),
         );
@@ -54,7 +55,7 @@ class AboutUsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'About Us',
+          Translation.t('about_us'),
           style: TextStyle(
             color: textPrimary,
             fontWeight: FontWeight.w800,

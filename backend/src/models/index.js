@@ -25,6 +25,7 @@ const userSchema = new Schema(
     headline: { type: String, default: "" },
     college: { type: String, default: "" },
     blocked: { type: Boolean, default: false },
+    lastActiveAt: { type: Date, default: Date.now, index: true },
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
     followRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],
     fcmTokens: [{ type: String }],
@@ -240,9 +241,36 @@ const notificationSchema = new Schema(
     body: { type: String, required: true, trim: true },
     type: { type: String, enum: ["judgment", "act", "update", "community", "system", "general"], default: "general" },
     refId: String,
-    refType: { type: String, enum: ["case", "act", "update", "post", "user", "general"], default: "general" },
+    refType: { type: String, enum: ["case", "act", "update", "post", "user", "message", "general"], default: "general" },
     readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
     isRead: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
+
+/* ---------------- 12. Conversations & Messages ---------------- */
+const conversationSchema = new Schema(
+  {
+    participants: [{ type: Schema.Types.ObjectId, ref: "User", index: true }],
+    status: { type: String, enum: ["requested", "active", "ignored"], default: "requested", index: true },
+    requestedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    lastMessage: { type: String, default: "" },
+    lastMessageAt: { type: Date },
+    lastSenderId: { type: Schema.Types.ObjectId, ref: "User" },
+    readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  },
+  { timestamps: true },
+);
+conversationSchema.index({ participants: 1, updatedAt: -1 });
+
+const messageSchema = new Schema(
+  {
+    conversationId: { type: Schema.Types.ObjectId, ref: "Conversation", required: true, index: true },
+    senderId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    receiverId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    body: { type: String, required: true, trim: true },
+    kind: { type: String, enum: ["message", "request"], default: "message" },
+    readAt: Date,
   },
   { timestamps: true },
 );
@@ -261,3 +289,5 @@ export const Bookmark = model("Bookmark", bookmarkSchema);
 export const History = model("History", historySchema);
 export const DeletionRequest = model("DeletionRequest", deletionRequestSchema);
 export const AppNotification = model("AppNotification", notificationSchema);
+export const Conversation = model("Conversation", conversationSchema);
+export const Message = model("Message", messageSchema);

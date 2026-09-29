@@ -11,6 +11,8 @@ class UserModel extends Equatable {
   final int followersCount;
   final int followingCount;
   final bool isFriend;
+  final bool isOnline;
+  final DateTime? lastActiveAt;
 
   const UserModel({
     required this.id,
@@ -23,9 +25,17 @@ class UserModel extends Equatable {
     this.followersCount = 0,
     this.followingCount = 0,
     this.isFriend = false,
+    this.isOnline = false,
+    this.lastActiveAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    DateTime? parsedLastActive;
+    if (json['lastActiveAt'] != null) {
+      try {
+        parsedLastActive = DateTime.parse(json['lastActiveAt'].toString());
+      } catch (_) {}
+    }
     return UserModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Advocate',
@@ -37,6 +47,8 @@ class UserModel extends Equatable {
       followersCount: (json['followersCount'] as num?)?.toInt() ?? 0,
       followingCount: (json['followingCount'] as num?)?.toInt() ?? 0,
       isFriend: json['isFriend'] == true,
+      isOnline: json['isOnline'] == true,
+      lastActiveAt: parsedLastActive,
     );
   }
 
@@ -48,10 +60,12 @@ class UserModel extends Equatable {
       'photoUrl': photoUrl,
       'headline': headline,
       'college': college,
+      'isOnline': isOnline,
+      'lastActiveAt': lastActiveAt?.toIso8601String(),
     };
   }
 
   @override
-  List<Object?> get props => [id, name, email, photoUrl, headline, college, postsCount, followersCount, followingCount, isFriend];
+  List<Object?> get props => [id, name, email, photoUrl, headline, college, postsCount, followersCount, followingCount, isFriend, isOnline, lastActiveAt];
 }
 
