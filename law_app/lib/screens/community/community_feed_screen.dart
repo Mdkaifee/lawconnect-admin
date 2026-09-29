@@ -519,6 +519,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           // Posts List
           Expanded(
             child: BlocBuilder<PostBloc, PostState>(
+              buildWhen: (previous, current) {
+                if (previous is PostLoaded && current is PostLoaded) {
+                  return previous.posts.length != current.posts.length ||
+                      previous.selectedCategory != current.selectedCategory ||
+                      previous.page != current.page;
+                }
+                return true;
+              },
               builder: (context, state) {
                 if (state is PostLoading) {
                   return Center(child: CircularProgressIndicator(color: primaryOrGold));
@@ -582,7 +590,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     );
                   }
 
-                    return RefreshIndicator(
+                  return RefreshIndicator(
                     color: primaryOrGold,
                     onRefresh: () async => _fetchPosts(),
                     child: ListView.builder(
@@ -614,25 +622,37 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                                 currentUserName.toLowerCase() == post.authorName.toLowerCase());
                         final isFollowing = _followedAuthorIds.contains(post.authorId);
 
-                        return BlocBuilder<UserDataBloc, UserDataState>(
-                          builder: (context, userState) {
-                            final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(post.id);
-                            return KeyedSubtree(
-                              key: ValueKey<String>('post-row-${post.id}'),
-                              child: PostCard(
-                                post: post,
-                                isSelf: isSelf,
-                                currentUserPhotoUrl: currentUserPhotoUrl,
-                                isFollowing: isFollowing,
-                                isBookmarked: isBookmarked,
-                                onFollow: () => _toggleFollow(post),
-                                onAuthorTap: () => _openAuthorProfile(post),
-                                onBookmark: () => _togglePostBookmark(post, isBookmarked),
-                                onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(post.id)),
-                                onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
-                                onReport: () => _showReportDialog(context, post.id),
-                                onDelete: isSelf ? () => _deletePost(post) : null,
-                              ),
+                        return BlocSelector<PostBloc, PostState, PostModel>(
+                          selector: (postState) {
+                            if (postState is PostLoaded) {
+                              for (final p in postState.posts) {
+                                if (p.id == post.id) return p;
+                              }
+                            }
+                            return post;
+                          },
+                          builder: (context, currentPost) {
+                            return BlocSelector<UserDataBloc, UserDataState, bool>(
+                              selector: (userState) => userState is UserDataLoaded && userState.isBookmarked(currentPost.id),
+                              builder: (context, isBookmarked) {
+                                return KeyedSubtree(
+                                  key: ValueKey<String>('post-row-${currentPost.id}'),
+                                  child: PostCard(
+                                    post: currentPost,
+                                    isSelf: isSelf,
+                                    currentUserPhotoUrl: currentUserPhotoUrl,
+                                    isFollowing: isFollowing,
+                                    isBookmarked: isBookmarked,
+                                    onFollow: () => _toggleFollow(currentPost),
+                                    onAuthorTap: () => _openAuthorProfile(currentPost),
+                                    onBookmark: () => _togglePostBookmark(currentPost, isBookmarked),
+                                    onLike: () => context.read<PostBloc>().add(ToggleLikePostEvent(currentPost.id)),
+                                    onComment: () => CommentsSheet.show(context, postId: currentPost.id, postTitle: currentPost.title),
+                                    onReport: () => _showReportDialog(context, currentPost.id),
+                                    onDelete: isSelf ? () => _deletePost(currentPost) : null,
+                                  ),
+                                );
+                              },
                             );
                           },
                         );
