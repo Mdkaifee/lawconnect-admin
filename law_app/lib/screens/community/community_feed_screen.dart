@@ -160,8 +160,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   }
 
   Future<void> _togglePostBookmark(PostModel post, bool isBookmarked) async {
-    if (_bookmarkBusyPostIds.contains(post.id)) return;
-    setState(() => _bookmarkBusyPostIds.add(post.id));
     try {
       final repository = context.read<UserDataRepository>();
       if (isBookmarked) {
@@ -186,8 +184,6 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('unable_update_bookmark'))));
       }
-    } finally {
-      if (mounted) setState(() => _bookmarkBusyPostIds.remove(post.id));
     }
   }
 
