@@ -236,19 +236,26 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           }
           return p;
         }).toList();
-        if (confirmedPosts.toString() != activeState.posts.toString()) {
-          emit(PostLoaded(confirmedPosts,
-            selectedCategory: activeState.selectedCategory,
-            page: activeState.page,
-            total: activeState.total,
-            hasMore: activeState.hasMore,
-          ));
-        }
+        // The optimistic state already matches the server result in the usual case.
+        // Avoid a second list emission that can disturb the visible scroll position.
       }
       event.completer?.complete(result);
     } catch (_) {
       // Revert to original state on failure
-      emit(currentState);
+      if (state is PostLoaded) {
+        final activeState = state as PostLoaded;
+        emit(PostLoaded(
+          activeState.posts.map((post) {
+            if (post.id != event.postId) return post;
+            final original = currentState.posts.firstWhere((item) => item.id == event.postId);
+            return original;
+          }).toList(),
+          selectedCategory: activeState.selectedCategory,
+          page: activeState.page,
+          total: activeState.total,
+          hasMore: activeState.hasMore,
+        ));
+      }
       if (!(event.completer?.isCompleted ?? true)) event.completer!.completeError(Exception('Unable to update like'));
     }
   }

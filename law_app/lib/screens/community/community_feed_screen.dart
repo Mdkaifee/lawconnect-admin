@@ -466,7 +466,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       body: Stack(
         children: [
           Column(
-        children: [
+            children: [
           // Top Category Tabs with Equal Width
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -681,8 +681,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
               },
             ),
           ),
-        ],
-      ),
+            ],
+          ),
           if (_activeMutations > 0)
             Positioned.fill(
               child: AbsorbPointer(
