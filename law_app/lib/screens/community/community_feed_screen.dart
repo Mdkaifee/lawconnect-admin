@@ -165,11 +165,12 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       if (isBookmarked) {
         await repository.removeBookmark(post.id);
       } else {
+        final firstLine = post.content.trim().split('\n').first;
         await repository.addBookmark(
           refType: 'post',
           refId: post.id,
-          title: post.title,
-          subtitle: post.category,
+          title: firstLine.isNotEmpty ? firstLine.substring(0, firstLine.length > 80 ? 80 : firstLine.length) : 'Photo post',
+          subtitle: 'Community post',
         );
       }
       if (mounted) {

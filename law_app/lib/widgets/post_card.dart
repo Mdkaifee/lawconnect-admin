@@ -44,7 +44,7 @@ class PostCard extends StatelessWidget {
     if (rawDate.isEmpty) return '';
     try {
       final dt = DateTime.parse(rawDate).toLocal();
-      return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+      return DateFormat('dd MMM, hh:mm a').format(dt);
     } catch (_) {
       return rawDate;
     }
