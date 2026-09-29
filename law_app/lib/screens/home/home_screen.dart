@@ -476,13 +476,13 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: Row(
-          children: [
-            BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
+        title: SizedBox(
+          width: MediaQuery.sizeOf(context).width * 0.55,
+          child: BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
               final name = state is Authenticated ? state.user.name : 'Advocate';
-              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(_timeBasedGreeting(), style: TextStyle(fontSize: 11, color: textMuted)),
-                Row(children: [
+                Row(mainAxisSize: MainAxisSize.max, children: [
                   if (state is Authenticated && state.user.isChatPaid) ...[
                     const PremiumMemberBadge(compact: true),
                     const SizedBox(width: 5),
@@ -501,7 +501,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(Translation.t('learn_explore_grow'), style: TextStyle(fontSize: 9, color: textMuted)),
               ]);
             }),
-          ],
         ),
         actions: [
           BlocBuilder<NotificationBloc, NotificationState>(
