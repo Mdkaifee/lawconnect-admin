@@ -1,5 +1,6 @@
 import { Router } from "express";
 import mongoose from "mongoose";
+import crypto from "node:crypto";
 import { auth, requireUser, asyncHandler } from "../middleware/auth.js";
 import { AppNotification, Conversation, Message, User } from "../models/index.js";
 import { notifyUsers } from "../services/notifications.js";
@@ -8,7 +9,31 @@ const router = Router();
 router.use(auth(), requireUser);
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+const freeMessageLimit = Math.max(0, Number.parseInt(process.env.CHAT_MESSAGE_FREE_LIMIT || "5", 10) || 5);
+const chatUnlockAmount = Number(process.env.CHAT_UNLOCK_AMOUNT || "11");
 const isOnline = (lastActiveAt) => lastActiveAt && Date.now() - new Date(lastActiveAt).getTime() <= 5 * 60 * 1000;
+
+async function getChatAccess(conversation, userId) {
+  const [sentCount, user] = await Promise.all([
+    Message.countDocuments({ conversationId: conversation._id, senderId: userId, kind: "message" }),
+    User.findOne({ _id: userId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("_id"),
+  ]);
+  const unlocked = conversation.paidUnlocks?.some((item) => item.userId.toString() === userId.toString()) || false;
+  return { sentCount, freeLimit: freeMessageLimit, unlockAmount: chatUnlockAmount, unlocked, canSend: Boolean(user) && (unlocked || sentCount < freeMessageLimit) };
+}
+
+async function loadActiveConversation(req, res) {
+  if (!isValidId(req.params.id)) {
+    res.status(400).json({ error: "Invalid conversation id" });
+    return null;
+  }
+  const conversation = await Conversation.findOne({ _id: req.params.id, participants: req.auth.id });
+  if (!conversation) {
+    res.status(404).json({ error: "Conversation not found" });
+    return null;
+  }
+  return conversation;
+}
 
 async function touchUser(userId) {
   await User.findByIdAndUpdate(userId, { lastActiveAt: new Date() });
@@ -95,6 +120,7 @@ router.get(
     const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 }).lean();
     res.json({
       conversation: serializeConversation(conversation, otherUser, req.auth.id),
+      chatAccess: await getChatAccess(conversation, req.auth.id),
       messages: messages.map((m) => ({
         id: m._id.toString(),
         conversationId: m.conversationId.toString(),
@@ -106,6 +132,76 @@ router.get(
         createdAt: m.createdAt,
       })),
     });
+  }),
+);
+
+router.post(
+  "/conversations/:id/payment/order",
+  asyncHandler(async (req, res) => {
+    const conversation = await loadActiveConversation(req, res);
+    if (!conversation) return;
+    const access = await getChatAccess(conversation, req.auth.id);
+    if (access.unlocked) return res.json({ unlocked: true });
+    if (access.sentCount < freeMessageLimit) return res.status(400).json({ error: "Free messages remain", chatAccess: access });
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
+    if (!Number.isFinite(chatUnlockAmount) || chatUnlockAmount <= 0) return res.status(503).json({ error: "Chat unlock amount is not configured" });
+
+    const amountPaise = Math.round(chatUnlockAmount * 100);
+    const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: `chat_${conversation._id}_${req.auth.id}_${Date.now()}`,
+        notes: { conversationId: conversation._id.toString(), userId: req.auth.id, purpose: "chat_unlock" },
+      }),
+    });
+    const order = await razorpayResponse.json().catch(() => ({}));
+    if (!razorpayResponse.ok || !order.id) {
+      console.error("Razorpay order creation failed:", order.error?.code || razorpayResponse.status);
+      return res.status(502).json({ error: "Unable to start payment. Please try again." });
+    }
+    conversation.paymentOrders.push({ userId: req.auth.id, orderId: order.id, amountPaise, status: "created" });
+    await conversation.save();
+    res.status(201).json({ orderId: order.id, amount: amountPaise, currency: "INR", keyId });
+  }),
+);
+
+router.post(
+  "/conversations/:id/payment/verify",
+  asyncHandler(async (req, res) => {
+    const conversation = await loadActiveConversation(req, res);
+    if (!conversation) return;
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body || {};
+    if (![razorpayOrderId, razorpayPaymentId, razorpaySignature].every((value) => typeof value === "string" && value.length > 0)) {
+      return res.status(400).json({ error: "Payment details are incomplete" });
+    }
+    const attempt = conversation.paymentOrders.find((item) => item.orderId === razorpayOrderId && item.userId.toString() === req.auth.id);
+    if (!attempt) return res.status(400).json({ error: "Payment order does not belong to this account or chat" });
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
+    const expected = crypto.createHmac("sha256", keySecret).update(`${razorpayOrderId}|${razorpayPaymentId}`).digest();
+    let supplied;
+    try {
+      supplied = Buffer.from(razorpaySignature, "hex");
+    } catch (_) {
+      supplied = Buffer.alloc(0);
+    }
+    if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
+      return res.status(400).json({ error: "Payment verification failed" });
+    }
+    attempt.status = "paid";
+    attempt.paymentId = razorpayPaymentId;
+    const alreadyUnlocked = conversation.paidUnlocks.some((item) => item.userId.toString() === req.auth.id);
+    if (!alreadyUnlocked) conversation.paidUnlocks.push({ userId: req.auth.id, unlockedAt: new Date() });
+    await conversation.save();
+    res.json({ ok: true, unlocked: true, chatAccess: await getChatAccess(conversation, req.auth.id) });
   }),
 );
 
@@ -174,6 +270,10 @@ router.post(
     const sender = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("name");
     const receiver = await User.findOne({ _id: otherId, blocked: { $ne: true }, deletionRequested: { $ne: true } }).select("_id");
     if (!sender || !receiver) return res.status(403).json({ error: "Inactive account cannot send messages" });
+    const chatAccess = await getChatAccess(conversation, req.auth.id);
+    if (!chatAccess.canSend) {
+      return res.status(402).json({ error: "Free messages used. Unlock this chat to continue.", paymentRequired: true, chatAccess });
+    }
     const message = await Message.create({ conversationId: conversation._id, senderId: req.auth.id, receiverId: otherId, body });
     conversation.lastMessage = body;
     conversation.lastMessageAt = new Date();

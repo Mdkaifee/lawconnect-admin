@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth/auth_bloc.dart';
 import '../core/services/notification_service.dart';
 import '../core/theme/app_theme.dart';
 import '../core/translations/translation.dart';
@@ -9,6 +10,7 @@ import 'cases/case_search_screen.dart';
 import 'community/community_feed_screen.dart';
 import 'profile/bookmarks_screen.dart';
 import 'profile/profile_screen.dart';
+import 'auth/login_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -50,7 +52,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return ListenableBuilder(
       listenable: Translation.instance,
       builder: (context, _) {
-        return Scaffold(
+        return BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is Unauthenticated) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            }
+          },
+          child: Scaffold(
           body: IndexedStack(
             index: _currentIndex,
             children: _screens,
@@ -103,6 +114,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               ],
             ),
+          ),
           ),
         );
       },

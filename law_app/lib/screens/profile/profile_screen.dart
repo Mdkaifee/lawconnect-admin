@@ -18,6 +18,7 @@ import 'settings_screen.dart';
 import 'users_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../messages/messages_screen.dart';
+import '../messages/ai_chat_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -233,6 +234,15 @@ class ProfileScreen extends StatelessWidget {
                         isDark: isDark,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                        ),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.auto_awesome_rounded,
+                        title: 'AI Legal Chat',
+                        isDark: isDark,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AiChatScreen()),
                         ),
                       ),
                       _buildMenuItem(

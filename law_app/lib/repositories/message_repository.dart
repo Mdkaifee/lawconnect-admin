@@ -29,6 +29,7 @@ class MessageRepository {
       return ConversationDetail(
         conversation: ConversationModel.fromJson(data['conversation'] as Map<String, dynamic>),
         messages: ((data['messages'] as List<dynamic>?) ?? []).map((e) => MessageModel.fromJson(e as Map<String, dynamic>)).toList(),
+        chatAccess: ChatAccess.fromJson(data['chatAccess'] as Map<String, dynamic>?),
       );
     }
     throw Exception(data['error'] ?? 'Failed to load chat');
@@ -66,7 +67,38 @@ class MessageRepository {
       body: jsonEncode({'body': body}),
     );
     final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode == 402 && data['paymentRequired'] == true) {
+      throw ChatPaymentRequiredException(data['error']?.toString() ?? 'Unlock this chat to continue.');
+    }
     if (response.statusCode < 200 || response.statusCode >= 300) throw Exception(data['error'] ?? 'Failed to send message');
+  }
+
+  Future<ChatPaymentOrder> createChatUnlockOrder(String conversationId) async {
+    final response = await _client.post(
+      Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/order'),
+      headers: _authRepo.authHeaders,
+    );
+    final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode < 200 || response.statusCode >= 300) throw Exception(data['error'] ?? 'Unable to start payment');
+    if (data['unlocked'] == true) return const ChatPaymentOrder(orderId: '', amountPaise: 0, currency: 'INR', keyId: '');
+    return ChatPaymentOrder(
+      orderId: data['orderId']?.toString() ?? '',
+      amountPaise: (data['amount'] as num?)?.toInt() ?? 0,
+      currency: data['currency']?.toString() ?? 'INR',
+      keyId: data['keyId']?.toString() ?? '',
+    );
+  }
+
+  Future<void> verifyChatUnlockPayment({required String conversationId, required String orderId, required String paymentId, required String signature}) async {
+    final response = await _client.post(
+      Uri.parse('${ApiConstants.messages}/conversations/$conversationId/payment/verify'),
+      headers: _authRepo.authHeaders,
+      body: jsonEncode({'razorpayOrderId': orderId, 'razorpayPaymentId': paymentId, 'razorpaySignature': signature}),
+    );
+    final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    if (response.statusCode < 200 || response.statusCode >= 300 || data['unlocked'] != true) {
+      throw Exception(data['error'] ?? 'Payment verification failed');
+    }
   }
 
   Future<void> acceptRequest(String conversationId) async {

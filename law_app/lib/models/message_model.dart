@@ -95,6 +95,46 @@ class MessageModel extends Equatable {
 class ConversationDetail {
   final ConversationModel conversation;
   final List<MessageModel> messages;
+  final ChatAccess chatAccess;
 
-  const ConversationDetail({required this.conversation, required this.messages});
+  const ConversationDetail({required this.conversation, required this.messages, required this.chatAccess});
+}
+
+class ChatAccess {
+  final int sentCount;
+  final int freeLimit;
+  final double unlockAmount;
+  final bool unlocked;
+  final bool canSend;
+
+  const ChatAccess({required this.sentCount, required this.freeLimit, required this.unlockAmount, required this.unlocked, required this.canSend});
+
+  bool get isLocked => !canSend && !unlocked;
+
+  factory ChatAccess.fromJson(Map<String, dynamic>? json) {
+    final value = json ?? const <String, dynamic>{};
+    return ChatAccess(
+      sentCount: (value['sentCount'] as num?)?.toInt() ?? 0,
+      freeLimit: (value['freeLimit'] as num?)?.toInt() ?? 5,
+      unlockAmount: (value['unlockAmount'] as num?)?.toDouble() ?? 11,
+      unlocked: value['unlocked'] == true,
+      canSend: value['canSend'] != false,
+    );
+  }
+}
+
+class ChatPaymentOrder {
+  final String orderId;
+  final int amountPaise;
+  final String currency;
+  final String keyId;
+
+  const ChatPaymentOrder({required this.orderId, required this.amountPaise, required this.currency, required this.keyId});
+}
+
+class ChatPaymentRequiredException implements Exception {
+  final String message;
+  const ChatPaymentRequiredException(this.message);
+  @override
+  String toString() => message;
 }

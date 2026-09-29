@@ -14,6 +14,7 @@ import 'repositories/user_data_repository.dart';
 import 'repositories/user_repository.dart';
 import 'repositories/notification_repository.dart';
 import 'repositories/message_repository.dart';
+import 'repositories/ai_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'blocs/case/case_bloc.dart';
 import 'blocs/act/act_bloc.dart';
@@ -97,6 +98,7 @@ class LawHubApp extends StatelessWidget {
         RepositoryProvider.value(value: userRepository),
         RepositoryProvider.value(value: notificationRepository),
         RepositoryProvider.value(value: messageRepository),
+        RepositoryProvider.value(value: AiRepository(authRepository: authRepository)),
       ],
       child: MultiBlocProvider(
         providers: [

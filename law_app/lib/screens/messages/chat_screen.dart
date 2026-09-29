@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
 import '../../core/utils/date_formatter.dart';
@@ -20,16 +21,25 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   Future<ConversationDetail>? _future;
   bool _sending = false;
+  bool _paymentInProgress = false;
+  ChatAccess? _chatAccess;
+  late final Razorpay _razorpay;
+  String? _pendingPaymentOrderId;
+  String? _pendingPaidMessage;
 
   @override
   void initState() {
     super.initState();
+    _razorpay = Razorpay()
+      ..on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess)
+      ..on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
     _load();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _razorpay.clear();
     super.dispose();
   }
 
@@ -51,17 +61,92 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
+    if (_chatAccess?.isLocked == true) {
+      await _startPayment(text);
+      return;
+    }
     setState(() => _sending = true);
     try {
       await context.read<MessageRepository>().sendMessage(widget.conversationId, text);
       _controller.clear();
       await _refresh();
+    } on ChatPaymentRequiredException {
+      if (mounted) await _startPayment(text);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _startPayment([String? messageToSend]) async {
+    if (_paymentInProgress) return;
+    setState(() => _paymentInProgress = true);
+    _pendingPaidMessage = messageToSend;
+    try {
+      final order = await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
+      if (!mounted) return;
+      if (order.orderId.isEmpty) {
+        await _refresh();
+        return;
+      }
+      _pendingPaymentOrderId = order.orderId;
+      _razorpay.open({
+        'key': order.keyId,
+        'order_id': order.orderId,
+        'amount': order.amountPaise,
+        'currency': order.currency,
+        'name': 'Rishikesh Law Hub',
+        'description': 'Unlock this chat',
+        'prefill': {'email': context.read<AuthRepository>().currentUser?.email ?? ''},
+      });
+    } catch (error) {
+      _paymentInProgress = false;
+      _pendingPaidMessage = null;
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
+      }
+    }
+  }
+
+  Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
+    final orderId = response.orderId ?? _pendingPaymentOrderId;
+    final paymentId = response.paymentId;
+    final signature = response.signature;
+    try {
+      if (orderId == null || paymentId == null || signature == null) throw Exception('Razorpay returned incomplete payment details');
+      await context.read<MessageRepository>().verifyChatUnlockPayment(
+            conversationId: widget.conversationId,
+            orderId: orderId,
+            paymentId: paymentId,
+            signature: signature,
+          );
+      final pendingMessage = _pendingPaidMessage;
+      if (pendingMessage != null && pendingMessage.isNotEmpty) {
+        await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
+        if (_controller.text.trim() == pendingMessage) _controller.clear();
+      }
+      _pendingPaidMessage = null;
+      await _refresh();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      _paymentInProgress = false;
+      _pendingPaymentOrderId = null;
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _onPaymentError(PaymentFailureResponse response) {
+    _paymentInProgress = false;
+    _pendingPaymentOrderId = null;
+    _pendingPaidMessage = null;
+    if (mounted) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.message ?? 'Payment was not completed')));
     }
   }
 
@@ -89,6 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
           future: _future,
           builder: (context, snapshot) {
             final detail = snapshot.data;
+            if (detail != null) _chatAccess = detail.chatAccess;
             final otherUser = detail?.conversation.otherUser;
             return Scaffold(
               backgroundColor: AppTheme.backgroundColor(context),
@@ -134,6 +220,29 @@ class _ChatScreenState extends State<ChatScreen> {
                                 isRequester: detail.conversation.isRequester,
                                 onAccept: _accept,
                                 onIgnore: _ignore,
+                              ),
+                            if (detail.conversation.isActive && detail.chatAccess.isLocked)
+                              Material(
+                                color: AppTheme.primaryOrGold(context).withValues(alpha: 0.10),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Free message limit reached. Unlock this chat for ₹${detail.chatAccess.unlockAmount.toStringAsFixed(0)}.',
+                                          style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600, fontSize: 12),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: _paymentInProgress ? null : () => _startPayment(),
+                                        child: _paymentInProgress
+                                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                            : const Text('Unlock'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             Expanded(
                               child: RefreshIndicator(
@@ -188,7 +297,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           minLines: 1,
                                           maxLines: 4,
                                           decoration: InputDecoration(
-                                            hintText: Translation.t('type_message'),
+                                            hintText: detail.chatAccess.isLocked ? 'Pay to unlock messaging' : Translation.t('type_message'),
                                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide(color: AppTheme.borderColor(context))),
                                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                           ),
@@ -196,8 +305,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton.filled(
-                                        onPressed: _sending ? null : _send,
-                                        icon: _sending ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send_rounded),
+                                        onPressed: _sending || _paymentInProgress ? null : _send,
+                                        icon: _sending || _paymentInProgress
+                                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                            : Icon(detail.chatAccess.isLocked ? Icons.lock_open_rounded : Icons.send_rounded),
                                       ),
                                     ],
                                   ),

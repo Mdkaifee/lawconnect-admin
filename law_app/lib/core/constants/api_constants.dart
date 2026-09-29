@@ -43,4 +43,5 @@ class ApiConstants {
   static const String notifications = '$baseUrl/notifications';
   static const String notificationsReadAll = '$baseUrl/notifications/read-all';
   static const String messages = '$baseUrl/messages';
+  static const String aiChat = '$baseUrl/ai/chat';
 }
