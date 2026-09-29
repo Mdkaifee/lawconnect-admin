@@ -42,7 +42,7 @@ test("verify/reconcile/webhook duplicates extend chat access exactly once", asyn
   let extensions = 0;
   const query = (value) => ({ session: async () => value });
   const PaymentAttempt = {
-    findOne: async (filter) => {
+    findOne: (filter) => {
       if (filter.razorpayPaymentId) return query(null);
       return query(filter.razorpayOrderId === attempt.razorpayOrderId ? attempt : null);
     },
@@ -51,11 +51,11 @@ test("verify/reconcile/webhook duplicates extend chat access exactly once", asyn
       Object.assign(attempt, update.$set);
       return attempt;
     },
-    findById: async () => query(attempt),
+    findById: () => query(attempt),
     updateOne: async () => {},
   };
   const User = {
-    findById: async () => query({
+    findById: () => query({
       ...user,
       async save() {
         extensions += 1;
