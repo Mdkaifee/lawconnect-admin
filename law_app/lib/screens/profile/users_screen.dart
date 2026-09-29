@@ -186,15 +186,30 @@ class _UsersScreenState extends State<UsersScreen> {
                       final filter = _filters[index];
                       final selected = _selectedFilter == filter;
                       return ChoiceChip(
-                        label: Text(_filterLabel(filter)),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedFilter = filter),
-                        selectedColor: primaryOrGold,
-                        labelStyle: TextStyle(
-                          color: selected ? (isDark ? AppColors.primaryNavyDark : Colors.white) : textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      );
+  showCheckmark: false,
+  label: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (selected) ...[
+        const Icon(
+          Icons.check,
+          size: 17,
+          color: Colors.white,
+        ),
+        const SizedBox(width: 5),
+      ],
+      Text(_filterLabel(filter)),
+    ],
+  ),
+  selected: selected,
+  onSelected: (_) => setState(() => _selectedFilter = filter),
+  selectedColor: primaryOrGold,
+  labelStyle: TextStyle(
+    color: selected ? Colors.white : textPrimary,
+    fontWeight: FontWeight.w700,
+  ),
+);
+
                     },
                   ),
                 ),
@@ -220,73 +235,137 @@ class _UsersScreenState extends State<UsersScreen> {
                     return Column(
                       children: [
                         ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          leading: GestureDetector(
-                            onTap: () => _openProfile(item),
-                            child: CircleAvatar(
-                              backgroundColor: isDark ? AppColors.surfaceDarkElevated : AppColors.primaryNavy,
-                              backgroundImage: user.photoUrl?.trim().isNotEmpty == true ? NetworkImage(user.photoUrl!.trim()) : null,
-                              child: user.photoUrl?.trim().isNotEmpty == true
-                                  ? null
-                                  : Text(
-                                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                                      style: TextStyle(
-                                        color: isDark ? AppColors.goldAccentLight : Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          title: Text(
-                            user.name,
-                            style: TextStyle(fontWeight: FontWeight.w800, color: textPrimary),
-                          ),
-                          subtitle: Text(
-                            [user.headline, user.college].where((value) => value.trim().isNotEmpty).join('\n'),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                          ),
-                          trailing: Wrap(
-                            spacing: 6,
-                            children: [
-                              if (showRemoveFollower)
-                                SizedBox(
-                                  width: 82,
-                                  child: OutlinedButton(
-                                    onPressed: !isBusy ? () => _removeFollower(item) : null,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.danger,
-                                      side: const BorderSide(color: AppColors.danger),
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                                    ),
-                                    child: Text(Translation.t('remove'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                                  ),
-                                ),
-                              SizedBox(
-                                width: item.connectionStatus == 'requested' ? 132 : 112,
-                                child: ElevatedButton(
-                                  onPressed: !isBusy ? () => _updateConnection(item) : null,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: color,
-                                    foregroundColor: (isDark && isDefaultFollow) ? AppColors.primaryNavyDark : Colors.white,
-                                    disabledBackgroundColor: color.withValues(alpha: 0.72),
-                                    disabledForegroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                  ),
-                                  child: isBusy
-                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                      : Text(
-                                          _buttonText(item.connectionStatus),
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          onTap: () => _openProfile(item),
-                        ),
+  contentPadding: const EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 8,
+  ),
+
+  leading: GestureDetector(
+    onTap: () => _openProfile(item),
+    child: CircleAvatar(
+      backgroundColor: isDark
+          ? AppColors.surfaceDarkElevated
+          : AppColors.primaryNavy,
+      backgroundImage:
+          user.photoUrl?.trim().isNotEmpty == true
+              ? NetworkImage(user.photoUrl!.trim())
+              : null,
+      child: user.photoUrl?.trim().isNotEmpty == true
+          ? null
+          : Text(
+              user.name.isNotEmpty
+                  ? user.name[0].toUpperCase()
+                  : 'U',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.goldAccentLight
+                    : Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+    ),
+  ),
+
+ title: Text(
+  user.name,
+  maxLines: 1,
+  overflow: TextOverflow.ellipsis,
+  softWrap: false,
+  style: TextStyle(
+    fontWeight: FontWeight.w800,
+    color: textPrimary,
+  ),
+),
+
+
+  subtitle: Text(
+    [
+      user.headline,
+      user.college,
+    ].where((value) => value.trim().isNotEmpty).join('\n'),
+    maxLines: 2,
+    overflow: TextOverflow.ellipsis,
+    style: const TextStyle(
+      fontSize: 12,
+      color: AppColors.textMuted,
+    ),
+  ),
+
+  trailing: Wrap(
+    spacing: 6,
+    children: [
+      if (showRemoveFollower)
+        OutlinedButton(
+          onPressed:
+              !isBusy ? () => _removeFollower(item) : null,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.danger,
+            side: const BorderSide(
+              color: AppColors.danger,
+            ),
+            minimumSize: Size.zero,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 12,
+            ),
+            tapTargetSize:
+                MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.standard,
+          ),
+          child: Text(
+            Translation.t('remove'),
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+
+      ElevatedButton(
+        onPressed:
+            !isBusy ? () => _updateConnection(item) : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor:
+              (isDark && isDefaultFollow)
+                  ? AppColors.primaryNavyDark
+                  : Colors.white,
+          disabledBackgroundColor:
+              color.withValues(alpha: 0.72),
+          disabledForegroundColor: Colors.white,
+          minimumSize: Size.zero,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 12,
+          ),
+          tapTargetSize:
+              MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.standard,
+        ),
+        child: isBusy
+            ? const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                _buttonText(item.connectionStatus),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+      ),
+    ],
+  ),
+
+  onTap: () => _openProfile(item),
+),
+
                         Divider(height: 1, color: AppTheme.dividerColor(context), indent: 20, endIndent: 20),
                       ],
                     );
