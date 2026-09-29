@@ -92,7 +92,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppColors.danger));
     } finally {
-      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999));
+      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999).toInt());
     }
   }
 
@@ -191,7 +191,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('unable_update_bookmark'))));
       }
     } finally {
-      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999));
+      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999).toInt());
     }
   }
 
@@ -447,7 +447,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: primaryOrGold),
-            onPressed: _fetchPosts,
+            onPressed: _activeMutations > 0 ? null : _fetchPosts,
           ),
         ],
         bottom: PreferredSize(
@@ -456,7 +456,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreatePostDialog(context),
+        onPressed: _activeMutations > 0 ? null : () => _showCreatePostDialog(context),
         backgroundColor: isDark ? AppColors.goldAccent : AppColors.primaryNavy,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
@@ -484,6 +484,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     ),
                     child: InkWell(
                       onTap: () {
+                        if (_activeMutations > 0) return;
                         if (_selectedCategory != cat) {
                           setState(() => _selectedCategory = cat);
                           _fetchPosts();
@@ -713,7 +714,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999));
+      if (mounted) setState(() => _activeMutations = (_activeMutations - 1).clamp(0, 999).toInt());
     }
   }
 }

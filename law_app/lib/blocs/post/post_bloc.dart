@@ -224,21 +224,6 @@ class PostBloc extends Bloc<PostEvent, PostState> {
 
     try {
       final result = await _postRepository.toggleLike(event.postId);
-      // Sync confirmed state from server if state is still PostLoaded
-      if (state is PostLoaded) {
-        final activeState = state as PostLoaded;
-        final confirmedPosts = activeState.posts.map((p) {
-          if (p.id == event.postId) {
-            return p.copyWith(
-              isLiked: result['isLiked'] as bool,
-              likesCount: result['likesCount'] as int,
-            );
-          }
-          return p;
-        }).toList();
-        // The optimistic state already matches the server result in the usual case.
-        // Avoid a second list emission that can disturb the visible scroll position.
-      }
       event.completer?.complete(result);
     } catch (_) {
       // Revert to original state on failure
