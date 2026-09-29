@@ -84,58 +84,20 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
   }
 
   Future<void> _showMessageRequestDialog(UserModel user) async {
-    final controller = TextEditingController();
-    var sending = false;
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(Translation.t('message_request')),
-              content: TextField(
-                controller: controller,
-                maxLength: 250,
-                minLines: 3,
-                maxLines: 5,
-                decoration: InputDecoration(hintText: Translation.t('message_request_hint')),
-              ),
-              actions: [
-                TextButton(onPressed: sending ? null : () => Navigator.of(dialogContext).pop(), child: Text(Translation.t('cancel'))),
-                FilledButton(
-                  onPressed: sending
-                      ? null
-                      : () async {
-                          final text = controller.text.trim();
-                          if (text.isEmpty) return;
-                          setDialogState(() => sending = true);
-                          try {
-                            final id = await context.read<MessageRepository>().sendMessageRequest(user.id, text);
-                            if (!mounted) return;
-                            setState(() {
-                              _conversationId = id;
-                              _messageStatus = 'requested';
-                              _isMessageRequester = true;
-                            });
-                            Navigator.of(dialogContext).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('message_request_sent'))));
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
-                            }
-                          } finally {
-                            setDialogState(() => sending = false);
-                          }
-                        },
-                  child: sending ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(Translation.t('send')),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => _MessageRequestDialog(
+        user: user,
+        onSuccess: (id) {
+          if (!mounted) return;
+          setState(() {
+            _conversationId = id;
+            _messageStatus = 'requested';
+            _isMessageRequester = true;
+          });
+        },
+      ),
     );
-    controller.dispose();
   }
 
   void _loadPostsIfNeeded() {
@@ -437,3 +399,80 @@ class _PostsTab extends StatelessWidget {
     );
   }
 }
+
+class _MessageRequestDialog extends StatefulWidget {
+  final UserModel user;
+  final ValueChanged<String> onSuccess;
+
+  const _MessageRequestDialog({required this.user, required this.onSuccess});
+
+  @override
+  State<_MessageRequestDialog> createState() => _MessageRequestDialogState();
+}
+
+class _MessageRequestDialogState extends State<_MessageRequestDialog> {
+  late final TextEditingController _controller;
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final id = await context.read<MessageRepository>().sendMessageRequest(widget.user.id, text);
+      if (!mounted) return;
+      widget.onSuccess(id);
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(Translation.t('message_request_sent'))),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(Translation.t('message_request')),
+      content: TextField(
+        controller: _controller,
+        maxLength: 250,
+        minLines: 3,
+        maxLines: 5,
+        decoration: InputDecoration(hintText: Translation.t('message_request_hint')),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _sending ? null : () => Navigator.of(context).pop(),
+          child: Text(Translation.t('cancel')),
+        ),
+        FilledButton(
+          onPressed: _sending ? null : _submit,
+          child: _sending
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Text(Translation.t('send')),
+        ),
+      ],
+    );
+  }
+}
+
