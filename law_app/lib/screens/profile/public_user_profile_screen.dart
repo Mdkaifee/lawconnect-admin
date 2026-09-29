@@ -4,8 +4,11 @@ import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
 import '../../models/post_model.dart';
 import '../../models/user_model.dart';
+import '../../repositories/auth_repository.dart';
+import '../../repositories/message_repository.dart';
 import '../../repositories/post_repository.dart';
 import '../../repositories/user_repository.dart';
+import '../messages/chat_screen.dart';
 
 class PublicUserProfileScreen extends StatefulWidget {
   final String userId;
@@ -25,11 +28,114 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
   late Future<UserModel> _profileFuture;
   Future<List<PostModel>>? _postsFuture;
   int _selectedTab = 0;
+  bool _messageLoading = false;
+  String _messageStatus = 'unknown';
+  String _conversationId = '';
+  bool _isMessageRequester = false;
 
   @override
   void initState() {
     super.initState();
     _profileFuture = context.read<UserRepository>().getPublicProfile(widget.userId);
+    _loadMessageStatus();
+  }
+
+  Future<void> _loadMessageStatus() async {
+    final currentUserId = context.read<AuthRepository>().currentUser?.id;
+    if (currentUserId == null || currentUserId == widget.userId) return;
+    try {
+      final state = await context.read<MessageRepository>().getOrCreateForUser(widget.userId);
+      if (!mounted) return;
+      setState(() {
+        _conversationId = state.conversationId;
+        _messageStatus = state.status;
+        _isMessageRequester = state.isRequester;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _openMessage(UserModel user) async {
+    if (_messageLoading) return;
+    setState(() => _messageLoading = true);
+    try {
+      final repo = context.read<MessageRepository>();
+      var conversationId = _conversationId;
+      var status = _messageStatus;
+      if (conversationId.isEmpty || status == 'unknown') {
+        final state = await repo.getOrCreateForUser(user.id);
+        conversationId = state.conversationId;
+        status = state.status;
+      }
+      if ((status == 'active' || user.isFriend) && conversationId.isNotEmpty) {
+        if (!mounted) return;
+        await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(conversationId: conversationId)));
+        await _loadMessageStatus();
+        return;
+      }
+      if (!mounted) return;
+      await _showMessageRequestDialog(user);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+      }
+    } finally {
+      if (mounted) setState(() => _messageLoading = false);
+    }
+  }
+
+  Future<void> _showMessageRequestDialog(UserModel user) async {
+    final controller = TextEditingController();
+    var sending = false;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(Translation.t('message_request')),
+              content: TextField(
+                controller: controller,
+                maxLength: 250,
+                minLines: 3,
+                maxLines: 5,
+                decoration: InputDecoration(hintText: Translation.t('message_request_hint')),
+              ),
+              actions: [
+                TextButton(onPressed: sending ? null : () => Navigator.of(dialogContext).pop(), child: Text(Translation.t('cancel'))),
+                FilledButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          final text = controller.text.trim();
+                          if (text.isEmpty) return;
+                          setDialogState(() => sending = true);
+                          try {
+                            final id = await context.read<MessageRepository>().sendMessageRequest(user.id, text);
+                            if (!mounted) return;
+                            setState(() {
+                              _conversationId = id;
+                              _messageStatus = 'requested';
+                              _isMessageRequester = true;
+                            });
+                            Navigator.of(dialogContext).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Translation.t('message_request_sent'))));
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+                            }
+                          } finally {
+                            setDialogState(() => sending = false);
+                          }
+                        },
+                  child: sending ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(Translation.t('send')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
   }
 
   void _loadPostsIfNeeded() {
@@ -114,6 +220,23 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
                             _Stat(label: Translation.t('following'), value: user.followingCount.toString()),
                           ],
                         ),
+                        const SizedBox(height: 14),
+                        if (context.read<AuthRepository>().currentUser?.id != user.id)
+                          FilledButton.icon(
+                            onPressed: (_messageLoading || (_messageStatus == 'requested' && _isMessageRequester)) ? null : () => _openMessage(user),
+                            icon: _messageLoading
+                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.forum_outlined),
+                            label: Text(
+                              _messageStatus == 'requested'
+                                  ? (_isMessageRequester ? Translation.t('message_request_sent') : Translation.t('open_request'))
+                                  : (user.isFriend || _messageStatus == 'active')
+                                      ? Translation.t('message')
+                                      : Translation.t('message_request'),
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        _OnlineLine(user: user),
                       ],
                     ),
                   ),
@@ -167,6 +290,37 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
         );
       },
     );
+  }
+}
+
+class _OnlineLine extends StatelessWidget {
+  final UserModel user;
+
+  const _OnlineLine({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = user.isOnline ? Colors.green : AppTheme.textSecondaryColor(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: user.isOnline ? Colors.green : Colors.grey, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(
+          user.isOnline ? Translation.t('online') : '${Translation.t('last_seen')} ${user.lastActiveAt == null ? Translation.t('recently') : _shortLastSeen(user.lastActiveAt!)}',
+          style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w700),
+        ),
+      ],
+    );
+  }
+
+  String _shortLastSeen(DateTime date) {
+    final difference = DateTime.now().difference(date);
+    if (difference.inMinutes < 1) return Translation.t('recently');
+    if (difference.inMinutes < 60) return '${difference.inMinutes}m';
+    if (difference.inHours < 24) return '${difference.inHours}h';
+    return '${difference.inDays}d';
   }
 }
 
