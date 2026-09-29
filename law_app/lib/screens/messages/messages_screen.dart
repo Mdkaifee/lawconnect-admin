@@ -24,8 +24,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = context.read<MessageRepository>().getConversations());
-    await _future;
+    final nextFuture = context.read<MessageRepository>().getConversations();
+    if (!mounted) return;
+    setState(() {
+      _future = nextFuture;
+    });
+    try {
+      await nextFuture;
+    } catch (_) {}
   }
 
   @override
