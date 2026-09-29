@@ -30,6 +30,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   final Set<String> _bookmarkBusyPostIds = {};
   final Set<String> _followedAuthorIds = {};
   final Set<String> _likeBusyPostIds = {};
+  bool _loadingMorePosts = false;
+  int _lastRenderedPage = 0;
 
   @override
   void initState() {
@@ -174,7 +176,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         );
       }
       if (mounted) {
-        context.read<UserDataBloc>().add(LoadUserDataEvent());
+        context.read<UserDataBloc>().add(RefreshUserDataSilentlyEvent());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(isBookmarked ? Translation.t('removed_from_bookmarks') : Translation.t('bookmarked_successfully'))),
         );
@@ -189,9 +191,11 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   }
 
   void _onScroll() {
+    if (_loadingMorePosts) return;
     if (_scrollController.position.pixels < _scrollController.position.maxScrollExtent - 200) return;
     final state = context.read<PostBloc>().state;
     if (state is PostLoaded && state.hasMore) {
+      _loadingMorePosts = true;
       context.read<PostBloc>().add(
             LoadPostsEvent(
               category: null,
@@ -541,6 +545,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                 }
 
                 if (state is PostLoaded) {
+                  if (state.page > _lastRenderedPage) {
+                    _lastRenderedPage = state.page;
+                    _loadingMorePosts = false;
+                  }
                   final allPosts = state.posts;
                   final displayPosts = _selectedCategory == 'Friends'
                       ? allPosts
@@ -583,6 +591,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                     color: primaryOrGold,
                     onRefresh: () async => _fetchPosts(),
                     child: ListView.builder(
+                      key: const PageStorageKey<String>('community-post-feed'),
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.only(top: 8, bottom: 80),
@@ -606,8 +615,10 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                         return BlocBuilder<UserDataBloc, UserDataState>(
                           builder: (context, userState) {
                             final isBookmarked = userState is UserDataLoaded && userState.isBookmarked(post.id);
-                            return PostCard(
-                              post: post,
+                            return KeyedSubtree(
+                              key: ValueKey<String>('post-row-${post.id}'),
+                              child: PostCard(
+                                post: post,
                               isSelf: isSelf,
                               currentUserPhotoUrl: currentUserPhotoUrl,
                               isFollowing: isFollowing,
@@ -633,6 +644,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                               onComment: () => CommentsSheet.show(context, postId: post.id, postTitle: post.title),
                               onReport: () => _showReportDialog(context, post.id),
                               onDelete: isSelf ? () => _deletePost(post) : null,
+                              ),
                             );
                           },
                         );

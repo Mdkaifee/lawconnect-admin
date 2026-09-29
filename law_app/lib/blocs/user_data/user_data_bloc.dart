@@ -12,6 +12,7 @@ abstract class UserDataEvent extends Equatable {
 }
 
 class LoadUserDataEvent extends UserDataEvent {}
+class RefreshUserDataSilentlyEvent extends UserDataEvent {}
 
 class SaveNoteEvent extends UserDataEvent {
   final String? id;
@@ -114,6 +115,7 @@ class UserDataBloc extends Bloc<UserDataEvent, UserDataState> {
       : _userDataRepository = userDataRepository,
         super(UserDataInitial()) {
     on<LoadUserDataEvent>(_onLoadUserData);
+    on<RefreshUserDataSilentlyEvent>(_onRefreshSilently);
     on<SaveNoteEvent>(_onSaveNote);
     on<DeleteNoteEvent>(_onDeleteNote);
     on<ToggleBookmarkEvent>(_onToggleBookmark);
@@ -137,6 +139,23 @@ class UserDataBloc extends Bloc<UserDataEvent, UserDataState> {
       ));
     } catch (e) {
       emit(UserDataError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onRefreshSilently(RefreshUserDataSilentlyEvent event, Emitter<UserDataState> emit) async {
+    try {
+      final results = await Future.wait([
+        _userDataRepository.getNotes(),
+        _userDataRepository.getBookmarks(),
+        _userDataRepository.getHistory(),
+      ]);
+      emit(UserDataLoaded(
+        notes: results[0] as List<NoteModel>,
+        bookmarks: results[1] as List<BookmarkModel>,
+        history: results[2] as List<Map<String, dynamic>>,
+      ));
+    } catch (_) {
+      // Preserve the current data when a background refresh fails.
     }
   }
 

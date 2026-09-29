@@ -64,6 +64,7 @@ class PostCard extends StatelessWidget {
         : (isSelf ? currentUserPhotoUrl : null);
 
     return Card(
+      key: ValueKey(post.id),
       elevation: 0,
       color: cardBg,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),

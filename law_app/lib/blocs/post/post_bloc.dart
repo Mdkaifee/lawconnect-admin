@@ -192,28 +192,10 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     if (state is! PostLoaded) return;
     final currentState = state as PostLoaded;
 
-    // Optimistically toggle like
-    final updatedPosts = currentState.posts.map((p) {
-      if (p.id == event.postId) {
-        final newIsLiked = !p.isLiked;
-        final newCount = newIsLiked ? p.likesCount + 1 : (p.likesCount > 0 ? p.likesCount - 1 : 0);
-        return p.copyWith(isLiked: newIsLiked, likesCount: newCount);
-      }
-      return p;
-    }).toList();
-
-    emit(PostLoaded(
-      updatedPosts,
-      selectedCategory: currentState.selectedCategory,
-      page: currentState.page,
-      total: currentState.total,
-      hasMore: currentState.hasMore,
-    ));
-
     try {
       final result = await _postRepository.toggleLike(event.postId);
       // Sync confirmed state from server
-      final confirmedPosts = updatedPosts.map((p) {
+      final confirmedPosts = currentState.posts.map((p) {
         if (p.id == event.postId) {
           return p.copyWith(
             isLiked: result['isLiked'] as bool,
