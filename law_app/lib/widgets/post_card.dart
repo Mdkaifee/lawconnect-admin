@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/theme/app_theme.dart';
@@ -254,7 +255,7 @@ class PostCard extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Post Title & Content
-            Text(
+            if (post.title.isNotEmpty) Text(
               post.title,
               style: TextStyle(
                 fontSize: 16,
@@ -263,8 +264,8 @@ class PostCard extends StatelessWidget {
                 height: 1.35,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
+            if (post.title.isNotEmpty && post.content.isNotEmpty) const SizedBox(height: 6),
+            if (post.content.isNotEmpty) Text(
               post.content,
               style: TextStyle(
                 fontSize: 13.5,
@@ -272,6 +273,13 @@ class PostCard extends StatelessWidget {
                 height: 1.5,
               ),
             ),
+            if (post.imageData != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.memory(base64Decode(post.imageData!), fit: BoxFit.cover, width: double.infinity),
+              ),
+            ],
 
             // Tags / Categories pills
             if (post.tags.isNotEmpty) ...[

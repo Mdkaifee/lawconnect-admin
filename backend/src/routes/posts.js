@@ -100,10 +100,18 @@ router.post(
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.auth.id);
     if (!user) return res.status(401).json({ error: "User not found" });
+    const title = (req.body.title || "").toString().trim();
+    const content = (req.body.content || "").toString().trim();
+    const imageData = (req.body.imageData || "").toString();
+    const imageMimeType = (req.body.imageMimeType || "").toString();
+    if (!title && !content && !imageData) return res.status(400).json({ error: "Add text or choose an image" });
+    if (imageData.length > 4 * 1024 * 1024) return res.status(400).json({ error: "Image is too large" });
 
     const item = await Post.create({
-      title: req.body.title,
-      content: req.body.content,
+      title,
+      content,
+      imageData,
+      imageMimeType,
       category: req.body.category || "General Law",
       tags: Array.isArray(req.body.tags) ? req.body.tags : [],
       authorType: "user",

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/post/post_bloc.dart';
 import '../../blocs/user_data/user_data_bloc.dart';
@@ -180,6 +182,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
     final titleController = TextEditingController();
     final contentController = TextEditingController();
     String category = 'General Law';
+    String? imageData;
+    String? imageMimeType;
 
     showDialog(
       context: context,
@@ -206,6 +210,24 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
                   controller: titleController,
                   decoration: InputDecoration(labelText: Translation.t('title_subject')),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 82, maxWidth: 1600);
+                    if (image == null) return;
+                    final bytes = await image.readAsBytes();
+                    setDialogState(() {
+                      imageData = base64Encode(bytes);
+                      imageMimeType = image.mimeType ?? 'image/jpeg';
+                    });
+                  },
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(imageData == null ? 'Add photo' : 'Photo selected'),
+                ),
+                if (imageData != null) ...[
+                  const SizedBox(height: 8),
+                  const Text('Photo attached', textAlign: TextAlign.center),
+                ],
                 const SizedBox(height: 14),
                 TextField(
                   controller: contentController,
@@ -222,12 +244,14 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (titleController.text.trim().isNotEmpty && contentController.text.trim().isNotEmpty) {
+                if ((titleController.text.trim().isNotEmpty || contentController.text.trim().isNotEmpty || imageData != null)) {
                   context.read<PostBloc>().add(
                         CreatePostEvent(
                           title: titleController.text.trim(),
                           content: contentController.text.trim(),
                           category: category,
+                          imageData: imageData,
+                          imageMimeType: imageMimeType,
                         ),
                       );
                   Navigator.pop(ctx);

@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primaryNavy,
+                    color: AppTheme.textPrimaryColor(ctx),
                   ),
                 ),
               ),
@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: categories.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.dividerColor(ctx)),
                   itemBuilder: (context, index) {
                     final category = categories[index];
                     return ListTile(
@@ -138,9 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       title: Text(
                         category.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
+                        style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimaryColor(ctx)),
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                      trailing: Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondaryColor(ctx)),
                       onTap: () {
                         Navigator.pop(ctx);
                         _openCategory(category);

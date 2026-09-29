@@ -36,9 +36,11 @@ class CreatePostEvent extends PostEvent {
   final String content;
   final String category;
   final List<String> tags;
-  const CreatePostEvent({required this.title, required this.content, required this.category, this.tags = const []});
+  final String? imageData;
+  final String? imageMimeType;
+  const CreatePostEvent({required this.title, required this.content, required this.category, this.tags = const [], this.imageData, this.imageMimeType});
   @override
-  List<Object?> get props => [title, content, category, tags];
+  List<Object?> get props => [title, content, category, tags, imageData, imageMimeType];
 }
 
 class ToggleLikePostEvent extends PostEvent {
@@ -160,6 +162,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         content: event.content,
         category: event.category,
         tags: event.tags,
+        imageData: event.imageData,
+        imageMimeType: event.imageMimeType,
       );
       if (state is PostLoaded) {
         final currentState = state as PostLoaded;

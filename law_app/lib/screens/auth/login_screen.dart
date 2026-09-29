@@ -75,22 +75,45 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final newController = TextEditingController();
     final confirmController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    var obscureCurrent = true;
+    var obscureNew = true;
+    var obscureConfirm = true;
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Change password'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextFormField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email'), validator: (v) => v == null || !v.contains('@') ? 'Enter a valid email' : null),
-              TextFormField(controller: currentController, obscureText: true, decoration: const InputDecoration(labelText: 'Current password'), validator: (v) => v == null || v.isEmpty ? 'Required' : null),
-              TextFormField(controller: newController, obscureText: true, decoration: const InputDecoration(labelText: 'New password'), validator: (v) => v == null || v.length < 6 ? 'Minimum 6 characters' : null),
-              TextFormField(controller: confirmController, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm new password'), validator: (v) => v != newController.text ? 'Passwords do not match' : null),
-            ]),
-          ),
-        ),
-        actions: [
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: const Text('Change password'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  TextFormField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email'), validator: (v) => v == null || !v.contains('@') ? 'Enter a valid email' : null),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: currentController,
+                    obscureText: obscureCurrent,
+                    decoration: InputDecoration(labelText: 'Current password', suffixIcon: IconButton(icon: Icon(obscureCurrent ? Icons.visibility_off_outlined : Icons.visibility_outlined), onPressed: () => setDialogState(() => obscureCurrent = !obscureCurrent))),
+                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: newController,
+                    obscureText: obscureNew,
+                    decoration: InputDecoration(labelText: 'New password', suffixIcon: IconButton(icon: Icon(obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined), onPressed: () => setDialogState(() => obscureNew = !obscureNew))),
+                    validator: (v) => v == null || v.length < 6 ? 'Minimum 6 characters' : null,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: confirmController,
+                    obscureText: obscureConfirm,
+                    decoration: InputDecoration(labelText: 'Confirm new password', suffixIcon: IconButton(icon: Icon(obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined), onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm))),
+                    validator: (v) => v != newController.text ? 'Passwords do not match' : null,
+                  ),
+                ]),
+              ),
+            ),
+            actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
@@ -107,7 +130,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             },
             child: const Text('Change'),
           ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

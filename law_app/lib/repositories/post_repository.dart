@@ -139,6 +139,8 @@ class PostRepository {
     required String content,
     required String category,
     List<String> tags = const [],
+    String? imageData,
+    String? imageMimeType,
   }) async {
     final response = await _client.post(
       Uri.parse(ApiConstants.posts),
@@ -148,6 +150,8 @@ class PostRepository {
         'content': content.trim(),
         'category': category,
         'tags': tags,
+        if (imageData != null && imageData.isNotEmpty) 'imageData': imageData,
+        if (imageMimeType != null && imageMimeType.isNotEmpty) 'imageMimeType': imageMimeType,
       }),
     );
 

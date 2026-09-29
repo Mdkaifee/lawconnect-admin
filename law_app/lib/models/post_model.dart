@@ -4,6 +4,8 @@ class PostModel extends Equatable {
   final String id;
   final String title;
   final String content;
+  final String? imageData;
+  final String? imageMimeType;
   final String category;
   final List<String> tags;
   final String authorId;
@@ -29,6 +31,8 @@ class PostModel extends Equatable {
     this.commentsCount = 0,
     this.isLiked = false,
     required this.createdAt,
+    this.imageData,
+    this.imageMimeType,
   });
 
   factory PostModel.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
@@ -47,6 +51,8 @@ class PostModel extends Equatable {
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       content: json['content']?.toString() ?? '',
+      imageData: json['imageData']?.toString().isNotEmpty == true ? json['imageData'].toString() : null,
+      imageMimeType: json['imageMimeType']?.toString(),
       category: json['category']?.toString() ?? 'General Law',
       tags: tagsList,
       authorId: json['authorId']?.toString() ?? '',
@@ -79,10 +85,12 @@ class PostModel extends Equatable {
       commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
       createdAt: createdAt,
+      imageData: imageData,
+      imageMimeType: imageMimeType,
     );
   }
 
   @override
-  List<Object?> get props => [id, title, content, category, authorId, likesCount, commentsCount, isLiked, createdAt];
+  List<Object?> get props => [id, title, content, imageData, category, authorId, likesCount, commentsCount, isLiked, createdAt];
 }
 
