@@ -259,8 +259,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         'retry': {'enabled': true, 'max_count': 3},
         'send_sms_hash': true,
         'prefill': {
+          'name': currentUser?.name ?? '',
           'email': currentUser?.email ?? '',
-          'contact': currentUser?.phone ?? '',
         },
       });
     } catch (error) {
