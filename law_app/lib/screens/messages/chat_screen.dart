@@ -247,6 +247,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _pendingPaymentOrderId = order.orderId;
       await _savePendingPaymentOrder(order.orderId);
       debugPrint('[CHAT_PAYMENT] opening checkout orderId=${order.orderId}');
+      final currentUser = context.read<AuthRepository>().currentUser;
       _razorpay.open({
         'key': order.keyId,
         'order_id': order.orderId,
@@ -254,10 +255,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         'currency': order.currency,
         'name': 'Rishikesh Law Hub',
         'description': 'Unlock this chat',
-        // Checkout retries reuse the pending order; the backend reconciles it
-        // before deciding whether a new order is safe to create.
-        'retry': {'enabled': false},
-        'prefill': {'email': context.read<AuthRepository>().currentUser?.email ?? ''},
+        'timeout': 180, // 3 minutes for UPI app switching & bank approval
+        'retry': {'enabled': true, 'max_count': 3},
+        'send_sms_hash': true,
+        'prefill': {
+          'email': currentUser?.email ?? '',
+          'contact': currentUser?.phone ?? '',
+        },
       });
     } catch (error) {
       debugPrint('[CHAT_PAYMENT] order/checkout start failed error=$error');
