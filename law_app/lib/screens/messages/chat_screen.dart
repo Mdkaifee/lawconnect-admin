@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/translations/translation.dart';
@@ -9,6 +10,8 @@ import '../../core/utils/date_formatter.dart';
 import '../../models/message_model.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/message_repository.dart';
+
+enum _PaymentReconcileResult { paid, notCaptured, unknown }
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -24,6 +27,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<ConversationDetail>? _future;
   bool _sending = false;
   bool _paymentInProgress = false;
+  bool _checkingPaymentStatus = false;
+  bool _restoringPendingOrder = true;
+  String? _paymentNotice;
   ChatAccess? _chatAccess;
   late final Razorpay _razorpay;
   String? _pendingPaymentOrderId;
@@ -39,6 +45,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ..on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess)
       ..on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
     _load();
+    _restorePendingPaymentOrder();
   }
 
   @override
@@ -52,46 +59,90 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _pendingPaymentOrderId != null) {
-      _reconcilePendingPayment(checkoutClosed: false);
+      _reconcilePendingPayment();
     }
   }
 
-  Future<void> _reconcilePendingPayment({required bool checkoutClosed, bool cancelled = false}) async {
-    final orderId = _pendingPaymentOrderId;
-    if (orderId == null || orderId.isEmpty || _reconcilingPayment) return;
-    _reconcilingPayment = true;
-    debugPrint('[CHAT_PAYMENT] reconcile start orderId=$orderId checkoutClosed=$checkoutClosed cancelled=$cancelled');
+  String get _pendingOrderStorageKey {
+    final userId = context.read<AuthRepository>().currentUser?.id ?? 'current';
+    return 'chat_payment_order_${userId}_${widget.conversationId}';
+  }
+
+  Future<void> _restorePendingPaymentOrder() async {
     try {
-      final result = await context.read<MessageRepository>().reconcileChatUnlockOrder(
-        widget.conversationId,
-        orderId,
-        checkoutClosed: checkoutClosed,
-        cancelled: cancelled,
-      );
-      if (!mounted) return;
-      if (result['paid'] == true) {
-        await _completeConfirmedPayment(orderId);
-      } else if (checkoutClosed) {
-        _pendingPaymentOrderId = null;
-        _pendingPaymentOrder = null;
-        _pendingPaidMessage = null;
-        _paymentInProgress = false;
-        if (mounted) setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(cancelled ? 'Payment cancelled. No amount was charged.' : 'Payment was not captured. You can try again.')),
-        );
+      final storageKey = _pendingOrderStorageKey;
+      final preferences = await SharedPreferences.getInstance();
+      final orderId = preferences.getString(storageKey);
+      if (orderId != null && orderId.isNotEmpty && mounted) {
+        _pendingPaymentOrderId = orderId;
+        await _reconcilePendingPayment();
       }
     } catch (error) {
-      debugPrint('[CHAT_PAYMENT] reconcile failed orderId=$orderId error=$error');
-      if (checkoutClosed && mounted) {
-        _paymentInProgress = false;
-        setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment status is still being confirmed. Tap Unlock to check again; do not pay again yet.')),
-        );
+      debugPrint('[CHAT_PAYMENT] pending order restore failed error=$error');
+    } finally {
+      _restoringPendingOrder = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _savePendingPaymentOrder(String? orderId) async {
+    try {
+      final storageKey = _pendingOrderStorageKey;
+      final preferences = await SharedPreferences.getInstance();
+      if (orderId == null || orderId.isEmpty) {
+        await preferences.remove(storageKey);
+      } else {
+        await preferences.setString(storageKey, orderId);
       }
+    } catch (error) {
+      debugPrint('[CHAT_PAYMENT] pending order persistence failed error=$error');
+    }
+  }
+
+  Future<_PaymentReconcileResult> _reconcilePendingPayment() async {
+    final orderId = _pendingPaymentOrderId;
+    if (orderId == null || orderId.isEmpty || _reconcilingPayment) return _PaymentReconcileResult.unknown;
+    _reconcilingPayment = true;
+    _checkingPaymentStatus = true;
+    _paymentInProgress = true;
+    _paymentNotice = null;
+    if (mounted) setState(() {});
+    debugPrint('[CHAT_PAYMENT] reconcile start orderId=$orderId');
+    var gotResponse = false;
+    var everyAttemptReturned = true;
+    const retryDelays = [Duration.zero, Duration(seconds: 3), Duration(seconds: 6), Duration(seconds: 10)];
+    try {
+      for (var index = 0; index < retryDelays.length; index++) {
+        if (index > 0) await Future.delayed(retryDelays[index]);
+        if (!mounted) return _PaymentReconcileResult.unknown;
+        try {
+          final result = await context.read<MessageRepository>().reconcileChatUnlockOrder(
+            widget.conversationId,
+            orderId,
+          );
+          gotResponse = true;
+          debugPrint('[CHAT_PAYMENT] reconcile attempt=${index + 1} orderId=$orderId paid=${result['paid'] == true}');
+          if (result['paid'] == true) {
+            await _completeConfirmedPayment(orderId);
+            return _PaymentReconcileResult.paid;
+          }
+        } catch (error) {
+          everyAttemptReturned = false;
+          debugPrint('[CHAT_PAYMENT] reconcile attempt=${index + 1} failed orderId=$orderId error=$error');
+        }
+      }
+      if (mounted) {
+        _paymentNotice = gotResponse
+            ? 'No captured payment confirmed yet. You can retry this same order.'
+            : 'Payment status is still unavailable. Please check again before retrying.';
+        _paymentInProgress = false;
+        _checkingPaymentStatus = false;
+        setState(() {});
+      }
+      return gotResponse && everyAttemptReturned ? _PaymentReconcileResult.notCaptured : _PaymentReconcileResult.unknown;
     } finally {
       _reconcilingPayment = false;
+      _checkingPaymentStatus = false;
     }
   }
 
@@ -100,6 +151,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     debugPrint('[CHAT_PAYMENT] backend confirmed captured payment orderId=$orderId');
     _pendingPaymentOrderId = null;
     _pendingPaymentOrder = null;
+    await _savePendingPaymentOrder(null);
     _paymentInProgress = false;
     context.read<AuthBloc>().add(CheckAuthEvent());
     final pendingMessage = _pendingPaidMessage;
@@ -169,20 +221,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _startPayment([String? messageToSend]) async {
-    if (_paymentInProgress) return;
+    if (_paymentInProgress || _restoringPendingOrder) return;
     debugPrint('[CHAT_PAYMENT] start conversation=${widget.conversationId} reusingPending=${_pendingPaymentOrder != null}');
     setState(() => _paymentInProgress = true);
     if (messageToSend != null) _pendingPaidMessage = messageToSend;
     try {
-      if (_pendingPaymentOrder != null && _pendingPaymentOrderId != null) {
-        final status = await context.read<MessageRepository>().reconcileChatUnlockOrder(
-          widget.conversationId,
-          _pendingPaymentOrderId!,
-        );
-        if (status['paid'] == true) {
-          await _completeConfirmedPayment(_pendingPaymentOrderId!);
-          return;
-        }
+      if (_pendingPaymentOrderId != null) {
+        final status = await _reconcilePendingPayment();
+        if (status != _PaymentReconcileResult.notCaptured) return;
+        if (!mounted) return;
+        setState(() {
+          _paymentInProgress = true;
+          _paymentNotice = null;
+        });
       }
       final order = _pendingPaymentOrder ?? await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
       if (!mounted) return;
@@ -194,6 +245,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
       _pendingPaymentOrder = order;
       _pendingPaymentOrderId = order.orderId;
+      await _savePendingPaymentOrder(order.orderId);
       debugPrint('[CHAT_PAYMENT] opening checkout orderId=${order.orderId}');
       _razorpay.open({
         'key': order.keyId,
@@ -234,8 +286,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       await _completeConfirmedPayment(orderId);
     } catch (error) {
       debugPrint('[CHAT_PAYMENT] success callback verification failed orderId=${orderId ?? '(missing)'} error=$error');
-      if (orderId != null) await _reconcilePendingPayment(checkoutClosed: false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Confirming payment with the server. Chat unlocks after capture is verified.')));
+      if (orderId != null) await _reconcilePendingPayment();
     } finally {
       _paymentInProgress = false;
       if (mounted) setState(() {});
@@ -245,17 +296,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<void> _onPaymentError(PaymentFailureResponse response) async {
     final orderId = _pendingPaymentOrderId;
     debugPrint('[CHAT_PAYMENT] checkout error orderId=${orderId ?? '(missing)'} code=${response.code} message=${response.message} description=${response.error?['description']}');
+    _paymentNotice = 'Checking payment status...';
+    _checkingPaymentStatus = true;
+    _paymentInProgress = true;
     if (mounted) setState(() {});
     if (orderId == null || orderId.isEmpty) {
       _paymentInProgress = false;
+      _checkingPaymentStatus = false;
       if (mounted) setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment status is unavailable. Please try Unlock again.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment status is unavailable. Check your payment before retrying.')));
       return;
     }
-    await _reconcilePendingPayment(
-      checkoutClosed: true,
-      cancelled: response.code == Razorpay.PAYMENT_CANCELLED || (response.message ?? '').toLowerCase().contains('cancel'),
-    );
+    await _reconcilePendingPayment();
   }
 
   Future<void> _accept() async {

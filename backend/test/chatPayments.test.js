@@ -87,4 +87,9 @@ test("late capture after cancellation and duplicate callbacks extend access exac
   assert.equal(extensions, 1);
   assert.deepEqual(duplicateIds, ["pay_duplicate"]);
   assert.equal(user.chatPaidUntil, expiryAfterFirst);
+  user.chatPaidUntil = new Date(Date.now() - 1000);
+  const expiredEntitlement = await markPaidIfCaptured(captured, options);
+  assert.equal(expiredEntitlement.paymentCaptured, true);
+  assert.equal(expiredEntitlement.paid, false);
+  assert.equal(extensions, 1);
 });
