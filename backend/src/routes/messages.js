@@ -82,6 +82,13 @@ async function reconcileAttempt(attempt, { checkoutClosed = false, cancelled = f
   const payment = await capturedPaymentForOrder(attempt.razorpayOrderId);
   if (payment) {
     const result = await applyCapturedPayment(payment);
+    console.info("Chat payment reconciled", {
+      orderId: attempt.razorpayOrderId,
+      paymentId: payment.id,
+      paymentStatus: payment.status,
+      accessGranted: result.paid === true,
+      chatPaidUntil: result.chatPaidUntil || null,
+    });
     if (result.error) throw Object.assign(new Error(result.error), { status: 409 });
     return { paid: result.paid, cancelled: false, chatPaidUntil: result.chatPaidUntil || null };
   }
@@ -307,6 +314,11 @@ router.post(
       return res.status(400).json({ error: "Payment verification failed" });
     }
     const payment = await razorpayGet(`/payments/${encodeURIComponent(razorpayPaymentId)}`);
+    console.info("Chat payment verification lookup", {
+      orderId: razorpayOrderId,
+      paymentId: razorpayPaymentId,
+      paymentStatus: payment.status || "unknown",
+    });
     if (payment.order_id !== razorpayOrderId) return res.status(400).json({ error: "Payment does not belong to this order" });
     if (payment.status !== "captured") {
       return res.status(409).json({ error: "Payment has not been captured yet. Chat access unlocks after capture confirmation." });

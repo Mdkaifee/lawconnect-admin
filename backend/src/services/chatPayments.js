@@ -82,7 +82,13 @@ export async function markPaidIfCaptured(payment, {
           });
         }
         const currentUser = await User.findById(attempt.userId).session(session);
-        result = { paid: true, chatPaidUntil: currentUser?.chatPaidUntil || null, duplicate: attempt.razorpayPaymentId !== payment.id };
+        const accessActive = Boolean(currentUser?.chatPaidUntil && currentUser.chatPaidUntil > new Date());
+        result = {
+          paid: accessActive,
+          paymentCaptured: true,
+          chatPaidUntil: currentUser?.chatPaidUntil || null,
+          duplicate: attempt.razorpayPaymentId !== payment.id,
+        };
         return;
       }
 
@@ -101,7 +107,12 @@ export async function markPaidIfCaptured(payment, {
       if (!updated) {
         const latest = await PaymentAttempt.findById(attempt._id).session(session);
         const currentUser = await User.findById(attempt.userId).session(session);
-        result = { paid: latest?.status === "paid", chatPaidUntil: currentUser?.chatPaidUntil || null };
+        const accessActive = Boolean(currentUser?.chatPaidUntil && currentUser.chatPaidUntil > new Date());
+        result = {
+          paid: latest?.status === "paid" && accessActive,
+          paymentCaptured: latest?.status === "paid",
+          chatPaidUntil: currentUser?.chatPaidUntil || null,
+        };
         return;
       }
 
@@ -110,7 +121,7 @@ export async function markPaidIfCaptured(payment, {
       const startsAt = user.chatPaidUntil && user.chatPaidUntil > now ? user.chatPaidUntil : now;
       user.chatPaidUntil = addCalendarMonths(startsAt, durationMonths);
       await user.save({ session });
-      result = { paid: true, chatPaidUntil: user.chatPaidUntil, duplicate: false };
+      result = { paid: true, paymentCaptured: true, chatPaidUntil: user.chatPaidUntil, duplicate: false };
     });
     return result;
   } finally {

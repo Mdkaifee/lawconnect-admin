@@ -95,7 +95,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _completeConfirmedPayment(String orderId) async {
+  Future<void> _completeConfirmedPayment(String orderId, {bool alreadyUnlocked = false}) async {
     if (!mounted) return;
     debugPrint('[CHAT_PAYMENT] backend confirmed captured payment orderId=$orderId');
     _pendingPaymentOrderId = null;
@@ -103,8 +103,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _paymentInProgress = false;
     context.read<AuthBloc>().add(CheckAuthEvent());
     final pendingMessage = _pendingPaidMessage;
-    _pendingPaidMessage = null;
-    if (pendingMessage != null && pendingMessage.isNotEmpty) {
+    await _refresh();
+    final hasChatAccess = _chatAccess?.isPaid == true;
+    if (hasChatAccess && pendingMessage != null && pendingMessage.isNotEmpty) {
       try {
         await context.read<MessageRepository>().sendMessage(widget.conversationId, pendingMessage);
         if (_controller.text.trim() == pendingMessage) _controller.clear();
@@ -116,10 +117,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         }
       }
     }
-    await _refresh();
+    _pendingPaidMessage = null;
     if (mounted) {
       setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment confirmed. Chat is unlocked.')));
+      final message = !hasChatAccess
+          ? 'Payment was recorded, but chat access is not active. Refresh the chat or contact support.'
+          : alreadyUnlocked
+              ? 'Chat is already unlocked.'
+              : 'Payment confirmed. Chat is unlocked.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -134,7 +140,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _load();
     });
     try {
-      await _future;
+      final detail = await _future;
+      _chatAccess = detail?.chatAccess;
     } catch (_) {}
   }
 
@@ -182,7 +189,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       debugPrint('[CHAT_PAYMENT] order response paid=${order.alreadyPaid} orderId=${order.orderId.isEmpty ? '(none)' : order.orderId} amountPaise=${order.amountPaise} currency=${order.currency}');
       if (order.alreadyPaid) {
         context.read<AuthBloc>().add(CheckAuthEvent());
-        await _completeConfirmedPayment('server-entitlement');
+        await _completeConfirmedPayment('server-entitlement', alreadyUnlocked: true);
         return;
       }
       _pendingPaymentOrder = order;
