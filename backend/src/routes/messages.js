@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { auth, requireUser, asyncHandler } from "../middleware/auth.js";
 import { AppNotification, Conversation, Message, PaymentAttempt, User } from "../models/index.js";
 import { notifyUsers } from "../services/notifications.js";
-import { markPaidIfCaptured, verifyRazorpayPaymentSignature } from "../services/chatPayments.js";
+import { findOwnedPaymentAttempt, markPaidIfCaptured, verifyRazorpayPaymentSignature } from "../services/chatPayments.js";
 
 const router = Router();
 router.use(auth(), requireUser);
@@ -47,7 +47,7 @@ async function razorpayGet(path) {
 
 async function capturedPaymentForOrder(orderId) {
   const result = await razorpayGet(`/orders/${encodeURIComponent(orderId)}/payments`);
-  return (result.items || []).find((payment) => payment.status === "captured" && payment.captured === true) || null;
+  return (result.items || []).find((payment) => payment.status === "captured") || null;
 }
 
 async function migrateLegacyPaymentAttempts(user) {
@@ -275,7 +275,7 @@ router.post(
     const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
     if (!user) return res.status(403).json({ error: "Active account required" });
     await migrateLegacyPaymentAttempts(user);
-    const attempt = await PaymentAttempt.findOne({ razorpayOrderId: orderId, userId: user._id });
+    const attempt = await findOwnedPaymentAttempt(PaymentAttempt, orderId, user._id);
     if (!attempt) return res.status(404).json({ error: "Payment order not found" });
     const result = await reconcileAttempt(attempt, {
       checkoutClosed: req.body?.checkoutClosed === true || req.body?.cancelled === true,
@@ -299,7 +299,7 @@ router.post(
     const user = await User.findOne({ _id: req.auth.id, blocked: { $ne: true }, deletionRequested: { $ne: true } });
     if (!user) return res.status(403).json({ error: "Active account required" });
     await migrateLegacyPaymentAttempts(user);
-    const attempt = await PaymentAttempt.findOne({ razorpayOrderId, userId: user._id });
+    const attempt = await findOwnedPaymentAttempt(PaymentAttempt, razorpayOrderId, user._id);
     if (!attempt) return res.status(400).json({ error: "Payment order does not belong to this account or chat" });
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!process.env.RAZORPAY_KEY_ID || !keySecret) return res.status(503).json({ error: "Chat payments are not configured yet" });
@@ -308,7 +308,7 @@ router.post(
     }
     const payment = await razorpayGet(`/payments/${encodeURIComponent(razorpayPaymentId)}`);
     if (payment.order_id !== razorpayOrderId) return res.status(400).json({ error: "Payment does not belong to this order" });
-    if (payment.status !== "captured" || payment.captured !== true) {
+    if (payment.status !== "captured") {
       return res.status(409).json({ error: "Payment has not been captured yet. Chat access unlocks after capture confirmation." });
     }
     const result = await applyCapturedPayment(payment);

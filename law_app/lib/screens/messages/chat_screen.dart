@@ -167,6 +167,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     setState(() => _paymentInProgress = true);
     if (messageToSend != null) _pendingPaidMessage = messageToSend;
     try {
+      if (_pendingPaymentOrder != null && _pendingPaymentOrderId != null) {
+        final status = await context.read<MessageRepository>().reconcileChatUnlockOrder(
+          widget.conversationId,
+          _pendingPaymentOrderId!,
+        );
+        if (status['paid'] == true) {
+          await _completeConfirmedPayment(_pendingPaymentOrderId!);
+          return;
+        }
+      }
       final order = _pendingPaymentOrder ?? await context.read<MessageRepository>().createChatUnlockOrder(widget.conversationId);
       if (!mounted) return;
       debugPrint('[CHAT_PAYMENT] order response paid=${order.alreadyPaid} orderId=${order.orderId.isEmpty ? '(none)' : order.orderId} amountPaise=${order.amountPaise} currency=${order.currency}');

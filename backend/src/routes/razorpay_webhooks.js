@@ -14,7 +14,7 @@ async function fetchCapturedPayment(orderId) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`Razorpay order payment lookup returned HTTP ${response.status}`);
-  return (data.items || []).find((payment) => payment.status === "captured" && payment.captured === true) || null;
+  return (data.items || []).find((payment) => payment.status === "captured") || null;
 }
 
 router.post("/", async (req, res) => {
@@ -40,7 +40,7 @@ router.post("/", async (req, res) => {
       if (type === "order.paid" && (!payment || payment.status !== "captured")) {
         payment = orderId ? await fetchCapturedPayment(orderId) : null;
       }
-      if (payment?.status === "captured" && payment.captured === true) {
+      if (payment?.status === "captured") {
         const result = await markPaidIfCaptured(payment, { PaymentAttempt, User, durationMonths });
         if (!result.paid) console.error("Captured Razorpay webhook did not grant chat access", { orderId, paymentId, error: result.error });
       }

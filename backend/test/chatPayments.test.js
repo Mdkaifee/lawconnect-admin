@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import {
   markPaidIfCaptured,
+  findOwnedPaymentAttempt,
   validateCapturedPayment,
   verifyRazorpayPaymentSignature,
   verifyRazorpayWebhookSignature,
@@ -36,10 +37,18 @@ test("authorized payments and amount mismatches cannot grant access", () => {
   assert.equal(validateCapturedPayment(captured, attempt), null);
 });
 
-test("verify/reconcile/webhook duplicates extend chat access exactly once", async () => {
-  const attempt = { _id: "attempt_a", userId: "user_a", razorpayOrderId: "order_a", amount: 1100, currency: "INR", status: "created" };
+test("an order cannot be found through another user's account", async () => {
+  const findOne = async ({ razorpayOrderId, userId }) =>
+    razorpayOrderId === "order_a" && userId === "owner_a" ? { userId: "owner_a" } : null;
+  assert.equal(await findOwnedPaymentAttempt({ findOne }, "order_a", "owner_a") !== null, true);
+  assert.equal(await findOwnedPaymentAttempt({ findOne }, "order_a", "attacker_b"), null);
+});
+
+test("late capture after cancellation and duplicate callbacks extend access exactly once", async () => {
+  const attempt = { _id: "attempt_a", userId: "user_a", razorpayOrderId: "order_a", amount: 1100, currency: "INR", status: "cancelled" };
   const user = { _id: "user_a", chatPaidUntil: null, async save() {} };
   let extensions = 0;
+  const duplicateIds = [];
   const query = (value) => ({ session: async () => value });
   const PaymentAttempt = {
     findOne: (filter) => {
@@ -52,7 +61,7 @@ test("verify/reconcile/webhook duplicates extend chat access exactly once", asyn
       return attempt;
     },
     findById: () => query(attempt),
-    updateOne: async () => {},
+    updateOne: async (_filter, update) => duplicateIds.push(update.$addToSet.duplicatePaymentIds),
   };
   const User = {
     findById: () => query({
@@ -73,6 +82,9 @@ test("verify/reconcile/webhook duplicates extend chat access exactly once", asyn
   assert.equal((await markPaidIfCaptured(captured, options)).paid, true);
   const expiryAfterFirst = user.chatPaidUntil;
   assert.equal((await markPaidIfCaptured(captured, options)).paid, true);
+  const duplicateResult = await markPaidIfCaptured({ ...captured, id: "pay_duplicate" }, options);
+  assert.equal(duplicateResult.duplicate, true);
   assert.equal(extensions, 1);
+  assert.deepEqual(duplicateIds, ["pay_duplicate"]);
   assert.equal(user.chatPaidUntil, expiryAfterFirst);
 });

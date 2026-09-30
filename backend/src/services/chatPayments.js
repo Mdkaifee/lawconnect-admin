@@ -26,11 +26,15 @@ export function verifyRazorpayWebhookSignature(rawBody, signature, secret) {
 }
 
 export function validateCapturedPayment(payment, attempt) {
-  if (!payment || payment.status !== "captured" || payment.captured !== true) return "Payment is not captured";
+  if (!payment || payment.status !== "captured") return "Payment is not captured";
   if (payment.order_id !== attempt.razorpayOrderId) return "Payment order does not match";
   if (Number(payment.amount) !== attempt.amount || payment.currency !== attempt.currency) return "Payment amount or currency does not match";
   if (!payment.id) return "Payment ID is missing";
   return null;
+}
+
+export function findOwnedPaymentAttempt(PaymentAttempt, orderId, userId) {
+  return PaymentAttempt.findOne({ razorpayOrderId: orderId, userId });
 }
 
 export function addCalendarMonths(date, months) {
